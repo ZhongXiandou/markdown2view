@@ -194,19 +194,15 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       {/* 工具栏 */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-        <div className="flex items-center gap-2 text-[12px] text-slate-600">
-          <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700 font-semibold flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            玩法说明
-          </span>
-          <span>1. 从<strong className="text-slate-800">指令库</strong>挑选风格</span>
-          <span className="text-slate-300">→</span>
-          <span>2. 发给 AI 助手</span>
-          <span className="text-slate-300">→</span>
-          <span>3. 将代码贴回左侧</span>
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
+        <div className="flex items-baseline gap-3 overflow-hidden pr-4">
+          <div className="text-[13px] font-semibold text-slate-900 shrink-0">HTML 可视化</div>
+          <div className="text-[12px] text-slate-500 truncate flex items-center gap-1.5">
+            <span className="rounded bg-blue-50 px-1.5 text-blue-700 font-semibold flex items-center gap-0.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>玩法</span>
+            <span>选风格 → 发给 AI → 贴回代码</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {pages.length > 0 && (
             <div className="flex items-center gap-1 mr-2">
               <span className="text-[12px] text-slate-500 font-medium px-1">
@@ -237,30 +233,28 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
             </div>
           )}
 
+          <div className="w-px h-4 bg-slate-200 mx-1" />
           <Button onClick={() => setPromptOpen(true)}>
-            Prompt 指令库
+            📚 指令库
           </Button>
           <Button onClick={() => setRefreshKey((n) => n + 1)} title="重新渲染预览">
-            刷新
+            🔄 刷新
           </Button>
           <Button onClick={() => iframeRef.current?.contentWindow?.print()}>
-            导出 PDF
+            🖨️ 导出 PDF
           </Button>
           {pages.length > 0 ? (
             <>
               <Button onClick={handleExportCurrentPage} disabled={exporting}>
-                导出当前页
+                🖼️ 导出当前页
               </Button>
-              <Button variant="primary" onClick={handleExportAllPages} disabled={exporting}>
-                {exporting ? '导出中…' : `导出全部（${pages.length}）`}
-              </Button>
-              <Button onClick={handleExportPagesZip} disabled={exporting}>
-                打包 ZIP
+              <Button variant="primary" onClick={handleExportPagesZip} disabled={exporting}>
+                {exporting ? '打包中…' : '📦 打包 ZIP'}
               </Button>
             </>
           ) : (
             <Button variant="primary" onClick={handleExport} disabled={exporting}>
-              {exporting ? '导出中…' : '导出 PNG'}
+              {exporting ? '导出中…' : '🖼️ 导出 PNG'}
             </Button>
           )}
         </div>

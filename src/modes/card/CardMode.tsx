@@ -233,57 +233,55 @@ export function CardMode({
       </section>
 
       <section ref={previewScrollRef} className="min-h-0 overflow-y-auto bg-slate-100">
-        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-[13px] font-semibold text-slate-900">分页图文</div>
-              <div className="mt-0.5 text-[11px] text-slate-500">
-                封面 1 张 / 文案 1 段 / 内容图 {model.pages.length} 张
-              </div>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
+          <div className="flex items-baseline gap-3 overflow-hidden pr-4">
+            <div className="text-[13px] font-semibold text-slate-900 shrink-0">分页图文</div>
+            <div className="text-[12px] text-slate-500 truncate">
+              封面 1 张 / 文案 1 段 / 内容图 {model.pages.length} 张
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-1.5 text-[12px] text-slate-500">
-                作者名
-                <Input
-                  value={authorName}
-                  placeholder={model.meta.brand}
-                  onChange={(e) => setAuthorName(e.target.value)}
-                  className="w-24"
-                />
-              </label>
-              <Select
-                value={aspect}
-                onChange={(e) => setAspect(e.target.value as XhsAspect)}
-              >
-                <option value="3:4">3:4比例</option>
-                <option value="9:16">9:16比例</option>
-              </Select>
-              <Select
-                value={cardFont}
-                onChange={(e) => setCardFont(e.target.value as any)}
-              >
-                <option value="songti">宋体</option>
-                <option value="fangsong">仿宋</option>
-                <option value="heiti">黑体</option>
-                <option value="lxgwwenkai">霞鹜文楷</option>
-              </Select>
-              <div className="w-px h-4 bg-slate-200 mx-1" />
-              <Button onClick={copyCaption} disabled={!model.caption}>
-                复制文案
-              </Button>
-              <Button onClick={copyGuide}>
-                ✨ 复制 AI 指令
-              </Button>
-              <Button onClick={copyGuideWithContent}>
-                指令+内容
-              </Button>
-              <Button variant="primary" onClick={exportAll} disabled={exporting || !cards.length}>
-                {exporting ? '导出中…' : `下载全部（${cards.length}）`}
-              </Button>
-              <Button onClick={exportZip} disabled={exporting || !cards.length}>
-                打包 ZIP
-              </Button>
-            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <label className="flex items-center gap-1.5 text-[12px] text-slate-500">
+              作者名
+              <Input
+                value={authorName}
+                placeholder={model.meta.brand}
+                onChange={(e) => setAuthorName(e.target.value)}
+                className="w-24"
+              />
+            </label>
+            <Select
+              value={aspect}
+              onChange={(e) => setAspect(e.target.value as XhsAspect)}
+            >
+              <option value="3:4">3:4比例</option>
+              <option value="9:16">9:16比例</option>
+            </Select>
+            <Select
+              value={cardFont}
+              onChange={(e) => setCardFont(e.target.value as any)}
+            >
+              <option value="songti">宋体</option>
+              <option value="fangsong">仿宋</option>
+              <option value="heiti">黑体</option>
+              <option value="lxgwwenkai">霞鹜文楷</option>
+            </Select>
+            <div className="w-px h-4 bg-slate-200 mx-1" />
+            <Button onClick={copyCaption} title="复制生成的小红书文案" disabled={!model.caption}>
+              📋 复制文案
+            </Button>
+            <Button onClick={copyGuide} title="复制 AI 指令">
+              ✨ 指令
+            </Button>
+            <Button onClick={copyGuideWithContent} title="复制指令和当前 Markdown 内容">
+              ✨ 指令+内容
+            </Button>
+            <Button onClick={exportAll} title="逐张下载所有生成的图片" disabled={exporting || !cards.length}>
+              🖼️ 下载单图
+            </Button>
+            <Button variant="primary" onClick={exportZip} title="将所有图片打包为一个 ZIP 文件下载" disabled={exporting || !cards.length}>
+              {exporting ? '打包中…' : '📦 打包下载'}
+            </Button>
           </div>
         </div>
 

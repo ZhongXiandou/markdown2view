@@ -72,14 +72,14 @@ export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: Artic
   return (
     <div className="flex h-full flex-col">
       {/* 复制类操作工具栏 */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-        <div>
-          <div className="text-[13px] font-semibold text-slate-900">长图文</div>
-          <div className="mt-0.5 text-[11px] text-slate-500">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
+        <div className="flex items-baseline gap-3 overflow-hidden pr-4">
+          <div className="text-[13px] font-semibold text-slate-900 shrink-0">长图文</div>
+          <div className="text-[12px] text-slate-500 truncate">
             带样式的微信公众号格式长图文排版
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Select
             value={articleFont}
             onChange={(e) => setArticleFont(e.target.value as any)}
@@ -91,19 +91,19 @@ export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: Artic
           </Select>
           <div className="w-px h-4 bg-slate-200 mx-1" />
           <Button onClick={handleCopyGuide} title="复制一段语法说明，发给 AI 让它按支持的排版语法输出长图文">
-            ✨ 复制 AI 指令
+            ✨ 复制指令
           </Button>
           <Button onClick={handleCopyGuideWithContent} title="复制 AI 指令和当前编辑区 Markdown">
-            指令+内容
+            ✨ 指令+内容
           </Button>
           <Button onClick={handleCopyHtml} title="复制带内联样式的 HTML 源码">
-            复制 HTML
+            📄 HTML源码
           </Button>
           <Button onClick={handleExportLongImage} title="将文章内容导出为长图 PNG">
-            导出长图
+            🖼️ 导出长图
           </Button>
           <Button variant="primary" onClick={handleCopyRichText} title="复制富文本，可直接粘贴到公众号等长图文编辑器，排版不丢失">
-            复制富文本
+            📋 复制富文本
           </Button>
         </div>
       </div>

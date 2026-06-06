@@ -145,13 +145,12 @@ export function DocumentMode({
       </section>
 
       <section ref={previewScrollRef} className="document-workspace min-h-0 overflow-y-auto bg-slate-100">
-        <div className="document-toolbar sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-[13px] font-semibold text-slate-900">A4 文档</div>
-              <div className="mt-0.5 text-[11px] text-slate-500">默认文件名：{model.filename}</div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="document-toolbar sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
+          <div className="flex items-baseline gap-3 overflow-hidden pr-4">
+            <div className="text-[13px] font-semibold text-slate-900 shrink-0">A4 文档</div>
+            <div className="text-[12px] text-slate-500 truncate">默认文件名：{model.filename}</div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
               <label className="flex items-center gap-1.5 text-[12px] text-slate-500">
                 左页眉
                 <Input
@@ -199,14 +198,14 @@ export function DocumentMode({
                   </button>
                 ))}
               </div>
-              <Button onClick={copyGuide}>
-                ✨ 复制 AI 指令
+              <div className="w-px h-4 bg-slate-200 mx-1" />
+              <Button onClick={copyGuide} title="复制 AI 指令">
+                ✨ 复制指令
               </Button>
               <Button variant="primary" onClick={handleExportPdf} disabled={exporting}>
-                {exporting ? `正在导出 ${exportProgress}...` : '直接导出 PDF'}
+                {exporting ? `导出 ${exportProgress}` : '🖨️ 导出 PDF'}
               </Button>
             </div>
-          </div>
         </div>
 
         <div className="document-print-area mx-auto flex w-full flex-col items-center gap-6 px-6 py-6">
