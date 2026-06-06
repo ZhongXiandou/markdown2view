@@ -72,13 +72,7 @@ export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: Artic
   return (
     <div className="flex h-full flex-col">
       {/* 复制类操作工具栏 */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-        <div className="flex items-baseline gap-3 overflow-hidden pr-4">
-          <div className="text-[13px] font-semibold text-slate-900 shrink-0">长图文</div>
-          <div className="text-[12px] text-slate-500 truncate">
-            带样式的微信公众号格式长图文排版
-          </div>
-        </div>
+      <div className="sticky top-0 z-10 flex items-center justify-end border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2 shrink-0">
           <Select
             value={articleFont}

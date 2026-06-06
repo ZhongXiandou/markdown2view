@@ -194,14 +194,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       {/* 工具栏 */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-        <div className="flex items-baseline gap-3 overflow-hidden pr-4">
-          <div className="text-[13px] font-semibold text-slate-900 shrink-0">HTML 可视化</div>
-          <div className="text-[12px] text-slate-500 truncate flex items-center gap-1.5">
-            <span className="rounded bg-blue-50 px-1.5 text-blue-700 font-semibold flex items-center gap-0.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>玩法</span>
-            <span>选风格 → 发给 AI → 贴回代码</span>
-          </div>
-        </div>
+      <div className="sticky top-0 z-10 flex items-center justify-end border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2 shrink-0">
           {pages.length > 0 && (
             <div className="flex items-center gap-1 mr-2">

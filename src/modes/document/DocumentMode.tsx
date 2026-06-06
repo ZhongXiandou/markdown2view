@@ -145,11 +145,7 @@ export function DocumentMode({
       </section>
 
       <section ref={previewScrollRef} className="document-workspace min-h-0 overflow-y-auto bg-slate-100">
-        <div className="document-toolbar sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-          <div className="flex items-baseline gap-3 overflow-hidden pr-4">
-            <div className="text-[13px] font-semibold text-slate-900 shrink-0">A4 文档</div>
-            <div className="text-[12px] text-slate-500 truncate">默认文件名：{model.filename}</div>
-          </div>
+        <div className="document-toolbar sticky top-0 z-10 flex items-center justify-end border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
           <div className="flex items-center gap-2 shrink-0">
               <label className="flex items-center gap-1.5 text-[12px] text-slate-500">
                 左页眉

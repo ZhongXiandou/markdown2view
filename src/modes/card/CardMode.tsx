@@ -233,13 +233,7 @@ export function CardMode({
       </section>
 
       <section ref={previewScrollRef} className="min-h-0 overflow-y-auto bg-slate-100">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
-          <div className="flex items-baseline gap-3 overflow-hidden pr-4">
-            <div className="text-[13px] font-semibold text-slate-900 shrink-0">分页图文</div>
-            <div className="text-[12px] text-slate-500 truncate">
-              封面 1 张 / 文案 1 段 / 内容图 {model.pages.length} 张
-            </div>
-          </div>
+        <div className="sticky top-0 z-10 flex items-center justify-end border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
           <div className="flex items-center gap-2 shrink-0">
             <label className="flex items-center gap-1.5 text-[12px] text-slate-500">
               作者名
