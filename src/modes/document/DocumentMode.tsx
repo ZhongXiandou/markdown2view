@@ -181,6 +181,8 @@ export function DocumentMode({
               >
                 <option value="songti">宋体</option>
                 <option value="fangsong">仿宋</option>
+                <option value="heiti">黑体</option>
+                <option value="lxgwwenkai">霞鹜文楷</option>
               </Select>
               <div className="flex items-center gap-0.5 border border-slate-200 rounded-md p-0.5 bg-slate-50 mr-1">
                 {(['small', 'normal', 'large'] as const).map((s) => (

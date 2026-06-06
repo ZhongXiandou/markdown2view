@@ -126,6 +126,14 @@ body {
   font-family: "FangSong", "仿宋", "STFangsong", "FangSong_GB2312", serif;
 }
 
+.document-font-heiti {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.document-font-lxgwwenkai {
+  font-family: "LXGW WenKai Lite", "LXGW WenKai", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
 .document-fontscale-small {
   --doc-font-size: 13px;
   --doc-line-height: 1.8;
