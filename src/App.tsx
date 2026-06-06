@@ -38,6 +38,15 @@ export default function App() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const showToast = (message: string) => setToast({ message, key: Date.now() })
 
+  const handleRestoreDemo = () => {
+    if (window.confirm('确定要恢复示例文件吗？这将会覆盖你当前所有的输入内容。')) {
+      import('@/data/demoContent').then(({ DEMO_CONTENT }) => {
+        setMarkdown(DEMO_CONTENT)
+        showToast('已恢复示例文件')
+      })
+    }
+  }
+
 
   return (
     <div className="flex h-full flex-col">
@@ -55,23 +64,34 @@ export default function App() {
           {/* 多模式切换 */}
           <ModeTabs mode={mode} onChange={setMode} />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleRestoreDemo}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+            title="恢复默认的示例文件"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+            恢复示例
+          </button>
+          
+          <div className="w-px h-4 bg-slate-200" />
+
           {/* 主题色切换 */}
           <div className="flex items-center gap-1.5">
-          {THEMES.map((t) => (
-            <button
-              key={t.accent}
-              title={t.accent}
-              onClick={() => setTheme(t.accent, t.dark)}
-              className="h-5 w-5 rounded-full border transition-transform hover:scale-110"
-              style={{
-                background: t.accent,
-                borderColor: accent === t.accent ? '#111' : 'transparent',
-                outline: accent === t.accent ? '2px solid #1118' : 'none',
-              }}
-            />
-          ))}
-        </div>
+            {THEMES.map((t) => (
+              <button
+                key={t.accent}
+                title={t.accent}
+                onClick={() => setTheme(t.accent, t.dark)}
+                className="h-5 w-5 rounded-full border transition-transform hover:scale-110"
+                style={{
+                  background: t.accent,
+                  borderColor: accent === t.accent ? '#111' : 'transparent',
+                  outline: accent === t.accent ? '2px solid #1118' : 'none',
+                }}
+              />
+            ))}
+          </div>
         </div>
       </header>
 

@@ -52,7 +52,7 @@ export function CardMode({
   const [exporting, setExporting] = useState(false)
   const cardFont = useStore((s) => s.cardFont)
   const setCardFont = useStore((s) => s.setCardFont)
-  const [authorName, setAuthorName] = useState('')
+  const [authorName, setAuthorName] = useState('Pintley Tasia')
   const cardRefs = useRef<Record<string, HTMLElement | null>>({})
 
   const editorScrollerRef = useRef<HTMLElement | null>(null)
