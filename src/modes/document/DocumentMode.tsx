@@ -180,7 +180,7 @@ export function DocumentMode({
                 onChange={(e) => updateSettings({ fontFamily: e.target.value as DocumentSettings['fontFamily'] })}
               >
                 <option value="songti">宋体</option>
-                <option value="kaiti">楷体</option>
+                <option value="fangsong">仿宋</option>
               </Select>
               <div className="flex items-center gap-0.5 border border-slate-200 rounded-md p-0.5 bg-slate-50 mr-1">
                 {(['small', 'normal', 'large'] as const).map((s) => (

@@ -146,6 +146,7 @@ export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: Artic
               color: '#333',
               fontSize: 15,
               lineHeight: 1.8,
+              fontFamily: '"LXGW WenKai Lite", "PingFang SC", "Microsoft YaHei", sans-serif',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
               backgroundColor: '#fff',

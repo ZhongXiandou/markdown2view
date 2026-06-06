@@ -40,7 +40,7 @@ export interface DocumentSettings {
   headerRight: string
   footerText: string
   theme: 'formal' | 'business'
-  fontFamily: 'songti' | 'kaiti'
+  fontFamily: 'songti' | 'fangsong'
   fontScale: 'small' | 'normal' | 'large'
 }
 

@@ -122,8 +122,8 @@ body {
   font-family: "SimSun", "宋体", "STSong", "Songti SC", serif;
 }
 
-.document-font-kaiti {
-  font-family: "KaiTi", "楷体", "STKaiti", "Kaiti SC", serif;
+.document-font-fangsong {
+  font-family: "FangSong", "仿宋", "STFangsong", "FangSong_GB2312", serif;
 }
 
 .document-fontscale-small {
