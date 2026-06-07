@@ -91,6 +91,9 @@ body {
 .document-block table {
   width: 100% !important;
   table-layout: auto !important;
+  border-collapse: collapse !important;
+  border: 1px solid #cbd5e1 !important;
+  margin: 16px 0 !important;
 }
 
 .document-block td,
@@ -98,7 +101,15 @@ body {
   overflow-wrap: anywhere;
   word-break: break-word;
   font-size: var(--doc-font-size, 15px) !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 10px 14px !important;
 }
+
+.document-block th {
+  background-color: #f8fafc !important;
+  font-weight: 700 !important;
+}
+
 
 .document-block img {
   max-width: 100% !important;
