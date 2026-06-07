@@ -52,8 +52,8 @@ export function previewHtml(input: string): string {
   let html = extractHtml(input)
   if (!html) return ''
   
-  // 注入打印所需的强制换页 CSS
-  const printCss = `
+  // 注入打印所需的强制换页 CSS 与屏幕居中预览 CSS
+  const injectedCss = `
 <style>
 @media print {
   .page, .slide, .card {
@@ -62,15 +62,26 @@ export function previewHtml(input: string): string {
   }
   body { margin: 0 !important; }
 }
+@media screen {
+  body:has(.page, .slide, .card) {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .page, .slide, .card {
+    margin: auto !important;
+  }
+}
 </style>
 `
   
   if (/<\/head>/i.test(html)) {
-    html = html.replace(/<\/head>/i, `${printCss}</head>`)
+    html = html.replace(/<\/head>/i, `${injectedCss}</head>`)
   } else if (/<body/i.test(html)) {
-    html = html.replace(/(<body[^>]*>)/i, `${printCss}$1`)
+    html = html.replace(/(<body[^>]*>)/i, `${injectedCss}$1`)
   } else {
-    html = printCss + html
+    html = injectedCss + html
   }
 
   if (/<\/html>/i.test(html)) return html
