@@ -351,24 +351,19 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       doc.documentElement.style.setProperty('--auto-scale', '1')
     }
     try {
-      const { exportElementsToPdf } = await import('@/lib/exportPdf')
-      
-      let elementsToExport: HTMLElement[] = []
-      
       if (pages.length > 0) {
-        // 多页模式：导出所有识别到的 page 节点
-        elementsToExport = pages.map(p => p.node)
+        // 多页模式：在 iframe 内逐页截图，保留完整样式
+        const { exportIframeToPdf } = await import('@/lib/exportPdf')
+        await exportIframeToPdf(
+          iframe,
+          pages.map(p => p.node),
+          `html-${Date.now()}.pdf`
+        )
       } else {
-        // 单页模式：尝试找到内部第一层包裹器，如果没有就用 body
-        // 优先找带有限制宽高的内层容器，如果只是一段纯文本，则降级为 body
-        const wrapper = doc.querySelector('body > div') || doc.querySelector('body > main') || doc.querySelector('body > section') || doc.body
-        elementsToExport = [wrapper as HTMLElement]
+        // 单页模式：直接截取 iframe 全部内容
+        const { exportSinglePageToPdf } = await import('@/lib/exportPdf')
+        await exportSinglePageToPdf(iframe, `html-${Date.now()}.pdf`)
       }
-
-      await exportElementsToPdf(
-        elementsToExport,
-        `html-${Date.now()}.pdf`
-      )
       onToast('PDF 导出成功')
     } catch (e) {
       onToast(`PDF 导出失败：${e instanceof Error ? e.message : '未知错误'}`)
@@ -379,6 +374,48 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       }
       setExporting(false)
     }
+  }
+
+  // 浏览器原生打印（文字可选可搜索）
+  const handleBrowserPrint = () => {
+    const iframe = iframeRef.current
+    if (!iframe?.contentWindow || !iframe.contentDocument) {
+      onToast('预览尚未就绪')
+      return
+    }
+
+    const doc = iframe.contentDocument
+
+    // 临时重置缩放
+    const oldZoom = doc.body.style.zoom
+    const oldScale = doc.documentElement.style.getPropertyValue('--auto-scale')
+    doc.body.style.zoom = '1'
+    doc.documentElement.style.setProperty('--auto-scale', '1')
+
+    // 多页模式：打印前显示所有页面（@media print 的 break-after 会自动分页）
+    const originalDisplays: string[] = []
+    if (pages.length > 0) {
+      pages.forEach((p, i) => {
+        originalDisplays[i] = p.node.style.display
+        p.node.style.display = ''
+      })
+    }
+
+    // 监听 afterprint 事件恢复状态
+    const restore = () => {
+      if (pages.length > 0) {
+        pages.forEach((p, i) => {
+          p.node.style.display = originalDisplays[i]
+        })
+      }
+      doc.body.style.zoom = oldZoom || ''
+      if (oldScale) doc.documentElement.style.setProperty('--auto-scale', oldScale)
+      iframe.contentWindow?.removeEventListener('afterprint', restore)
+    }
+    iframe.contentWindow.addEventListener('afterprint', restore)
+
+    // 触发 iframe 内的打印
+    iframe.contentWindow.print()
   }
 
   const handleCopyPrompt = async (style: DesignStyle) => {
@@ -429,8 +466,11 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
           <Button onClick={() => iframeRef.current?.requestFullscreen?.()} title="全屏查看展示区内容">
             📺 全屏
           </Button>
-          <Button onClick={handleExportPdf} disabled={exporting}>
-            🖨️ 导出 PDF
+          <Button onClick={handleExportPdf} disabled={exporting} title="截图式高保真导出，视觉完全一致">
+            🖨️ 高保真 PDF
+          </Button>
+          <Button onClick={handleBrowserPrint} title="浏览器打印，文字可选可搜索">
+            📄 可选文字 PDF
           </Button>
           {pages.length > 0 ? (
             <>
