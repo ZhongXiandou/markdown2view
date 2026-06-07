@@ -226,14 +226,22 @@ export async function captureElementInIframeToBlob(
   // 1. 确保 iframe 加载完成
   await waitForDocumentReady(doc, win)
 
-  // 2. 临时重置缩放和自适应，以获取真实的 natural 尺寸
+  // 保存原始 iframe 属性以便后面还原
+  const prevIframeWidth = iframe.style.width
+  const prevIframeMaxWidth = iframe.style.maxWidth
+
+  // 2. 临时重置缩放和自适应，并将 iframe 强行撑开到桌面端标准宽度（1200px），
+  //    以此来获得在桌面端排版下的真实内容宽高，防止窄屏下响应式布局折叠/被挤压变形。
   const prevZoom = doc.body.style.zoom
   const prevScale = doc.documentElement.style.getPropertyValue('--auto-scale')
   
   doc.body.style.zoom = '1'
   doc.documentElement.style.setProperty('--auto-scale', '1')
 
-  // 等待布局重流
+  iframe.style.setProperty('width', '1200px', 'important')
+  iframe.style.setProperty('max-width', 'none', 'important')
+
+  // 等待布局重流以获取真正的宽度和高度
   await NEXT_FRAME()
 
   // 3. 计算元素的真实内容尺寸
@@ -327,9 +335,21 @@ export async function captureElementInIframeToBlob(
         el.style.setProperty(property, originalValue, originalPriority)
       }
     }
-    // 恢复缩放
+    // 恢复缩放与 iframe 原始宽高样式
     doc.body.style.zoom = prevZoom
     doc.documentElement.style.setProperty('--auto-scale', prevScale)
+
+    if (prevIframeWidth === '') {
+      iframe.style.removeProperty('width')
+    } else {
+      iframe.style.setProperty('width', prevIframeWidth)
+    }
+
+    if (prevIframeMaxWidth === '') {
+      iframe.style.removeProperty('max-width')
+    } else {
+      iframe.style.setProperty('max-width', prevIframeMaxWidth)
+    }
   }
 }
 

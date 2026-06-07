@@ -52,9 +52,22 @@ export function previewHtml(input: string): string {
   let html = extractHtml(input)
   if (!html) return ''
   
-  // 注入打印所需的强制换页 CSS 与屏幕居中预览 CSS
+  // 注入打印所需的强制换页 CSS 与屏幕居中预览 CSS，以及防御性排版样式（防截图乱码/折行）
   const injectedCss = `
 <style>
+/* 防御性排版：防止截图渲染时因 web fonts 未能加载而导致 generic sans-serif 降级为 SimSun 衬线体 */
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+body {
+  font-family: var(--font-cn, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif);
+}
+
+/* 防御性排版：防止常见小组件在截图/字体回退时发生奇怪的折行或垂直排版 */
+.chip, .badge, .slide-num, .page-num, .tag, .button, button, .btn {
+  white-space: nowrap !important;
+}
+
 @media print {
   .page, .slide, .card {
     page-break-after: always !important;
