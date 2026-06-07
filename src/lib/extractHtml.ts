@@ -68,9 +68,12 @@ export function previewHtml(input: string): string {
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow: hidden; /* 防止拉伸后的轻微滚动条 */
   }
   .page, .slide, .card {
     margin: auto !important;
+    transform: scale(var(--auto-scale, 1));
+    transform-origin: center center;
   }
 }
 </style>

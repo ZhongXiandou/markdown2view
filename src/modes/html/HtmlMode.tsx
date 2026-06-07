@@ -135,32 +135,35 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       const viewW = iframe.clientWidth
       const viewH = iframe.clientHeight
       
-      const wrapper = doc.querySelector('.page, .slide, .card') as HTMLElement
-        || doc.querySelector('body > div') as HTMLElement
-        || doc.querySelector('body > main') as HTMLElement
-        || doc.querySelector('body > section') as HTMLElement
-        || doc.body
+      if (pages.length > 0) {
+        // 多页模式：寻找当前可见页获取真实尺寸
+        const pagesEls = Array.from(doc.querySelectorAll('.page, .slide, .card')) as HTMLElement[]
+        const visiblePage = pagesEls.find(el => el.style.display !== 'none') || pagesEls[0]
+        if (!visiblePage) return
 
-      const oldZoom = doc.body.style.zoom
-      doc.body.style.zoom = '1'
-      
-      const rawW = wrapper.offsetWidth
-      const rawH = wrapper.offsetHeight
-
-      if (rawW && rawH) {
-        if (pages.length > 0) {
-          // 多页模式：等比例适应可用宽高
-          const scaleW = viewW / rawW
-          const scaleH = viewH / rawH
-          const scale = Math.min(scaleW, scaleH)
-          doc.body.style.zoom = `${scale}`
-        } else {
-          // 单页模式：适应宽度
-          const scale = viewW / rawW
-          doc.body.style.zoom = `${scale}`
+        const rawW = visiblePage.offsetWidth
+        const rawH = visiblePage.offsetHeight
+        
+        if (rawW && rawH) {
+          const scale = Math.min(viewW / rawW, viewH / rawH)
+          doc.documentElement.style.setProperty('--auto-scale', \`\${scale}\`)
         }
       } else {
-        doc.body.style.zoom = oldZoom
+        // 单页模式：适应宽度
+        const wrapper = doc.querySelector('body > div') as HTMLElement
+          || doc.querySelector('body > main') as HTMLElement
+          || doc.querySelector('body > section') as HTMLElement
+          || doc.body
+
+        const oldZoom = doc.body.style.zoom
+        doc.body.style.zoom = '1'
+        const rawW = wrapper.offsetWidth
+        if (rawW) {
+          const scale = viewW / rawW
+          doc.body.style.zoom = \`\${scale}\`
+        } else {
+          doc.body.style.zoom = oldZoom
+        }
       }
     }
 
@@ -185,14 +188,21 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     setExporting(true)
     const doc = iframeRef.current.contentDocument
     const oldZoom = doc?.body.style.zoom
-    if (doc) doc.body.style.zoom = '1'
+    const oldScale = doc?.documentElement.style.getPropertyValue('--auto-scale')
+    if (doc) {
+      doc.body.style.zoom = '1'
+      doc.documentElement.style.setProperty('--auto-scale', '1')
+    }
     try {
       await downloadIframeAsImage(iframeRef.current, 'html')
       onToast('已导出 PNG')
     } catch (e) {
       onToast(`导出失败：${e instanceof Error ? e.message : '未知错误'}`)
     } finally {
-      if (doc) doc.body.style.zoom = oldZoom || ''
+      if (doc) {
+        doc.body.style.zoom = oldZoom || ''
+        if (oldScale) doc.documentElement.style.setProperty('--auto-scale', oldScale)
+      }
       setExporting(false)
     }
   }
@@ -208,7 +218,11 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     const originalStyles = allNodes.map(n => n.style.display)
     const doc = iframe.contentDocument
     const oldZoom = doc?.body.style.zoom
-    if (doc) doc.body.style.zoom = '1'
+    const oldScale = doc?.documentElement.style.getPropertyValue('--auto-scale')
+    if (doc) {
+      doc.body.style.zoom = '1'
+      doc.documentElement.style.setProperty('--auto-scale', '1')
+    }
     try {
       // Hide all other pages
       allNodes.forEach((n, i) => {
@@ -224,7 +238,10 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       allNodes.forEach((n, i) => {
         n.style.display = originalStyles[i]
       })
-      if (doc) doc.body.style.zoom = oldZoom || ''
+      if (doc) {
+        doc.body.style.zoom = oldZoom || ''
+        if (oldScale) doc.documentElement.style.setProperty('--auto-scale', oldScale)
+      }
       setExporting(false)
     }
   }
@@ -238,7 +255,11 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     const originalStyles = allNodes.map(n => n.style.display)
     const doc = iframe.contentDocument
     const oldZoom = doc?.body.style.zoom
-    if (doc) doc.body.style.zoom = '1'
+    const oldScale = doc?.documentElement.style.getPropertyValue('--auto-scale')
+    if (doc) {
+      doc.body.style.zoom = '1'
+      doc.documentElement.style.setProperty('--auto-scale', '1')
+    }
     try {
       for (let i = 0; i < pages.length; i++) {
         // Hide all except current
@@ -260,7 +281,10 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       allNodes.forEach((n, i) => {
         n.style.display = originalStyles[i]
       })
-      if (doc) doc.body.style.zoom = oldZoom || ''
+      if (doc) {
+        doc.body.style.zoom = oldZoom || ''
+        if (oldScale) doc.documentElement.style.setProperty('--auto-scale', oldScale)
+      }
       setExporting(false)
     }
   }
@@ -274,7 +298,11 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     const originalStyles = allNodes.map(n => n.style.display)
     const doc = iframe.contentDocument
     const oldZoom = doc?.body.style.zoom
-    if (doc) doc.body.style.zoom = '1'
+    const oldScale = doc?.documentElement.style.getPropertyValue('--auto-scale')
+    if (doc) {
+      doc.body.style.zoom = '1'
+      doc.documentElement.style.setProperty('--auto-scale', '1')
+    }
     try {
       const entries: ZipEntry[] = []
       
@@ -299,7 +327,10 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       allNodes.forEach((n, i) => {
         n.style.display = originalStyles[i]
       })
-      if (doc) doc.body.style.zoom = oldZoom || ''
+      if (doc) {
+        doc.body.style.zoom = oldZoom || ''
+        if (oldScale) doc.documentElement.style.setProperty('--auto-scale', oldScale)
+      }
       setExporting(false)
     }
   }
@@ -314,7 +345,11 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     setExporting(true)
     const doc = iframe.contentDocument
     const oldZoom = doc?.body.style.zoom
-    if (doc) doc.body.style.zoom = '1'
+    const oldScale = doc?.documentElement.style.getPropertyValue('--auto-scale')
+    if (doc) {
+      doc.body.style.zoom = '1'
+      doc.documentElement.style.setProperty('--auto-scale', '1')
+    }
     try {
       const { exportElementsToPdf } = await import('@/lib/exportPdf')
       
@@ -338,7 +373,10 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     } catch (e) {
       onToast(`PDF 导出失败：${e instanceof Error ? e.message : '未知错误'}`)
     } finally {
-      if (doc) doc.body.style.zoom = oldZoom || ''
+      if (doc) {
+        doc.body.style.zoom = oldZoom || ''
+        if (oldScale) doc.documentElement.style.setProperty('--auto-scale', oldScale)
+      }
       setExporting(false)
     }
   }
