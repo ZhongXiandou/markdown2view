@@ -123,18 +123,76 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     }
   }, [pages])
 
+  // 自动等比例缩放适应窗口大小
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    const handleResize = () => {
+      const doc = iframe.contentDocument
+      if (!doc) return
+      
+      const viewW = iframe.clientWidth
+      const viewH = iframe.clientHeight
+      
+      const wrapper = doc.querySelector('.page, .slide, .card') as HTMLElement
+        || doc.querySelector('body > div') as HTMLElement
+        || doc.querySelector('body > main') as HTMLElement
+        || doc.querySelector('body > section') as HTMLElement
+        || doc.body
+
+      const oldZoom = doc.body.style.zoom
+      doc.body.style.zoom = '1'
+      
+      const rawW = wrapper.offsetWidth
+      const rawH = wrapper.offsetHeight
+
+      if (rawW && rawH) {
+        if (pages.length > 0) {
+          // 多页模式：等比例适应可用宽高
+          const scaleW = viewW / rawW
+          const scaleH = viewH / rawH
+          const scale = Math.min(scaleW, scaleH)
+          doc.body.style.zoom = \`\${scale}\`
+        } else {
+          // 单页模式：适应宽度
+          const scale = viewW / rawW
+          doc.body.style.zoom = \`\${scale}\`
+        }
+      } else {
+        doc.body.style.zoom = oldZoom
+      }
+    }
+
+    setTimeout(handleResize, 100)
+
+    const ro = new ResizeObserver(() => {
+      handleResize()
+    })
+    
+    ro.observe(iframe)
+
+    return () => {
+      ro.disconnect()
+    }
+  }, [pages])
+
   const handleExport = async () => {
     if (!iframeRef.current) {
       onToast('预览尚未就绪')
       return
     }
     setExporting(true)
+    const doc = iframeRef.current.contentDocument
+    const oldZoom = doc?.body.style.zoom
+    if (doc) doc.body.style.zoom = '1'
     try {
       await downloadIframeAsImage(iframeRef.current, 'html')
       onToast('已导出 PNG')
     } catch (e) {
       onToast(`导出失败：${e instanceof Error ? e.message : '未知错误'}`)
     } finally {
+      if (doc) doc.body.style.zoom = oldZoom || ''
       setExporting(false)
     }
   }
@@ -148,6 +206,9 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     setExporting(true)
     const allNodes = pages.map(p => p.node)
     const originalStyles = allNodes.map(n => n.style.display)
+    const doc = iframe.contentDocument
+    const oldZoom = doc?.body.style.zoom
+    if (doc) doc.body.style.zoom = '1'
     try {
       // Hide all other pages
       allNodes.forEach((n, i) => {
@@ -163,6 +224,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       allNodes.forEach((n, i) => {
         n.style.display = originalStyles[i]
       })
+      if (doc) doc.body.style.zoom = oldZoom || ''
       setExporting(false)
     }
   }
@@ -174,6 +236,9 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     setExporting(true)
     const allNodes = pages.map(p => p.node)
     const originalStyles = allNodes.map(n => n.style.display)
+    const doc = iframe.contentDocument
+    const oldZoom = doc?.body.style.zoom
+    if (doc) doc.body.style.zoom = '1'
     try {
       for (let i = 0; i < pages.length; i++) {
         // Hide all except current
@@ -195,6 +260,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       allNodes.forEach((n, i) => {
         n.style.display = originalStyles[i]
       })
+      if (doc) doc.body.style.zoom = oldZoom || ''
       setExporting(false)
     }
   }
@@ -206,6 +272,9 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     setExporting(true)
     const allNodes = pages.map(p => p.node)
     const originalStyles = allNodes.map(n => n.style.display)
+    const doc = iframe.contentDocument
+    const oldZoom = doc?.body.style.zoom
+    if (doc) doc.body.style.zoom = '1'
     try {
       const entries: ZipEntry[] = []
       
@@ -230,6 +299,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       allNodes.forEach((n, i) => {
         n.style.display = originalStyles[i]
       })
+      if (doc) doc.body.style.zoom = oldZoom || ''
       setExporting(false)
     }
   }
@@ -242,6 +312,9 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     }
 
     setExporting(true)
+    const doc = iframe.contentDocument
+    const oldZoom = doc?.body.style.zoom
+    if (doc) doc.body.style.zoom = '1'
     try {
       const { exportElementsToPdf } = await import('@/lib/exportPdf')
       
@@ -252,7 +325,6 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
         elementsToExport = pages.map(p => p.node)
       } else {
         // 单页模式：尝试找到内部第一层包裹器，如果没有就用 body
-        const doc = iframe.contentDocument
         // 优先找带有限制宽高的内层容器，如果只是一段纯文本，则降级为 body
         const wrapper = doc.querySelector('body > div') || doc.querySelector('body > main') || doc.querySelector('body > section') || doc.body
         elementsToExport = [wrapper as HTMLElement]
@@ -266,6 +338,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     } catch (e) {
       onToast(`PDF 导出失败：${e instanceof Error ? e.message : '未知错误'}`)
     } finally {
+      if (doc) doc.body.style.zoom = oldZoom || ''
       setExporting(false)
     }
   }
