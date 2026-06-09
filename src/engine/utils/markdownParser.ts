@@ -481,7 +481,7 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
         )
         i++
       }
-      html += `<section style="margin:0px 0px 30px;box-shadow:rgba(15,23,42,0.05) 0px 10px 24px;border-radius:12px;border:1px solid rgba(229,231,235,0.9);overflow:hidden;background:#ffffff"><section style="padding:16px;background:#ffffff"><section class="tableWrapper" style="width:100%;overflow-x:auto"><table style="border-collapse:collapse;table-layout:auto;width:100%;border:1px solid rgb(226,232,240)"><thead><tr style="background-color:rgb(248,250,252)">`
+      html += `<section style="margin:0px 0px 30px;display:flex;justify-content:center;width:100%"><section style="box-shadow:rgba(15,23,42,0.05) 0px 10px 24px;border-radius:12px;border:1px solid rgba(229,231,235,0.9);overflow:hidden;background:#ffffff;max-width:100%;width:max-content"><section style="padding:16px;background:#ffffff"><section class="tableWrapper" style="width:100%;overflow-x:auto"><table style="border-collapse:collapse;table-layout:auto;width:100%;border:1px solid rgb(226,232,240)"><thead><tr style="background-color:rgb(248,250,252)">`
       headers.forEach((h) => {
         html += `<th valign="top" align="left" style="vertical-align:top;border:1px solid rgb(226,232,240);padding:10px 14px;text-align:left;font-size:13px;font-weight:700;color:rgb(51,65,85)">${inlineFormat(h, t)}</th>`
       })
@@ -493,7 +493,7 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
         })
         html += `</tr>`
       })
-      html += `</tbody></table></section></section></section>`
+      html += `</tbody></table></section></section></section></section>`
       continue
     }
 
@@ -542,9 +542,9 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
       const [, alt, src, size] = imgMatch
       if (size) {
         const parts = size.split(/\s+/)
-        html += `<section style="max-height:${parts[1] || '250px'};overflow-y:auto;border-radius:8px;margin:12px 0px"><img src="${esc(src)}" alt="${esc(alt)}" style="width:${parts[0] || '100%'};display:block"></section>`
+        html += `<section style="max-height:${parts[1] || '250px'};overflow-y:auto;border-radius:8px;margin:12px 0px;display:flex;justify-content:center"><img src="${esc(src)}" alt="${esc(alt)}" style="width:${parts[0] || '100%'};display:block;margin:0 auto"></section>`
       } else {
-        html += `<img src="${esc(src)}" alt="${esc(alt)}" style="max-width:100%;border-radius:6px;margin:12px 0px;display:block">`
+        html += `<section style="margin:12px 0px;display:flex;justify-content:center"><img src="${esc(src)}" alt="${esc(alt)}" style="max-width:100%;border-radius:6px;display:block;margin:0 auto"></section>`
       }
       i++
       continue
@@ -581,7 +581,7 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
       const captionClass = isTableCaption ? 'document-caption document-caption-table' : 'document-caption document-caption-image'
       const captionKind = isTableCaption ? 'table' : 'image'
       const sectionStyle = isTableCaption ? 'margin:16px 0px 8px' : 'margin:8px 0px 16px'
-      html += `<section data-caption-kind="${captionKind}" style="${sectionStyle}"><p class="${captionClass}" style="margin:0px;font-size:13px;color:rgb(100,116,139);line-height:1.5;text-align:center;overflow-wrap:break-word">${inlineFormat(trimmedLine, t)}</p></section>`
+      html += `<section data-caption-kind="${captionKind}" style="${sectionStyle};display:flex;justify-content:center;width:100%"><p class="${captionClass}" style="margin:0px;font-size:13px;color:rgb(100,116,139);line-height:1.5;text-align:center;overflow-wrap:break-word">${inlineFormat(trimmedLine, t)}</p></section>`
     } else {
       html += `<section style="margin:0px 0px 24px"><p style="margin:0px;font-size:16px;color:rgb(51,65,85);line-height:1.85;letter-spacing:0.5px;text-align:justify;overflow-wrap:break-word">${inlineFormat(line, t)}</p></section>`
     }
