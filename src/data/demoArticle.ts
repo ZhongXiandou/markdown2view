@@ -76,7 +76,24 @@ markdown2view 的长图文模式把重点放在“文章表达”上：你仍然
 | 导出长图 | 知识平台、社群传播 | 将整篇内容输出为单张 PNG |
 | 复制 AI 指令 | 外部 AI 改写 | 让 AI 按当前支持语法产出内容 |
 
-<p-title num="06" title="代码与公式也能放进长文" subtitle="TECH CONTENT" level="1"></p-title>
+<p-title num="06" title="实践路径与成功案例" subtitle="TIMELINE & CASES" level="1"></p-title>
+
+我们在实际排版与推广中，整理出了如下关键的发展路线和案例分享：
+
+<timeline>
+- 2026年01月 | 项目启动 | 确定纯前端、零后端的极致流畅体验，搭建基础渲染器
+- 2026年03月 | 多端适配 | 引入小红书卡片、A4 文档双排版内核，解决图片跨页等排版痛点 | ![多端适配](https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&auto=format&fit=crop&q=80)[100% 140px]
+- 2026年06月 | 画布升级 | 突破静态限制，加入自由画布，支持横向网页 PPT 导出与打包下载 | ![自由画布](https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&auto=format&fit=crop&q=80)[100% 140px]
+</timeline>
+
+以下是使用本工作台的用户真实反馈：
+
+<case-flow>
+- [案例 01] 自媒体主创：原先排版公众号加导出小红书卡片需要2小时，现在10分钟内一键生成双平台素材，工作流效率大升。
+- [案例 02] 独立开发者：使用 HTML 可视化模式，用 AI 快速生成炫酷的 Swiss 风格网页 PPT 并在发布会上大获好评。
+</case-flow>
+
+<p-title num="07" title="代码与公式也能放进长文" subtitle="TECH CONTENT" level="1"></p-title>
 
 技术类文章常常需要展示代码、配置或公式。长图文模式会继续复用 Markdown 渲染能力，让工程说明和知识教程更容易交付。
 
@@ -94,7 +111,7 @@ $$
 x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
 $$
 
-<p-title num="07" title="什么时候切换到其他模式" subtitle="SCENARIO GUIDE" level="1"></p-title>
+<p-title num="08" title="什么时候切换到其他模式" subtitle="SCENARIO GUIDE" level="1"></p-title>
 
 <compare left-label="LONGFORM" left-title="继续使用长图文" right-label="OTHER MODES" right-title="切换到其他模式">
 <left>
