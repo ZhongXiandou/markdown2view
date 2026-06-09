@@ -16,8 +16,8 @@ export function PromptLibrary({ open, onClose, onCopy }: PromptLibraryProps) {
       groups[mainCategory].push(s)
     })
 
-    // 推荐展示顺序
-    const order = ['科技', '开发', '设计', 'AI', '文档', '生产力', '数据', '演示', '媒体', '社交', '消费', '生活', '个人', '系统']
+    // 推荐展示顺序：用更少的风格系列收拢品牌/用途标签。
+    const order = ['演示汇报', '科技产品', '设计创意', '媒体内容', '数据分析', '文档知识']
 
     return Object.entries(groups).sort((a, b) => {
       const idxA = order.indexOf(a[0])
