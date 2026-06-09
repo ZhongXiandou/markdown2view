@@ -15,18 +15,26 @@ interface ArticleModeProps {
 
 export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleModeProps) {
   const [localMarkdown, setLocalMarkdown] = useState(markdown)
-  
+
+  // 外部 store 变化（恢复示例 / 版本刷新）→ 同步到本地编辑器
   useEffect(() => {
     setLocalMarkdown(markdown)
   }, [markdown])
 
   const debouncedMarkdown = useDebounce(localMarkdown, 500)
 
+  // 始终持有最新的 store 值供回写比较，避免把外部更新误判为本地编辑
+  const markdownRef = useRef(markdown)
   useEffect(() => {
-    if (debouncedMarkdown !== markdown) {
+    markdownRef.current = markdown
+  }, [markdown])
+
+  // 本地编辑（防抖后）→ 回写 store。仅依赖防抖值，外部更新不会触发回写，避免回滚
+  useEffect(() => {
+    if (debouncedMarkdown !== markdownRef.current) {
       setMarkdown(debouncedMarkdown)
     }
-  }, [debouncedMarkdown, markdown, setMarkdown])
+  }, [debouncedMarkdown, setMarkdown])
 
   const rendered = useMemo(() => renderMarkdown(debouncedMarkdown, colors), [debouncedMarkdown, colors])
   const editorScrollerRef = useRef<HTMLElement | null>(null)

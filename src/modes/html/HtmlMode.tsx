@@ -99,19 +99,27 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const [promptOpen, setPromptOpen] = useState(false)
   const [editorReady, setEditorReady] = useState(0)
   const [exporting, setExporting] = useState(false)
-  const [allowScripts, setAllowScripts] = useState(false)
+  const [allowScripts, setAllowScripts] = useState(true)
 
   const [localHtml, setLocalHtml] = useState(html)
+  // 外部 store 变化（恢复示例 / 版本刷新）→ 同步到本地编辑器
   useEffect(() => {
     setLocalHtml(html)
   }, [html])
   const debouncedHtml = useDebounce(localHtml, 500)
 
+  // 始终持有最新的 store 值供回写比较，避免把外部更新误判为本地编辑
+  const htmlRef = useRef(html)
   useEffect(() => {
-    if (debouncedHtml !== html) {
+    htmlRef.current = html
+  }, [html])
+
+  // 本地编辑（防抖后）→ 回写 store。仅依赖防抖值，外部更新不会触发回写，避免回滚
+  useEffect(() => {
+    if (debouncedHtml !== htmlRef.current) {
       setHtml(debouncedHtml)
     }
-  }, [debouncedHtml, html, setHtml])
+  }, [debouncedHtml, setHtml])
 
   const [pages, setPages] = useState<PageInfo[]>([])
   const [currentPage, setCurrentPage] = useState(0)

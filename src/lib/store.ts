@@ -25,6 +25,19 @@ const CARD_FONT_KEY = 'm2v-card-font'
 const FALLBACK_MARKDOWN = '# markdown2view\n\n正在加载示例内容，或直接在左侧输入 Markdown。'
 const FALLBACK_HTML = '<main style="padding:32px;font-family:sans-serif">正在加载示例 HTML，或直接粘贴 AI 生成的 HTML。</main>'
 
+// 示例内容版本号：当更新了 src/data/demo* 示例、且希望「老用户 / 已有本地缓存」在下次加载时
+// 也能自动获取最新示例，请将此值 +1。版本变化时只会覆盖用户「从未编辑过」的字段，
+// 用户手动编辑过的内容始终保留，不会被覆盖。
+export const DEMO_VERSION = 1
+
+// 各模式的最新示例内容集合，由 App 在挂载时传入，避免 store 直接依赖示例数据文件。
+export interface DemoContents {
+  article: string
+  document: string
+  card: string
+  html: string
+}
+
 interface AppState {
   articleMarkdown: string
   documentMarkdown: string
@@ -39,10 +52,20 @@ interface AppState {
   accent: string
   accentDark: string
   colors: ThemeColors
+  // 示例内容版本与「是否被用户编辑过」标记（dirty）
+  demoVersion: number
+  articleDirty: boolean
+  documentDirty: boolean
+  cardDirty: boolean
+  htmlDirty: boolean
   setArticleMarkdown: (md: string) => void
   setDocumentMarkdown: (md: string) => void
   setCardMarkdown: (md: string) => void
   setHtml: (html: string) => void
+  // 版本驱动的示例同步：仅在版本变化时，刷新用户未编辑过的字段为最新示例
+  syncDemoContent: (demos: DemoContents) => void
+  // 恢复当前模式示例：强制写入最新示例并清除该模式的 dirty 标记
+  restoreDemo: (mode: RenderMode, demos: DemoContents) => void
   setMode: (mode: RenderMode) => void
   setInputType: (type: InputType) => void
   setPlatform: (platform: PlatformPreset) => void
@@ -137,11 +160,39 @@ export const useStore = create<AppState>()(
       accent: initAccent,
       accentDark: initDark,
       colors: legacyState.colors ?? makeColors(initAccent, initDark),
+      // 默认版本号 0，确保首次加载（无持久化版本）时会注入最新示例。
+      demoVersion: 0,
+      // 旧版分散 key 迁移而来的内容视为「用户内容」，标记为 dirty 以免被示例覆盖。
+      articleDirty: legacyState.articleMarkdown != null,
+      documentDirty: legacyState.documentMarkdown != null,
+      cardDirty: legacyState.cardMarkdown != null,
+      htmlDirty: legacyState.html != null,
 
-      setArticleMarkdown: (md) => set({ articleMarkdown: md }),
-      setDocumentMarkdown: (md) => set({ documentMarkdown: md }),
-      setCardMarkdown: (md) => set({ cardMarkdown: md }),
-      setHtml: (html) => set({ html }),
+      setArticleMarkdown: (md) => set({ articleMarkdown: md, articleDirty: true }),
+      setDocumentMarkdown: (md) => set({ documentMarkdown: md, documentDirty: true }),
+      setCardMarkdown: (md) => set({ cardMarkdown: md, cardDirty: true }),
+      setHtml: (html) => set({ html, htmlDirty: true }),
+      syncDemoContent: (demos) =>
+        set((state) => {
+          // 版本未变化则不动用户内容，避免每次加载都覆盖。
+          if (state.demoVersion === DEMO_VERSION) return {}
+          return {
+            articleMarkdown: state.articleDirty ? state.articleMarkdown : demos.article,
+            documentMarkdown: state.documentDirty ? state.documentMarkdown : demos.document,
+            cardMarkdown: state.cardDirty ? state.cardMarkdown : demos.card,
+            html: state.htmlDirty ? state.html : demos.html,
+            demoVersion: DEMO_VERSION,
+          }
+        }),
+      restoreDemo: (mode, demos) =>
+        set(() => {
+          const next: Partial<AppState> = {}
+          if (mode === 'article') { next.articleMarkdown = demos.article; next.articleDirty = false }
+          else if (mode === 'document') { next.documentMarkdown = demos.document; next.documentDirty = false }
+          else if (mode === 'card') { next.cardMarkdown = demos.card; next.cardDirty = false }
+          else if (mode === 'html') { next.html = demos.html; next.htmlDirty = false }
+          return next
+        }),
       setMode: (mode) =>
         set({
           mode,
@@ -169,23 +220,3 @@ export const useStore = create<AppState>()(
     }
   )
 )
-
-export function shouldHydrateDemoContent(mode: RenderMode): boolean {
-  if (typeof localStorage === 'undefined') return false
-  const storeStr = localStorage.getItem('m2v-store')
-  if (storeStr) {
-    try {
-      const state = JSON.parse(storeStr).state
-      if (mode === 'html') return !state.html || state.html === FALLBACK_HTML
-      if (mode === 'article') return !state.articleMarkdown || state.articleMarkdown === FALLBACK_MARKDOWN
-      if (mode === 'card') return !state.cardMarkdown || state.cardMarkdown === FALLBACK_MARKDOWN
-      return !state.documentMarkdown || state.documentMarkdown === FALLBACK_MARKDOWN
-    } catch {
-      return true
-    }
-  }
-  if (mode === 'html') return !localStorage.getItem(HTML_STORAGE_KEY)
-  if (mode === 'article') return !localStorage.getItem(ARTICLE_MD_STORAGE_KEY)
-  if (mode === 'card') return !localStorage.getItem(CARD_MD_STORAGE_KEY)
-  return !localStorage.getItem(DOCUMENT_MD_STORAGE_KEY) && !localStorage.getItem(LEGACY_MD_STORAGE_KEY)
-}

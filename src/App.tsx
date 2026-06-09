@@ -1,8 +1,13 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { shouldHydrateDemoContent, useStore, type RenderMode } from '@/lib/store'
+import { useStore, type DemoContents } from '@/lib/store'
 import { Toast, type ToastState } from '@/components/ui/Toast'
 import { ModeTabs } from '@/components/layout/ModeTabs'
 import { THEMES } from '@engine/composables/useTheme'
+
+import { DEMO_ARTICLE } from '@/data/demoArticle'
+import { DEMO_DOCUMENT } from '@/data/demoDocument'
+import { DEMO_CARD } from '@/data/demoCard'
+import { DEMO_HTML } from '@/data/demoHtml'
 
 const ArticleMode = lazy(() => import('@/modes/article/ArticleMode').then((m) => ({ default: m.ArticleMode })))
 const DocumentMode = lazy(() => import('@/modes/document/DocumentMode').then((m) => ({ default: m.DocumentMode })))
@@ -17,25 +22,12 @@ function ModeLoading() {
   )
 }
 
-async function loadDemoForMode(mode: RenderMode): Promise<{ markdown?: string; html?: string }> {
-  switch (mode) {
-    case 'article': {
-      const { DEMO_ARTICLE } = await import('@/data/demoArticle')
-      return { markdown: DEMO_ARTICLE }
-    }
-    case 'document': {
-      const { DEMO_DOCUMENT } = await import('@/data/demoDocument')
-      return { markdown: DEMO_DOCUMENT }
-    }
-    case 'card': {
-      const { DEMO_CARD } = await import('@/data/demoCard')
-      return { markdown: DEMO_CARD }
-    }
-    case 'html': {
-      const { DEMO_HTML } = await import('@/data/demoHtml')
-      return { html: DEMO_HTML }
-    }
-  }
+// 各模式最新示例内容集合（模块级常量，引用稳定），供版本同步与恢复示例使用。
+const DEMOS: DemoContents = {
+  article: DEMO_ARTICLE,
+  document: DEMO_DOCUMENT,
+  card: DEMO_CARD,
+  html: DEMO_HTML,
 }
 
 // 多场景渲染工作台：长图文 / A4 文档 / 小红书卡片 / HTML 可视化。
@@ -57,36 +49,22 @@ export default function App() {
   const setPlatform = useStore((s) => s.setPlatform)
   const documentSettings = useStore((s) => s.documentSettings)
   const updateDocumentSettings = useStore((s) => s.updateDocumentSettings)
+  const syncDemoContent = useStore((s) => s.syncDemoContent)
+  const restoreDemo = useStore((s) => s.restoreDemo)
 
   // 统一 Toast 反馈
   const [toast, setToast] = useState<ToastState | null>(null)
   const showToast = (message: string) => setToast({ message, key: Date.now() })
 
-  const applyDemo = (targetMode: RenderMode, demo: { markdown?: string; html?: string }) => {
-    if (targetMode === 'article' && demo.markdown) setArticleMarkdown(demo.markdown)
-    if (targetMode === 'document' && demo.markdown) setDocumentMarkdown(demo.markdown)
-    if (targetMode === 'card' && demo.markdown) setCardMarkdown(demo.markdown)
-    if (targetMode === 'html' && demo.html) setHtml(demo.html)
-  }
-
+  // 挂载时按版本号同步示例：仅当 DEMO_VERSION 变化时，刷新用户未编辑过的字段为最新示例。
   useEffect(() => {
-    if (!shouldHydrateDemoContent(mode)) return
-    let cancelled = false
-    loadDemoForMode(mode).then((demo) => {
-      if (cancelled || !shouldHydrateDemoContent(mode)) return
-      applyDemo(mode, demo)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [mode, setArticleMarkdown, setDocumentMarkdown, setCardMarkdown, setHtml])
+    syncDemoContent(DEMOS)
+  }, [syncDemoContent])
 
   const handleRestoreDemo = () => {
     if (window.confirm('确定要恢复当前模块的示例内容吗？这将会覆盖当前编辑区内容。')) {
-      loadDemoForMode(mode).then((demo) => {
-        applyDemo(mode, demo)
-        showToast('已恢复当前模块示例')
-      })
+      restoreDemo(mode, DEMOS)
+      showToast('已恢复当前模块示例')
     }
   }
 
