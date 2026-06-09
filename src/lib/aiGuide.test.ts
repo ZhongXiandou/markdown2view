@@ -13,10 +13,14 @@ describe('AI Guide Prompts', () => {
   it('should generate A4 Document guide with formal layout requirements', () => {
     const guide = buildDocumentAiGuide()
     expect(guide).toContain('A4 文档排版 Markdown 语法指令')
+    expect(guide).toContain('正式文档')
+    expect(guide).toContain('第一个、最大的一级标题')
+    expect(guide).toContain('段首空格')
     expect(guide).toContain('图片题注')
     expect(guide).toContain('图片下方')
     expect(guide).toContain('表格上方')
     expect(guide).toContain('<page-break>')
+    expect(guide).toContain('导航栏主题色')
     // 确保去除了微信花哨的社交、互动组件的详细讲解模块
     expect(guide).not.toContain('## 四、块级组件（直接以标签形式写在正文中）')
   })
@@ -27,5 +31,7 @@ describe('AI Guide Prompts', () => {
     expect(guide).toContain('YAML frontmatter')
     expect(guide).toContain('brand:')
     expect(guide).toContain('chips:')
+    expect(guide).toContain('每张图只承载一个重点')
+    expect(guide).toContain('分页建议')
   })
 })

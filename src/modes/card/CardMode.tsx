@@ -214,11 +214,6 @@ export function CardMode({
     onToast(ok ? '已复制图文卡片 AI 指令' : '复制失败，请重试')
   }
 
-  const copyGuideWithContent = async () => {
-    const ok = await copyText(`${buildCardAiGuide(platform, aspect)}\n\n---\n\n以下是待处理内容：\n\n${markdown}`)
-    onToast(ok ? '已复制指令和当前 Markdown 内容' : '复制失败，请重试')
-  }
-
   return (
     <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(620px,1.1fr)] gap-px bg-gray-200">
       <section className="min-h-0 overflow-hidden bg-white">
@@ -266,9 +261,6 @@ export function CardMode({
             </Button>
             <Button onClick={copyGuide} title="复制 AI 指令">
               ✨ 指令
-            </Button>
-            <Button onClick={copyGuideWithContent} title="复制指令和当前 Markdown 内容">
-              ✨ 指令+内容
             </Button>
             <Button onClick={exportAll} title="逐张下载所有生成的图片" disabled={exporting || !cards.length}>
               🖼️ 下载单图

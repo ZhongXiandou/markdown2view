@@ -12,14 +12,12 @@ interface ArticlePreviewProps {
   rendered: MarkdownRenderResult
   // 滚动容器引用，供滚动联动使用
   scrollRef: React.RefObject<HTMLDivElement>
-  // 当前 Markdown 源码，供"指令+内容"复制使用
-  markdown: string
   // 统一 Toast 反馈
   onToast: (message: string) => void
 }
 
 // 长图文预览：标题/摘要作为独立可复制元信息展示，正文继续复用共享 Markdown 渲染内核。
-export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: ArticlePreviewProps) {
+export function ArticlePreview({ rendered, scrollRef, onToast }: ArticlePreviewProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const { html, meta } = rendered
   const articleFont = useStore((s) => s.articleFont)
@@ -38,11 +36,6 @@ export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: Artic
   const handleCopyGuide = async () => {
     const ok = await copyText(buildArticleAiGuide())
     onToast(ok ? '已复制长图文 AI 排版指令，可发给 AI 使用' : '复制失败，请重试')
-  }
-
-  const handleCopyGuideWithContent = async () => {
-    const ok = await copyText(`${buildArticleAiGuide()}\n\n---\n\n以下是待处理内容：\n\n${markdown}`)
-    onToast(ok ? '已复制 AI 指令和当前 Markdown 内容' : '复制失败，请重试')
   }
 
   const handleCopyHtml = async () => {
@@ -86,9 +79,6 @@ export function ArticlePreview({ rendered, scrollRef, markdown, onToast }: Artic
           <div className="w-px h-4 bg-slate-200 mx-1" />
           <Button onClick={handleCopyGuide} title="复制一段语法说明，发给 AI 让它按支持的排版语法输出长图文">
             ✨ 复制指令
-          </Button>
-          <Button onClick={handleCopyGuideWithContent} title="复制 AI 指令和当前编辑区 Markdown">
-            ✨ 指令+内容
           </Button>
           <Button onClick={handleCopyHtml} title="复制带内联样式的 HTML 源码">
             📄 HTML源码

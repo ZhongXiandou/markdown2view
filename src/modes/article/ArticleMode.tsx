@@ -36,7 +36,6 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
         <ArticlePreview
           rendered={rendered}
           scrollRef={previewScrollRef}
-          markdown={markdown}
           onToast={onToast}
         />
       </section>

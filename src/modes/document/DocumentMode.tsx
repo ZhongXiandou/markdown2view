@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ThemeColors } from '@engine'
-import { parseMarkdown, makeColors } from '@engine'
+import { parseMarkdown } from '@engine'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { renderMarkdown } from '@/lib/render/markdown'
@@ -85,19 +85,11 @@ export function DocumentMode({
     if (changed) {
       setActualHeights(newHeights)
     }
-  }, [model.blocks, settings.pageWidth, settings.fontScale, settings.fontFamily])
+  }, [model.blocks, settings.pageWidth, settings.fontScale, settings.fontFamily, colors])
 
   const pages = useMemo(() => {
     return paginateDocumentBlocks(model.blocks, settings, actualHeights)
   }, [model.blocks, settings, actualHeights])
-
-  const docColors = useMemo(() => {
-    if (settings.theme === 'business') {
-      return makeColors('#2563eb', '#1e40af') // 商务蓝
-    } else {
-      return makeColors('#111827', '#000000') // 黑色正式
-    }
-  }, [settings.theme])
 
   const [exporting, setExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState('')
@@ -127,8 +119,8 @@ export function DocumentMode({
   }
 
   const copyGuide = async () => {
-    const ok = await copyText(`${buildDocumentAiGuide()}\n\n---\n\n以下是待处理内容：\n\n${markdown}`)
-    onToast(ok ? '已复制指令和当前 Markdown 内容' : '复制失败，请重试')
+    const ok = await copyText(buildDocumentAiGuide())
+    onToast(ok ? '已复制 A4 文档 AI 指令' : '复制失败，请重试')
   }
 
   return (
@@ -163,13 +155,6 @@ export function DocumentMode({
                   className="w-24"
                 />
               </label>
-              <Select
-                value={settings.theme}
-                onChange={(e) => updateSettings({ theme: e.target.value as DocumentSettings['theme'] })}
-              >
-                <option value="business">蓝色商务</option>
-                <option value="formal">黑白正式</option>
-              </Select>
               <Select
                 value={settings.fontFamily}
                 onChange={(e) => updateSettings({ fontFamily: e.target.value as DocumentSettings['fontFamily'] })}
@@ -227,7 +212,7 @@ export function DocumentMode({
           {/* 隐藏测量容器 */}
           <div
             ref={measuringRef}
-            className={`document-page document-content document-theme-${settings.theme} document-font-${settings.fontFamily} document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
+            className={`document-page document-content document-font-${settings.fontFamily} document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
             style={{
               position: 'absolute',
               visibility: 'hidden',
@@ -241,7 +226,7 @@ export function DocumentMode({
                 data-block-id={block.id}
                 className={`document-block ${block.id === firstHeadingId ? 'document-title-block' : ''}`}
                 data-kind={block.kind}
-                dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, docColors) }}
+                dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, colors) }}
               />
             ))}
           </div>
@@ -249,7 +234,7 @@ export function DocumentMode({
           {pages.map((page) => (
             <article
               key={page.pageNumber}
-              className={`document-page document-theme-${settings.theme} document-font-${settings.fontFamily} document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
+              className={`document-page document-font-${settings.fontFamily} document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
               style={{
                 width: settings.pageWidth,
                 height: settings.pageHeight,
@@ -288,7 +273,7 @@ export function DocumentMode({
                     key={block.id}
                     className={`document-block ${block.id === firstHeadingId ? 'document-title-block' : ''}`}
                     data-kind={block.kind}
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, docColors) }}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, colors) }}
                   />
                 ))}
               </section>
