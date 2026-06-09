@@ -6,6 +6,7 @@ import { downloadAsZip, type ZipEntry } from '@/lib/export/zipDownload'
 import { copyText } from '@/lib/clipboard'
 import { buildDesignPrompt, type DesignStyle } from '@/data/designPrompts'
 import { PromptLibrary } from './PromptLibrary'
+import { useDebounce } from '@/lib/useDebounce'
 import { detectPages, type PageInfo } from '@/lib/multipage'
 import { Button } from '@/components/ui/Button'
 
@@ -100,6 +101,18 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const [exporting, setExporting] = useState(false)
   const [allowScripts, setAllowScripts] = useState(false)
 
+  const [localHtml, setLocalHtml] = useState(html)
+  useEffect(() => {
+    setLocalHtml(html)
+  }, [html])
+  const debouncedHtml = useDebounce(localHtml, 500)
+
+  useEffect(() => {
+    if (debouncedHtml !== html) {
+      setHtml(debouncedHtml)
+    }
+  }, [debouncedHtml, html, setHtml])
+
   const [pages, setPages] = useState<PageInfo[]>([])
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -153,7 +166,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     iframe.addEventListener('load', check)
     check()
     return () => iframe.removeEventListener('load', check)
-  }, [html, refreshKey])
+  }, [debouncedHtml, refreshKey])
 
   // 多页模式：只显示当前页，隐藏其他页
   useEffect(() => {
@@ -332,7 +345,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       ro.disconnect()
       contentObserver?.disconnect()
     }
-  }, [html, refreshKey, pages, currentPage])
+  }, [debouncedHtml, refreshKey, pages, currentPage])
 
   const handleExport = async () => {
     if (!iframeRef.current) {
@@ -530,8 +543,8 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       <div className="grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
         <section className="min-h-0 overflow-hidden bg-white">
           <CodeEditor
-            value={html}
-            onChange={setHtml}
+            value={localHtml}
+            onChange={setLocalHtml}
             language="html"
             onScrollerReady={(el) => {
               editorScrollerRef.current = el
@@ -542,7 +555,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
         <section ref={previewPaneRef} className="min-h-0 overflow-hidden bg-white">
           <HtmlSandbox 
             ref={iframeRef} 
-            html={html} 
+            html={debouncedHtml} 
             refreshKey={refreshKey}
             allowScripts={allowScripts}
             onLoad={() => {

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { copyText } from '@/lib/clipboard'
@@ -6,6 +6,7 @@ import { buildCardAiGuide } from '@/lib/aiGuide'
 import { downloadBlob, elementToBlob } from '@/lib/exportImage'
 import { downloadAsZip, type ZipEntry } from '@/lib/export/zipDownload'
 import { parseMarkdown, type ThemeColors } from '@engine'
+import { useDebounce } from '@/lib/useDebounce'
 import {
   ASPECTS,
   XHS,
@@ -68,9 +69,23 @@ export function CardMode({
   // 给四周留出均匀的呼吸感：卡片总高 - 页脚高度(44) - 顶部留白(32) - 底部留白(24)
   const pixelBudget = size.h - 44 - 32 - 24
 
+  const [localMarkdown, setLocalMarkdown] = useState(markdown)
+  
+  useEffect(() => {
+    setLocalMarkdown(markdown)
+  }, [markdown])
+
+  const debouncedMarkdown = useDebounce(localMarkdown, 500)
+
+  useEffect(() => {
+    if (debouncedMarkdown !== markdown) {
+      setMarkdown(debouncedMarkdown)
+    }
+  }, [debouncedMarkdown, markdown, setMarkdown])
+
   const model = useMemo(
-    () => createCardModel(markdown, aspect, platform, Object.keys(actualHeights).length ? actualHeights : undefined, pixelBudget),
-    [markdown, aspect, platform, actualHeights, pixelBudget],
+    () => createCardModel(debouncedMarkdown, aspect, platform, Object.keys(actualHeights).length ? actualHeights : undefined, pixelBudget),
+    [debouncedMarkdown, aspect, platform, actualHeights, pixelBudget],
   )
 
   useLayoutEffect(() => {
@@ -218,8 +233,8 @@ export function CardMode({
     <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(620px,1.1fr)] gap-px bg-gray-200">
       <section className="min-h-0 overflow-hidden bg-white">
         <CodeEditor
-          value={markdown}
-          onChange={setMarkdown}
+          value={localMarkdown}
+          onChange={setLocalMarkdown}
           onScrollerReady={(el) => {
             editorScrollerRef.current = el
             setEditorReady((n) => n + 1)
@@ -272,6 +287,9 @@ export function CardMode({
         </div>
 
         <div className="flex flex-col gap-4 px-5 py-5">
+          <aside className="mx-auto w-full max-w-[480px] rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-[13px] leading-6 text-blue-800">
+            当前分页图文适合快速生成清晰、统一的多页卡片；如果需要更强的品牌风格、复杂版式或活动海报，可以切换到自由画布使用“小红书多页图文”风格深度生成。
+          </aside>
           <aside className="group relative mx-auto w-full max-w-[480px] rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-xs font-semibold text-slate-400">发布文案</div>
@@ -286,9 +304,6 @@ export function CardMode({
             <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
               {model.caption || '从 frontmatter 或 <title> 中补充 title / summary / chips 后，这里会生成可复制文案。'}
             </pre>
-          </aside>
-          <aside className="mx-auto w-full max-w-[480px] rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-[13px] leading-6 text-blue-800">
-            当前分页图文适合快速生成清晰、统一的多页卡片；如果需要更强的品牌风格、复杂版式或活动海报，可以切换到自由画布使用“小红书多页图文”风格深度生成。
           </aside>
 
           <div className="flex flex-col items-center gap-6 pb-12">

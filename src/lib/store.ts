@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { THEMES, makeColors, type ThemeColors } from '@engine/composables/useTheme'
 import {
   DEFAULT_DOCUMENT_SETTINGS,
@@ -6,7 +7,6 @@ import {
 } from '@/modes/document/documentModel'
 import type { FontFamilyOption } from '@/lib/fonts'
 
-// 渲染场景：通用 Markdown 渲染内核 + 不同交付场景适配。
 export type RenderMode = 'article' | 'document' | 'card' | 'html'
 export type InputType = 'markdown' | 'html'
 export type PlatformPreset = 'longform' | 'xiaohongshu'
@@ -24,64 +24,6 @@ const CARD_FONT_KEY = 'm2v-card-font'
 
 const FALLBACK_MARKDOWN = '# markdown2view\n\n正在加载示例内容，或直接在左侧输入 Markdown。'
 const FALLBACK_HTML = '<main style="padding:32px;font-family:sans-serif">正在加载示例 HTML，或直接粘贴 AI 生成的 HTML。</main>'
-
-function loadMarkdown(key: string, options: { legacyFallback?: boolean } = {}): string {
-  if (typeof localStorage === 'undefined') return FALLBACK_MARKDOWN
-  return (
-    localStorage.getItem(key)
-    ?? (options.legacyFallback ? localStorage.getItem(LEGACY_MD_STORAGE_KEY) : null)
-    ?? FALLBACK_MARKDOWN
-  )
-}
-
-function loadHtml(): string {
-  if (typeof localStorage === 'undefined') return FALLBACK_HTML
-  return localStorage.getItem(HTML_STORAGE_KEY) ?? FALLBACK_HTML
-}
-
-function loadMode(): RenderMode {
-  if (typeof localStorage === 'undefined') return 'document'
-  const saved = localStorage.getItem(MODE_STORAGE_KEY)
-  if (saved && ['article', 'document', 'card', 'html'].includes(saved)) {
-    return saved as RenderMode
-  }
-  return 'document'
-}
-
-function loadTheme(): { accent: string; dark: string } {
-  const fallback = THEMES[3] // 默认绿色
-  if (typeof localStorage === 'undefined') return fallback
-  const saved = localStorage.getItem(THEME_STORAGE_KEY)
-  if (!saved) return fallback
-  try {
-    const t = JSON.parse(saved)
-    if (t.accent && t.dark) return { accent: t.accent, dark: t.dark }
-  } catch {
-    /* ignore */
-  }
-  return fallback
-}
-
-function loadDocumentSettings(): DocumentSettings {
-  if (typeof localStorage === 'undefined') return DEFAULT_DOCUMENT_SETTINGS
-  const saved = localStorage.getItem(DOCUMENT_SETTINGS_STORAGE_KEY)
-  if (!saved) return DEFAULT_DOCUMENT_SETTINGS
-  try {
-    const parsed = JSON.parse(saved)
-    return { ...DEFAULT_DOCUMENT_SETTINGS, ...parsed }
-  } catch {
-    return DEFAULT_DOCUMENT_SETTINGS
-  }
-}
-
-function loadFont(key: string, defaultVal: FontFamilyOption): FontFamilyOption {
-  if (typeof localStorage === 'undefined') return defaultVal
-  const saved = localStorage.getItem(key)
-  if (saved && ['songti', 'fangsong', 'heiti', 'lxgwwenkai'].includes(saved)) {
-    return saved as FontFamilyOption
-  }
-  return defaultVal
-}
 
 interface AppState {
   articleMarkdown: string
@@ -117,77 +59,131 @@ function applyCssVars(accent: string, dark: string) {
   root.style.setProperty('--accent-dark', dark)
 }
 
-const initTheme = loadTheme()
-const initDocumentSettings = loadDocumentSettings()
-applyCssVars(initTheme.accent, initTheme.dark)
+function getInitialStateFromLegacyKeys(): Partial<AppState> {
+  if (typeof localStorage === 'undefined') return {}
+  if (localStorage.getItem('m2v-store')) return {}
 
-export const useStore = create<AppState>((set) => ({
-  articleMarkdown: loadMarkdown(ARTICLE_MD_STORAGE_KEY),
-  documentMarkdown: loadMarkdown(DOCUMENT_MD_STORAGE_KEY, { legacyFallback: true }),
-  cardMarkdown: loadMarkdown(CARD_MD_STORAGE_KEY),
-  html: loadHtml(),
-  mode: loadMode(),
-  inputType: loadMode() === 'html' ? 'html' : 'markdown',
-  platform: loadMode() === 'card' ? 'xiaohongshu' : 'longform',
-  documentSettings: initDocumentSettings,
-  articleFont: loadFont(ARTICLE_FONT_KEY, 'lxgwwenkai'),
-  cardFont: loadFont(CARD_FONT_KEY, 'heiti'),
-  accent: initTheme.accent,
-  accentDark: initTheme.dark,
-  colors: makeColors(initTheme.accent, initTheme.dark),
-  setArticleMarkdown: (md) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(ARTICLE_MD_STORAGE_KEY, md)
-    set({ articleMarkdown: md })
-  },
-  setDocumentMarkdown: (md) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(DOCUMENT_MD_STORAGE_KEY, md)
-    set({ documentMarkdown: md })
-  },
-  setCardMarkdown: (md) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(CARD_MD_STORAGE_KEY, md)
-    set({ cardMarkdown: md })
-  },
-  setHtml: (html) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(HTML_STORAGE_KEY, html)
-    set({ html })
-  },
-  setMode: (mode) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(MODE_STORAGE_KEY, mode)
-    set({
-      mode,
-      inputType: mode === 'html' ? 'html' : 'markdown',
-      platform: mode === 'card' ? 'xiaohongshu' : 'longform',
-    })
-  },
-  setInputType: (inputType) => set({ inputType }),
-  setPlatform: (platform) => set({ platform }),
-  updateDocumentSettings: (patch) =>
-    set((state) => {
-      const next = { ...state.documentSettings, ...patch }
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(DOCUMENT_SETTINGS_STORAGE_KEY, JSON.stringify(next))
+  const state: Partial<AppState> = {}
+  
+  const articleMd = localStorage.getItem(ARTICLE_MD_STORAGE_KEY)
+  if (articleMd) state.articleMarkdown = articleMd
+
+  const docMd = localStorage.getItem(DOCUMENT_MD_STORAGE_KEY) || localStorage.getItem(LEGACY_MD_STORAGE_KEY)
+  if (docMd) state.documentMarkdown = docMd
+
+  const cardMd = localStorage.getItem(CARD_MD_STORAGE_KEY)
+  if (cardMd) state.cardMarkdown = cardMd
+
+  const html = localStorage.getItem(HTML_STORAGE_KEY)
+  if (html) state.html = html
+
+  const mode = localStorage.getItem(MODE_STORAGE_KEY)
+  if (mode && ['article', 'document', 'card', 'html'].includes(mode)) {
+    state.mode = mode as RenderMode
+    state.inputType = mode === 'html' ? 'html' : 'markdown'
+    state.platform = mode === 'card' ? 'xiaohongshu' : 'longform'
+  }
+
+  const articleFont = localStorage.getItem(ARTICLE_FONT_KEY)
+  if (articleFont && ['songti', 'fangsong', 'heiti', 'lxgwwenkai'].includes(articleFont)) {
+    state.articleFont = articleFont as FontFamilyOption
+  }
+
+  const cardFont = localStorage.getItem(CARD_FONT_KEY)
+  if (cardFont && ['songti', 'fangsong', 'heiti', 'lxgwwenkai'].includes(cardFont)) {
+    state.cardFont = cardFont as FontFamilyOption
+  }
+
+  const docSettings = localStorage.getItem(DOCUMENT_SETTINGS_STORAGE_KEY)
+  if (docSettings) {
+    try {
+      state.documentSettings = { ...DEFAULT_DOCUMENT_SETTINGS, ...JSON.parse(docSettings) }
+    } catch { /* ignore */ }
+  }
+
+  const themeStr = localStorage.getItem(THEME_STORAGE_KEY)
+  if (themeStr) {
+    try {
+      const t = JSON.parse(themeStr)
+      if (t.accent && t.dark) {
+        state.accent = t.accent
+        state.accentDark = t.dark
+        state.colors = makeColors(t.accent, t.dark)
       }
-      return { documentSettings: next }
+    } catch { /* ignore */ }
+  }
+
+  return state
+}
+
+const legacyState = getInitialStateFromLegacyKeys()
+const initAccent = legacyState.accent ?? THEMES[3].accent
+const initDark = legacyState.accentDark ?? THEMES[3].dark
+applyCssVars(initAccent, initDark)
+
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      articleMarkdown: legacyState.articleMarkdown ?? FALLBACK_MARKDOWN,
+      documentMarkdown: legacyState.documentMarkdown ?? FALLBACK_MARKDOWN,
+      cardMarkdown: legacyState.cardMarkdown ?? FALLBACK_MARKDOWN,
+      html: legacyState.html ?? FALLBACK_HTML,
+      mode: legacyState.mode ?? 'document',
+      inputType: legacyState.inputType ?? 'markdown',
+      platform: legacyState.platform ?? 'longform',
+      documentSettings: legacyState.documentSettings ?? DEFAULT_DOCUMENT_SETTINGS,
+      articleFont: legacyState.articleFont ?? 'lxgwwenkai',
+      cardFont: legacyState.cardFont ?? 'heiti',
+      accent: initAccent,
+      accentDark: initDark,
+      colors: legacyState.colors ?? makeColors(initAccent, initDark),
+
+      setArticleMarkdown: (md) => set({ articleMarkdown: md }),
+      setDocumentMarkdown: (md) => set({ documentMarkdown: md }),
+      setCardMarkdown: (md) => set({ cardMarkdown: md }),
+      setHtml: (html) => set({ html }),
+      setMode: (mode) =>
+        set({
+          mode,
+          inputType: mode === 'html' ? 'html' : 'markdown',
+          platform: mode === 'card' ? 'xiaohongshu' : 'longform',
+        }),
+      setInputType: (inputType) => set({ inputType }),
+      setPlatform: (platform) => set({ platform }),
+      updateDocumentSettings: (patch) =>
+        set((state) => ({ documentSettings: { ...state.documentSettings, ...patch } })),
+      setArticleFont: (f) => set({ articleFont: f }),
+      setCardFont: (f) => set({ cardFont: f }),
+      setTheme: (accent, dark) => {
+        applyCssVars(accent, dark)
+        set({ accent, accentDark: dark, colors: makeColors(accent, dark) })
+      },
     }),
-  setArticleFont: (f) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(ARTICLE_FONT_KEY, f)
-    set({ articleFont: f })
-  },
-  setCardFont: (f) => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(CARD_FONT_KEY, f)
-    set({ cardFont: f })
-  },
-  setTheme: (accent, dark) => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ accent, dark }))
+    {
+      name: 'm2v-store',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          applyCssVars(state.accent, state.accentDark)
+        }
+      },
     }
-    applyCssVars(accent, dark)
-    set({ accent, accentDark: dark, colors: makeColors(accent, dark) })
-  },
-}))
+  )
+)
 
 export function shouldHydrateDemoContent(mode: RenderMode): boolean {
   if (typeof localStorage === 'undefined') return false
+  const storeStr = localStorage.getItem('m2v-store')
+  if (storeStr) {
+    try {
+      const state = JSON.parse(storeStr).state
+      if (mode === 'html') return !state.html || state.html === FALLBACK_HTML
+      if (mode === 'article') return !state.articleMarkdown || state.articleMarkdown === FALLBACK_MARKDOWN
+      if (mode === 'card') return !state.cardMarkdown || state.cardMarkdown === FALLBACK_MARKDOWN
+      return !state.documentMarkdown || state.documentMarkdown === FALLBACK_MARKDOWN
+    } catch {
+      return true
+    }
+  }
   if (mode === 'html') return !localStorage.getItem(HTML_STORAGE_KEY)
   if (mode === 'article') return !localStorage.getItem(ARTICLE_MD_STORAGE_KEY)
   if (mode === 'card') return !localStorage.getItem(CARD_MD_STORAGE_KEY)

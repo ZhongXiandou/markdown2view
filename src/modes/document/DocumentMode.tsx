@@ -1,9 +1,10 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react'
 import type { ThemeColors } from '@engine'
 import { parseMarkdown } from '@engine'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { renderMarkdown } from '@/lib/render/markdown'
+import { useDebounce } from '@/lib/useDebounce'
 import {
   DEFAULT_DOCUMENT_SETTINGS,
   createDocumentModel,
@@ -44,10 +45,24 @@ export function DocumentMode({
 
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady])
 
-  const rendered = useMemo(() => renderMarkdown(markdown, colors), [markdown, colors])
+  const [localMarkdown, setLocalMarkdown] = useState(markdown)
+  
+  useEffect(() => {
+    setLocalMarkdown(markdown)
+  }, [markdown])
+
+  const debouncedMarkdown = useDebounce(localMarkdown, 500)
+
+  useEffect(() => {
+    if (debouncedMarkdown !== markdown) {
+      setMarkdown(debouncedMarkdown)
+    }
+  }, [debouncedMarkdown, markdown, setMarkdown])
+
+  const rendered = useMemo(() => renderMarkdown(debouncedMarkdown, colors), [debouncedMarkdown, colors])
   const model = useMemo(
-    () => createDocumentModel(markdown, rendered.meta, settings),
-    [markdown, rendered.meta.title, rendered.meta.contentMarkdown, settings],
+    () => createDocumentModel(debouncedMarkdown, rendered.meta, settings),
+    [debouncedMarkdown, rendered.meta.title, rendered.meta.contentMarkdown, settings],
   )
   const firstHeadingId = model.blocks.find((block) => block.kind === 'heading')?.id
 
@@ -57,34 +72,61 @@ export function DocumentMode({
   // 测量隐藏 DOM 中的所有块的高度
   useLayoutEffect(() => {
     if (!measuringRef.current) return
-    const newHeights: Record<string, number> = {}
-    let changed = false
-    const elements = measuringRef.current.children
-    
-    let lastBottom = 0
-    let isFirst = true
 
-    for (let i = 0; i < elements.length; i++) {
-      const el = elements[i] as HTMLElement
-      const id = el.getAttribute('data-block-id')
-      if (id) {
-        if (isFirst) {
-          lastBottom = el.offsetTop
-          isFirst = false
-        }
-        
-        const bottom = el.offsetTop + el.offsetHeight
-        const h = bottom - lastBottom
-        lastBottom = bottom
+    const measure = () => {
+      const newHeights: Record<string, number> = {}
+      const elements = measuringRef.current!.children
+      
+      let lastBottom = 0
+      let isFirst = true
 
-        if (actualHeights[id] !== h) {
-          changed = true
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i] as HTMLElement
+        const id = el.getAttribute('data-block-id')
+        if (id) {
+          if (isFirst) {
+            lastBottom = el.offsetTop
+            isFirst = false
+          }
+          
+          const bottom = el.offsetTop + el.offsetHeight
+          const h = bottom - lastBottom
+          lastBottom = bottom
+
+          newHeights[id] = h
         }
-        newHeights[id] = h
+      }
+
+      setActualHeights(prev => {
+        let hasChange = Object.keys(newHeights).length !== Object.keys(prev).length
+        if (!hasChange) {
+          for (const key in newHeights) {
+            if (prev[key] !== newHeights[key]) {
+              hasChange = true
+              break
+            }
+          }
+        }
+        return hasChange ? newHeights : prev
+      })
+    }
+
+    measure()
+
+    const resizeObserver = new ResizeObserver(() => measure())
+    const handleLoad = (e: Event) => {
+      if ((e.target as HTMLElement).tagName === 'IMG') {
+        measure()
       }
     }
-    if (changed) {
-      setActualHeights(newHeights)
+    measuringRef.current.addEventListener('load', handleLoad, true)
+    
+    const elements = Array.from(measuringRef.current.children)
+    elements.forEach(el => resizeObserver.observe(el))
+
+    return () => {
+      resizeObserver.disconnect()
+      measuringRef.current?.removeEventListener('load', handleLoad, true)
     }
   }, [model.blocks, settings.pageWidth, settings.fontScale, settings.fontFamily, colors])
 
@@ -128,8 +170,8 @@ export function DocumentMode({
     <main className="document-shell grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(620px,1.08fr)] gap-px bg-gray-200">
       <section className="document-editor-pane min-h-0 overflow-hidden bg-white">
         <CodeEditor
-          value={markdown}
-          onChange={setMarkdown}
+          value={localMarkdown}
+          onChange={setLocalMarkdown}
           onScrollerReady={(el) => {
             editorScrollerRef.current = el
             setEditorReady((n) => n + 1)
