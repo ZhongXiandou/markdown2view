@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { copyText } from '@/lib/clipboard'
@@ -6,7 +6,7 @@ import { buildCardAiGuide } from '@/lib/aiGuide'
 import { downloadBlob, elementToBlob } from '@/lib/exportImage'
 import { downloadAsZip, type ZipEntry } from '@/lib/export/zipDownload'
 import { parseMarkdown, type ThemeColors } from '@engine'
-import { useDebounce } from '@/lib/useDebounce'
+import { useEditorDocSync } from '@/lib/useEditorDocSync'
 import {
   ASPECTS,
   XHS,
@@ -69,27 +69,13 @@ export function CardMode({
   // 给四周留出均匀的呼吸感：卡片总高 - 页脚高度(44) - 顶部留白(32) - 底部留白(24)
   const pixelBudget = size.h - 44 - 32 - 24
 
-  const [localMarkdown, setLocalMarkdown] = useState(markdown)
-
-  // 外部 store 变化（恢复示例 / 版本刷新）→ 同步到本地编辑器
-  useEffect(() => {
-    setLocalMarkdown(markdown)
-  }, [markdown])
-
-  const debouncedMarkdown = useDebounce(localMarkdown, 500)
-
-  // 始终持有最新的 store 值供回写比较，避免把外部更新误判为本地编辑
-  const markdownRef = useRef(markdown)
-  useEffect(() => {
-    markdownRef.current = markdown
-  }, [markdown])
-
-  // 本地编辑（防抖后）→ 回写 store。仅依赖防抖值，外部更新不会触发回写，避免回滚
-  useEffect(() => {
-    if (debouncedMarkdown !== markdownRef.current) {
-      setMarkdown(debouncedMarkdown)
-    }
-  }, [debouncedMarkdown, setMarkdown])
+  // store ↔ 编辑器双向同步（防抖回写 + 外部变更信号）
+  const {
+    localValue: localMarkdown,
+    debouncedValue: debouncedMarkdown,
+    setLocalValue: setLocalMarkdown,
+    externalVersion,
+  } = useEditorDocSync(markdown, setMarkdown)
 
   const model = useMemo(
     () => createCardModel(debouncedMarkdown, aspect, platform, Object.keys(actualHeights).length ? actualHeights : undefined, pixelBudget),
@@ -243,6 +229,7 @@ export function CardMode({
         <CodeEditor
           value={localMarkdown}
           onChange={setLocalMarkdown}
+          externalVersion={externalVersion}
           onScrollerReady={(el) => {
             editorScrollerRef.current = el
             setEditorReady((n) => n + 1)

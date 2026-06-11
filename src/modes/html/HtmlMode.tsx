@@ -6,7 +6,7 @@ import { downloadAsZip, type ZipEntry } from '@/lib/export/zipDownload'
 import { copyText } from '@/lib/clipboard'
 import { buildDesignPrompt, type DesignStyle } from '@/data/designPrompts'
 import { PromptLibrary } from './PromptLibrary'
-import { useDebounce } from '@/lib/useDebounce'
+import { useEditorDocSync } from '@/lib/useEditorDocSync'
 import { detectPages, type PageInfo } from '@/lib/multipage'
 import { Button } from '@/components/ui/Button'
 
@@ -101,25 +101,13 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const [exporting, setExporting] = useState(false)
   const [allowScripts, setAllowScripts] = useState(true)
 
-  const [localHtml, setLocalHtml] = useState(html)
-  // 外部 store 变化（恢复示例 / 版本刷新）→ 同步到本地编辑器
-  useEffect(() => {
-    setLocalHtml(html)
-  }, [html])
-  const debouncedHtml = useDebounce(localHtml, 500)
-
-  // 始终持有最新的 store 值供回写比较，避免把外部更新误判为本地编辑
-  const htmlRef = useRef(html)
-  useEffect(() => {
-    htmlRef.current = html
-  }, [html])
-
-  // 本地编辑（防抖后）→ 回写 store。仅依赖防抖值，外部更新不会触发回写，避免回滚
-  useEffect(() => {
-    if (debouncedHtml !== htmlRef.current) {
-      setHtml(debouncedHtml)
-    }
-  }, [debouncedHtml, setHtml])
+  // store ↔ 编辑器双向同步（防抖回写 + 外部变更信号）
+  const {
+    localValue: localHtml,
+    debouncedValue: debouncedHtml,
+    setLocalValue: setLocalHtml,
+    externalVersion,
+  } = useEditorDocSync(html, setHtml)
 
   const [pages, setPages] = useState<PageInfo[]>([])
   const [currentPage, setCurrentPage] = useState(0)
@@ -554,6 +542,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
             value={localHtml}
             onChange={setLocalHtml}
             language="html"
+            externalVersion={externalVersion}
             onScrollerReady={(el) => {
               editorScrollerRef.current = el
               setEditorReady((n) => n + 1)

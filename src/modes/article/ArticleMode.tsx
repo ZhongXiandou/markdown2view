@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { ThemeColors } from '@engine'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { renderMarkdown } from '@/lib/render/markdown'
 import { ArticlePreview } from './ArticlePreview'
-import { useDebounce } from '@/lib/useDebounce'
+import { useEditorDocSync } from '@/lib/useEditorDocSync'
 
 interface ArticleModeProps {
   markdown: string
@@ -14,27 +14,13 @@ interface ArticleModeProps {
 }
 
 export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleModeProps) {
-  const [localMarkdown, setLocalMarkdown] = useState(markdown)
-
-  // 外部 store 变化（恢复示例 / 版本刷新）→ 同步到本地编辑器
-  useEffect(() => {
-    setLocalMarkdown(markdown)
-  }, [markdown])
-
-  const debouncedMarkdown = useDebounce(localMarkdown, 500)
-
-  // 始终持有最新的 store 值供回写比较，避免把外部更新误判为本地编辑
-  const markdownRef = useRef(markdown)
-  useEffect(() => {
-    markdownRef.current = markdown
-  }, [markdown])
-
-  // 本地编辑（防抖后）→ 回写 store。仅依赖防抖值，外部更新不会触发回写，避免回滚
-  useEffect(() => {
-    if (debouncedMarkdown !== markdownRef.current) {
-      setMarkdown(debouncedMarkdown)
-    }
-  }, [debouncedMarkdown, setMarkdown])
+  // store ↔ 编辑器双向同步（防抖回写 + 外部变更信号）
+  const {
+    localValue: localMarkdown,
+    debouncedValue: debouncedMarkdown,
+    setLocalValue: setLocalMarkdown,
+    externalVersion,
+  } = useEditorDocSync(markdown, setMarkdown)
 
   const rendered = useMemo(() => renderMarkdown(debouncedMarkdown, colors), [debouncedMarkdown, colors])
   const editorScrollerRef = useRef<HTMLElement | null>(null)
@@ -49,6 +35,7 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
         <CodeEditor
           value={localMarkdown}
           onChange={setLocalMarkdown}
+          externalVersion={externalVersion}
           onScrollerReady={(el) => {
             editorScrollerRef.current = el
             setEditorReady((n) => n + 1)
