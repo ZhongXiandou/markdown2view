@@ -103,7 +103,7 @@ function classifyBlock(markdown: string): DocumentBlockKind {
   if (/^#{1,6}\s/.test(text) || /^<title\b/.test(text) || /^<p-title\b/.test(text)) return 'heading'
   if (/^!\[/.test(text)) return 'image'
   if (/^```/.test(text)) return 'code'
-  if (/^>\s/.test(text)) return 'quote'
+  if (/^>/.test(text)) return 'quote'
   if (/^([-*+]\s|\d+\.\s)/.test(text)) return 'list'
   if (/^---+$/.test(text)) return 'rule'
   if (/^<page-break\s*\/?>/.test(text)) return 'pagebreak'

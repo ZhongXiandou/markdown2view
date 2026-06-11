@@ -258,7 +258,7 @@ export function parseCallout(
   const title = m ? m[2] : ''
   i++
   let body = ''
-  while (i < lines.length && /^>\s/.test(lines[i])) {
+  while (i < lines.length && /^>/.test(lines[i])) {
     body += lines[i].replace(/^>\s?/, '') + '\n'
     i++
   }

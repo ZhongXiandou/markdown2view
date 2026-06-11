@@ -39,7 +39,7 @@ function firstPlainParagraph(md: string): string {
   for (const raw of md.split('\n')) {
     const line = raw.trim()
     if (!line) continue
-    if (/^(---+|#{1,6}\s|>\s|[-*+]\s|\d+\.\s|```|<[^>]+>|\|)/.test(line)) continue
+    if (/^(---+|#{1,6}\s|>|[-*+]\s|\d+\.\s|```|<[^>]+>|\|)/.test(line)) continue
     const text = stripInline(line)
     if (text) return text
   }

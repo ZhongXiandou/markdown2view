@@ -77,7 +77,7 @@ function classify(block: string) {
   if (/^#{1,6}\s/.test(text) || /^<title\b/.test(text) || /^<p-title\b/.test(text)) return 'heading'
   if (/^```/.test(text)) return 'code'
   if (/^!\[/.test(text)) return 'image'
-  if (/^>\s/.test(text)) return 'quote'
+  if (/^>/.test(text)) return 'quote'
   if (/^([-*+]\s|\d+\.\s)/.test(text)) return 'list'
   if (text.includes('|') && /\n\|?[\s:-]+\|/.test(text)) return 'table'
   if (/^<\w[\s\S]*<\/\w/.test(text)) return 'component'

@@ -358,9 +358,9 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
       continue
     }
     // > quote
-    if (/^>\s/.test(line)) {
+    if (/^>/.test(line)) {
       const ql: string[] = []
-      while (i < lines.length && /^>\s/.test(lines[i])) {
+      while (i < lines.length && /^>/.test(lines[i])) {
         ql.push(lines[i].replace(/^>\s?/, ''))
         i++
       }
