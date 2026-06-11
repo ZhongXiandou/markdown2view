@@ -18,8 +18,9 @@ import { createCardModel, type CardPlatform } from './cardModel'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { FontSelect } from '@/components/ui/FontSelect'
 import { useStore } from '@/lib/store'
-import { getFontFamilyCss, type FontFamilyOption } from '@/lib/fonts'
+import { getFontFamilyCss } from '@/lib/fonts'
 
 interface CardModeProps {
   markdown: string
@@ -84,34 +85,55 @@ export function CardMode({
 
   useLayoutEffect(() => {
     if (!measuringRef.current) return
-    const newHeights: Record<string, number> = {}
-    let changed = false
-    const elements = measuringRef.current.children
-    
-    let lastBottom = 0
-    let isFirst = true
 
-    for (let i = 0; i < elements.length; i++) {
-      const el = elements[i] as HTMLElement
-      const id = el.getAttribute('data-block-id')
-      if (id) {
-        if (isFirst) {
-          lastBottom = el.offsetTop
-          isFirst = false
-        }
-        
-        const bottom = el.offsetTop + el.offsetHeight
-        const h = bottom - lastBottom
-        lastBottom = bottom
+    const measure = () => {
+      const newHeights: Record<string, number> = {}
+      let changed = false
+      const elements = measuringRef.current!.children
 
-        if (actualHeights[id] !== h) {
-          changed = true
+      let lastBottom = 0
+      let isFirst = true
+
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i] as HTMLElement
+        const id = el.getAttribute('data-block-id')
+        if (id) {
+          if (isFirst) {
+            lastBottom = el.offsetTop
+            isFirst = false
+          }
+
+          const bottom = el.offsetTop + el.offsetHeight
+          const h = bottom - lastBottom
+          lastBottom = bottom
+
+          if (actualHeights[id] !== h) {
+            changed = true
+          }
+          newHeights[id] = h
         }
-        newHeights[id] = h
+      }
+      if (changed) {
+        setActualHeights(newHeights)
       }
     }
-    if (changed) {
-      setActualHeights(newHeights)
+
+    measure()
+
+    const resizeObserver = new ResizeObserver(() => measure())
+    const handleLoad = (e: Event) => {
+      if ((e.target as HTMLElement).tagName === 'IMG') {
+        measure()
+      }
+    }
+    measuringRef.current.addEventListener('load', handleLoad, true)
+
+    const elements = Array.from(measuringRef.current.children)
+    elements.forEach((el) => resizeObserver.observe(el))
+
+    return () => {
+      resizeObserver.disconnect()
+      measuringRef.current?.removeEventListener('load', handleLoad, true)
     }
   }, [model.rawBlocks, aspect, colors])
 
@@ -256,15 +278,7 @@ export function CardMode({
               <option value="3:4">3:4比例</option>
               <option value="9:16">9:16比例</option>
             </Select>
-            <Select
-              value={cardFont}
-              onChange={(e) => setCardFont(e.target.value as FontFamilyOption)}
-            >
-              <option value="songti">宋体</option>
-              <option value="fangsong">仿宋</option>
-              <option value="heiti">黑体</option>
-              <option value="lxgwwenkai">霞鹜文楷</option>
-            </Select>
+            <FontSelect value={cardFont} onChange={setCardFont} />
             <div className="w-px h-4 bg-slate-200 mx-1" />
             <Button onClick={copyCaption} title="复制生成的小红书文案" disabled={!model.caption}>
               📋 复制文案

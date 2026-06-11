@@ -1,8 +1,15 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror'
+import CodeMirror, { EditorView, keymap, type Extension } from '@uiw/react-codemirror'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import type { LanguageDescription } from '@codemirror/language'
 import { html } from '@codemirror/lang-html'
+import { EditorToolbar } from './EditorToolbar'
+import { useStore } from '@/lib/store'
+import {
+  uploadImageFile,
+  preloadImagesFromMarkdown,
+} from '@/lib/editor/imageStorage'
+import { editorShortcuts } from '@/lib/editor/shortcuts'
 
 interface CodeEditorProps {
   value: string
@@ -10,6 +17,7 @@ interface CodeEditorProps {
   /** 外部重置信号：递增时将最新 value 强制写入编辑器文档（恢复示例 / 版本刷新等场景） */
   externalVersion?: number
   onScrollerReady?: (el: HTMLElement) => void
+  onViewReady?: (view: EditorView) => void
   language?: 'markdown' | 'html'
 }
 
@@ -42,11 +50,15 @@ export function CodeEditor({
   onChange,
   externalVersion = 0,
   onScrollerReady,
+  onViewReady,
   language = 'markdown',
 }: CodeEditorProps) {
   const [codeLangs, setCodeLangs] = useState<LanguageDescription[]>(() =>
     preloadedCodeLangs ?? []
   )
+
+  const [editorView, setEditorView] = useState<EditorView | null>(null)
+  const imageHostConfig = useStore((s) => s.imageHostConfig)
 
   // 编辑器为「挂载时受控、之后非受控」：仅用初始值创建文档，后续输入由 CodeMirror 自身维护。
   // 避免 react-codemirror 受控 value 全文替换与 IME 组合输入产生竞态导致丢字。
@@ -55,6 +67,13 @@ export function CodeEditor({
   // 始终指向最新 value，供外部重置时读取（不触发受控同步）
   const valueRef = useRef(value)
   valueRef.current = value
+
+  // 预加载当前文档中的本地图片
+  useEffect(() => {
+    if (language === 'markdown') {
+      preloadImagesFromMarkdown(valueRef.current)
+    }
+  }, [language])
 
   // 将最新 value 覆盖写入编辑器文档（仅外部变更时调用）
   const applyExternalValue = (view: EditorView) => {
@@ -87,36 +106,107 @@ export function CodeEditor({
     }
   }, [language])
 
+  // 处理图片粘贴或拖拽上传
+  const handlePasteOrDrop = async (
+    event: ClipboardEvent | DragEvent,
+    view: EditorView
+  ) => {
+    let files: FileList | null = null
+    let dropPos: number | null = null
+
+    if (event.type === 'paste') {
+      const clipboardEvent = event as ClipboardEvent
+      files = clipboardEvent.clipboardData?.files || null
+    } else if (event.type === 'drop') {
+      const dragEvent = event as DragEvent
+      dragEvent.preventDefault()
+      files = dragEvent.dataTransfer?.files || null
+      const coords = { x: dragEvent.clientX, y: dragEvent.clientY }
+      const pos = view.posAtCoords(coords)
+      if (pos !== null) {
+        dropPos = pos
+      }
+    }
+
+    if (!files || files.length === 0) return
+
+    const file = files[0]
+    if (!file.type.startsWith('image/')) return
+
+    event.preventDefault()
+
+    try {
+      const url = await uploadImageFile(file, imageHostConfig)
+      const insertText = `![${file.name.split('.')[0]}](${url})`
+      const insertPos = dropPos !== null ? dropPos : view.state.selection.main.from
+
+      view.dispatch({
+        changes: { from: insertPos, to: insertPos, insert: insertText },
+        selection: { anchor: insertPos + insertText.length },
+      })
+      view.focus()
+    } catch (err) {
+      console.error('Paste/Drop image error:', err)
+      alert(`图片导入失败: ${err instanceof Error ? err.message : '未知错误'}`)
+    }
+  }
+
+  // 快捷键 keymap 绑定
+  const customKeymap = useMemo(() => {
+    return keymap.of(editorShortcuts)
+  }, [])
+
+  // 绑定事件和快捷键
   const extensions = useMemo<Extension[]>(() => {
     const langExtension =
       language === 'html'
         ? html()
         : markdown({ base: markdownLanguage, codeLanguages: codeLangs })
-    return [langExtension, EditorView.lineWrapping]
-  }, [language, codeLangs])
+
+    const eventHandlers = EditorView.domEventHandlers({
+      paste: (event, view) => {
+        handlePasteOrDrop(event, view)
+      },
+      drop: (event, view) => {
+        handlePasteOrDrop(event, view)
+      },
+    })
+
+    const exts = [langExtension, EditorView.lineWrapping, eventHandlers]
+    if (language === 'markdown') {
+      exts.push(customKeymap)
+    }
+    return exts
+  }, [language, codeLangs, customKeymap, imageHostConfig])
 
   return (
-    <CodeMirror
-      value={initialValue}
-      onChange={onChange}
-      theme={lightTheme}
-      height="100%"
-      style={{ height: '100%', fontSize: 14 }}
-      onCreateEditor={(view) => {
-        viewRef.current = view
-        if (pendingExternalRef.current) {
-          pendingExternalRef.current = false
-          // 等 react-codemirror 完成挂载期受控同步后再覆盖，避免被其回写还原
-          requestAnimationFrame(() => applyExternalValue(view))
-        }
-        onScrollerReady?.(view.scrollDOM)
-      }}
-      extensions={extensions}
-      basicSetup={{
-        lineNumbers: true,
-        foldGutter: true,
-        highlightActiveLine: true,
-      }}
-    />
+    <div className="flex h-full flex-col">
+      {language === 'markdown' && <EditorToolbar view={editorView} />}
+      <div className="flex-1 min-h-0">
+        <CodeMirror
+          value={initialValue}
+          onChange={onChange}
+          theme={lightTheme}
+          height="100%"
+          style={{ height: '100%', fontSize: 14 }}
+          onCreateEditor={(view) => {
+            viewRef.current = view
+            setEditorView(view)
+            if (pendingExternalRef.current) {
+              pendingExternalRef.current = false
+              requestAnimationFrame(() => applyExternalValue(view))
+            }
+            onScrollerReady?.(view.scrollDOM)
+            onViewReady?.(view)
+          }}
+          extensions={extensions}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            highlightActiveLine: true,
+          }}
+        />
+      </div>
+    </div>
   )
 }

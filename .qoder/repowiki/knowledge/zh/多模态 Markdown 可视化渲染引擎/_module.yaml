@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: markdown2view
+title: 多模态 Markdown 可视化渲染引擎
+scope:
+    - src/
+source_files: []
+depends_on: []
+related_to: []

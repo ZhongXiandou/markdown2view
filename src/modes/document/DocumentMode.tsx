@@ -16,6 +16,7 @@ import { copyText } from '@/lib/clipboard'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { FontSelect } from '@/components/ui/FontSelect'
 import { DOCUMENT_TITLE_STYLE_VARS } from './documentStyles'
 
 interface DocumentModeProps {
@@ -193,15 +194,10 @@ export function DocumentMode({
                   className="w-24"
                 />
               </label>
-              <Select
-                value={settings.fontFamily}
-                onChange={(e) => updateSettings({ fontFamily: e.target.value as DocumentSettings['fontFamily'] })}
-              >
-                <option value="songti">宋体</option>
-                <option value="fangsong">仿宋</option>
-                <option value="heiti">黑体</option>
-                <option value="lxgwwenkai">霞鹜文楷</option>
-              </Select>
+              <FontSelect
+                value={settings.fontFamily as 'songti' | 'fangsong' | 'heiti' | 'lxgwwenkai'}
+                onChange={(v) => updateSettings({ fontFamily: v })}
+              />
               <div className="flex items-center gap-0.5 border border-slate-200 rounded-md p-0.5 bg-slate-50 mr-1">
                 {(['small', 'normal', 'large'] as const).map((s) => (
                   <button

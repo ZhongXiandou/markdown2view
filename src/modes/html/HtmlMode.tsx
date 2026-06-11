@@ -147,23 +147,6 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     }
   }, [editorReady, refreshKey])
 
-  useEffect(() => {
-    const iframe = iframeRef.current
-    if (!iframe) return
-    const check = () => {
-      if (iframe.contentDocument) {
-        setTimeout(() => {
-          const detected = detectPages(iframe.contentDocument!)
-          setPages(detected)
-          setCurrentPage(0)
-        }, 500)
-      }
-    }
-    iframe.addEventListener('load', check)
-    check()
-    return () => iframe.removeEventListener('load', check)
-  }, [debouncedHtml, refreshKey])
-
   // 多页模式：只显示当前页，隐藏其他页
   useEffect(() => {
     if (pages.length === 0) return

@@ -241,23 +241,23 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
         continue
       }
     }
-    // <cta>
+    // <cta ...> 单行属性语法（无 body）vs <cta ...>...</cta> 多行 body 语法
     if (/^<cta\b/.test(line)) {
-      const r = parseCtaInline(lines, i, t)
-      html += r.html
-      i = r.next
+      // 当前行已有闭合标签 → 单行属性语法
+      if (/<\/cta>/.test(line)) {
+        const r = parseCtaInline(lines, i, t)
+        html += r.html
+        i = r.next
+      } else {
+        const r = parseCtaTag(lines, i, t)
+        html += r.html
+        i = r.next
+      }
       continue
     }
     // <compare>
     if (/^<compare\b/.test(line)) {
       const r = parseCompare(lines, i, t)
-      html += r.html
-      i = r.next
-      continue
-    }
-    // <cta>
-    if (/^<cta\b/.test(line)) {
-      const r = parseCtaTag(lines, i, t)
       html += r.html
       i = r.next
       continue

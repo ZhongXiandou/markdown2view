@@ -3,6 +3,7 @@ import { useStore, type DemoContents } from '@/lib/store'
 import { Toast, type ToastState } from '@/components/ui/Toast'
 import { ModeTabs } from '@/components/layout/ModeTabs'
 import { THEMES } from '@engine/composables/useTheme'
+import { SettingsModal } from '@/components/editor/SettingsModal'
 
 import { DEMO_ARTICLE } from '@/data/demoArticle'
 import { DEMO_DOCUMENT } from '@/data/demoDocument'
@@ -52,6 +53,9 @@ export default function App() {
   const syncDemoContent = useStore((s) => s.syncDemoContent)
   const restoreDemo = useStore((s) => s.restoreDemo)
 
+  // 图床设置弹窗状态
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   // 统一 Toast 反馈
   const [toast, setToast] = useState<ToastState | null>(null)
   const showToast = (message: string) => setToast({ message, key: Date.now() })
@@ -87,8 +91,19 @@ export default function App() {
         </div>
         <div className="flex items-center gap-4">
           <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+            title="图片上传与图床配置"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            图床设置
+          </button>
+
+          <div className="w-px h-4 bg-slate-200" />
+
+          <button
             onClick={handleRestoreDemo}
-            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
             title="恢复当前模块的示例内容"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
@@ -149,6 +164,7 @@ export default function App() {
         )}
       </Suspense>
 
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <Toast toast={toast} />
     </div>
   )

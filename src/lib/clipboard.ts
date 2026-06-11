@@ -1,6 +1,4 @@
-// 剪贴板工具：复制富文本（可直接粘贴到公众号后台）与复制 HTML 源码。
-// 移植自 r-markdown 的实现：优先用 ClipboardItem 写 text/html + text/plain，
-// 失败时降级到 document.execCommand('copy')。
+import { getLocalImage, blobToBase64, localImageUrls } from '@/lib/editor/imageStorage'
 
 /** 复制纯文本（带降级方案） */
 export async function copyText(text: string): Promise<boolean> {
@@ -28,20 +26,59 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-/** 复制富文本：保留内联样式，粘贴到公众号编辑器排版不丢失 */
+/**
+ * 辅助方法：克隆 DOM 节点，并将其中的所有 blob: 或 img:// 占位符 URL 编译替换为 base64
+ */
+async function compileElementImages(contentEl: HTMLElement): Promise<HTMLElement> {
+  const clone = contentEl.cloneNode(true) as HTMLElement
+  const imgs = clone.querySelectorAll('img')
+  for (const img of Array.from(imgs)) {
+    const src = img.getAttribute('src') || ''
+    if (src.startsWith('blob:') || src.startsWith('img://')) {
+      let id = ''
+      if (src.startsWith('img://')) {
+        id = src.replace('img://', '')
+      } else {
+        // 从内存 Map 中逆向查找 id
+        const found = Object.entries(localImageUrls).find(([_, url]) => url === src)
+        if (found) id = found[0]
+      }
+
+      if (id) {
+        const blob = await getLocalImage(id)
+        if (blob) {
+          try {
+            const base64 = await blobToBase64(blob)
+            img.setAttribute('src', base64)
+          } catch (e) {
+            console.error(`Failed to compile image ${id} to base64 during copy:`, e)
+          }
+        }
+      }
+    }
+  }
+  return clone
+}
+
+/** 复制富文本：保留内联样式，并在后台自动编译本地图片为 base64 */
 export async function copyRichText(contentEl: HTMLElement): Promise<boolean> {
-  const html = `<section style="background-color:#fff;color:#333;padding:0">${contentEl.innerHTML}</section>`
-  const text = contentEl.innerText
   try {
+    const compiledEl = await compileElementImages(contentEl)
+    const html = `<section style="background-color:#fff;color:#333;padding:0">${compiledEl.innerHTML}</section>`
+    const text = compiledEl.innerText
+
     const item = new ClipboardItem({
       'text/html': new Blob([html], { type: 'text/html' }),
       'text/plain': new Blob([text], { type: 'text/plain;charset=utf-8' }),
     })
     await navigator.clipboard.write([item])
     return true
-  } catch {
+  } catch (err) {
+    console.warn('ClipboardItem copy failed, fallback to execCommand:', err)
     // 降级：选区 + execCommand
     try {
+      const compiledEl = await compileElementImages(contentEl)
+      const html = `<section style="background-color:#fff;color:#333;padding:0">${compiledEl.innerHTML}</section>`
       const tmp = document.createElement('div')
       tmp.innerHTML = html
       tmp.style.position = 'fixed'
@@ -62,14 +99,17 @@ export async function copyRichText(contentEl: HTMLElement): Promise<boolean> {
   }
 }
 
-/** 复制 HTML 源码（全内联样式） */
+/** 复制 HTML 源码（将图片动态替换为 base64） */
 export async function copyHtmlSource(contentEl: HTMLElement): Promise<boolean> {
-  const html = contentEl.innerHTML
   try {
+    const compiledEl = await compileElementImages(contentEl)
+    const html = compiledEl.innerHTML
     await navigator.clipboard.writeText(html)
     return true
   } catch {
     try {
+      const compiledEl = await compileElementImages(contentEl)
+      const html = compiledEl.innerHTML
       const ta = document.createElement('textarea')
       ta.value = html
       ta.style.position = 'fixed'

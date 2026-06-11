@@ -4,9 +4,9 @@ import { copyText, copyRichText, copyHtmlSource } from '@/lib/clipboard'
 import { buildArticleAiGuide } from '@/lib/aiGuide'
 import { exportLongImage } from '@/lib/export/longImage'
 import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
+import { FontSelect } from '@/components/ui/FontSelect'
 import { useStore } from '@/lib/store'
-import { getFontFamilyCss, type FontFamilyOption } from '@/lib/fonts'
+import { getFontFamilyCss } from '@/lib/fonts'
 
 interface ArticlePreviewProps {
   rendered: MarkdownRenderResult
@@ -22,6 +22,9 @@ export function ArticlePreview({ rendered, scrollRef, onToast }: ArticlePreviewP
   const { html, meta } = rendered
   const articleFont = useStore((s) => s.articleFont)
   const setArticleFont = useStore((s) => s.setArticleFont)
+  const imageHostConfig = useStore((s) => s.imageHostConfig)
+
+  const hasLocalImages = html.includes('blob:') || html.includes('img://') || meta.contentMarkdown.includes('img://')
 
   const handleCopyTitle = async () => {
     const ok = await copyText(meta.title)
@@ -67,15 +70,7 @@ export function ArticlePreview({ rendered, scrollRef, onToast }: ArticlePreviewP
       {/* 复制类操作工具栏 */}
       <div className="sticky top-0 z-10 flex items-center justify-end border-b border-slate-200 bg-white/95 px-5 py-2.5 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2 shrink-0">
-          <Select
-            value={articleFont}
-            onChange={(e) => setArticleFont(e.target.value as FontFamilyOption)}
-          >
-            <option value="songti">宋体</option>
-            <option value="fangsong">仿宋</option>
-            <option value="heiti">黑体</option>
-            <option value="lxgwwenkai">霞鹜文楷</option>
-          </Select>
+          <FontSelect value={articleFont} onChange={setArticleFont} />
           <div className="w-px h-4 bg-slate-200 mx-1" />
           <Button onClick={handleCopyGuide} title="复制一段语法说明，发给 AI 让它按支持的排版语法输出长图文">
             ✨ 复制指令
@@ -91,6 +86,16 @@ export function ArticlePreview({ rendered, scrollRef, onToast }: ArticlePreviewP
           </Button>
         </div>
       </div>
+
+      {/* 公众号本地图片裂图警告 */}
+      {hasLocalImages && imageHostConfig.activeType === 'local' && (
+        <div className="bg-amber-50 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-700 flex items-center gap-2">
+          <svg className="shrink-0 text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span>
+            检测到本地存储的图片。直接复制到微信公众号会导致<strong>图片失效（裂图）</strong>。建议在顶部配置第三方云图床，或手动在微信后台重新上传这些图片。
+          </span>
+        </div>
+      )}
 
       {/* 可滚动预览区域 */}
       <div ref={scrollRef} className="preview-scroll flex-1 overflow-y-auto p-4 bg-slate-50">

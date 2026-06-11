@@ -1,5 +1,6 @@
 import type { ThemeColors } from '../composables/useTheme'
 import { esc, leaf, lightenHex, pangu } from './helpers'
+import { localImageUrls } from '@/lib/editor/imageStorage'
 
 export function inlineFormat(text: string, t: ThemeColors): string {
   // 中英文/数字自动加空格：先保护行内代码与链接/图片 URL，避免破坏代码与网址
@@ -77,13 +78,18 @@ export function inlineFormat(text: string, t: ThemeColors): string {
   text = text.replace(
     /!\[([^\]]*)\]\(([^)]+)\)(?:\[([^\]]+)\])?/g,
     (_m, alt: string, src: string, size?: string) => {
+      let resolvedSrc = src
+      if (src.startsWith('img://')) {
+        const id = src.replace('img://', '')
+        resolvedSrc = localImageUrls[id] || src
+      }
       if (size) {
         const parts = size.split(/\s+/)
         const w = parts[0] || '100%'
         const h = parts[1] || '250px'
-        return `<img src="${esc(src)}" alt="${esc(alt)}" style="width:${w};max-height:${h};border-radius:6px;display:block">`
+        return `<img src="${esc(resolvedSrc)}" alt="${esc(alt)}" style="width:${w};max-height:${h};border-radius:6px;display:block">`
       }
-      return `<img src="${esc(src)}" alt="${esc(alt)}" style="max-width:100%;border-radius:6px;display:block">`
+      return `<img src="${esc(resolvedSrc)}" alt="${esc(alt)}" style="max-width:100%;border-radius:6px;display:block">`
     },
   )
   // 链接 [text](url)

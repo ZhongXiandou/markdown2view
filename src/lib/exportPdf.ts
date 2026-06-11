@@ -149,31 +149,33 @@ export async function exportElementsToPdf(
       el.style.display = ''
     }
 
-    const w = opts?.width || el.offsetWidth
-    const h = opts?.height || el.offsetHeight
+    try {
+      const w = opts?.width || el.offsetWidth
+      const h = opts?.height || el.offsetHeight
 
-    // 使用 3x 缩放确保文字极其清晰
-    const dataUrl = await domToJpeg(el, {
-      scale: 3,
-      backgroundColor: '#ffffff',
-    })
-    
-    if (originalDisplay === 'none') {
-      el.style.display = 'none'
-    }
-
-    if (!pdf) {
-      pdf = new jsPDF({
-        orientation: w > h ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [w, h],
-        compress: true,
+      // 使用 3x 缩放确保文字极其清晰
+      const dataUrl = await domToJpeg(el, {
+        scale: 3,
+        backgroundColor: '#ffffff',
       })
-    } else {
-      pdf.addPage([w, h], w > h ? 'landscape' : 'portrait')
+
+      if (!pdf) {
+        pdf = new jsPDF({
+          orientation: w > h ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [w, h],
+          compress: true,
+        })
+      } else {
+        pdf.addPage([w, h], w > h ? 'landscape' : 'portrait')
+      }
+
+      pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h)
+    } finally {
+      if (originalDisplay === 'none') {
+        el.style.display = 'none'
+      }
     }
-    
-    pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h)
   }
   
   if (pdf) {

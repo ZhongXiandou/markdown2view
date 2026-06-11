@@ -38,6 +38,19 @@ export interface DemoContents {
   html: string
 }
 
+export type ImageHostType = 'local' | 'smms' | 'oss' | 'cos'
+
+export interface ImageHostConfig {
+  activeType: ImageHostType
+  smms?: { token: string }
+  oss?: { region: string; accessKeyId: string; accessKeySecret: string; bucket: string }
+  cos?: { SecretId: string; SecretKey: string; Bucket: string; Region: string }
+}
+
+const DEFAULT_IMAGE_HOST_CONFIG: ImageHostConfig = {
+  activeType: 'local',
+}
+
 interface AppState {
   articleMarkdown: string
   documentMarkdown: string
@@ -52,6 +65,9 @@ interface AppState {
   accent: string
   accentDark: string
   colors: ThemeColors
+  // 图床设置
+  imageHostConfig: ImageHostConfig
+  setImageHostConfig: (config: Partial<ImageHostConfig>) => void
   // 示例内容版本与「是否被用户编辑过」标记（dirty）
   demoVersion: number
   articleDirty: boolean
@@ -160,6 +176,9 @@ export const useStore = create<AppState>()(
       accent: initAccent,
       accentDark: initDark,
       colors: legacyState.colors ?? makeColors(initAccent, initDark),
+      imageHostConfig: DEFAULT_IMAGE_HOST_CONFIG,
+      setImageHostConfig: (config) =>
+        set((state) => ({ imageHostConfig: { ...state.imageHostConfig, ...config } })),
       // 默认版本号 0，确保首次加载（无持久化版本）时会注入最新示例。
       demoVersion: 0,
       // 旧版分散 key 迁移而来的内容视为「用户内容」，标记为 dirty 以免被示例覆盖。
