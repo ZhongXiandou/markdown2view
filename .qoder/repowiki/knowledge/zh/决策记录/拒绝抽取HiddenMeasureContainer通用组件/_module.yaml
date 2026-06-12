@@ -4,4 +4,5 @@ title: 拒绝抽取HiddenMeasureContainer通用组件
 scope: []
 source_files: []
 depends_on: []
-related_to: []
+related_to:
+    - path: markdown2view

@@ -15,6 +15,9 @@
 - [useEditorDocSync.ts](file://src/lib/useEditorDocSync.ts)
 - [exportImage.ts](file://src/lib/exportImage.ts)
 - [exportPdf.ts](file://src/lib/exportPdf.ts)
+- [ArticlePreview.tsx](file://src/modes/article/ArticlePreview.tsx)
+- [documentModel.ts](file://src/modes/document/documentModel.ts)
+- [FontSelect.tsx](file://src/components/ui/FontSelect.tsx)
 </cite>
 
 ## 目录
@@ -82,7 +85,7 @@ SYNC --> DB
 ```
 
 **图表来源**
-- [clipboard.ts:1-131](file://src/lib/clipboard.ts#L1-L131)
+- [clipboard.ts:1-122](file://src/lib/clipboard.ts#L1-L122)
 - [extractHtml.ts:1-113](file://src/lib/extractHtml.ts#L1-L113)
 - [fonts.ts:1-16](file://src/lib/fonts.ts#L1-L16)
 - [aiGuide.ts:1-274](file://src/lib/aiGuide.ts#L1-L274)
@@ -96,7 +99,7 @@ SYNC --> DB
 - [useEditorDocSync.ts:1-50](file://src/lib/useEditorDocSync.ts#L1-L50)
 
 **章节来源**
-- [clipboard.ts:1-131](file://src/lib/clipboard.ts#L1-L131)
+- [clipboard.ts:1-122](file://src/lib/clipboard.ts#L1-L122)
 - [aiGuide.ts:1-274](file://src/lib/aiGuide.ts#L1-L274)
 - [extractHtml.ts:1-113](file://src/lib/extractHtml.ts#L1-L113)
 - [fonts.ts:1-16](file://src/lib/fonts.ts#L1-L16)
@@ -110,7 +113,7 @@ SYNC --> DB
 ## 核心组件
 - 剪贴板操作
   - 复制纯文本（带降级方案）
-  - 复制富文本（保留内联样式，自动编译本地图片为 base64）
+  - 复制富文本（保留内联样式，自动编译本地图片为 base64，**新增字体族参数支持**）
   - 复制 HTML 源码（将图片动态替换为 base64）
 - AI 辅助
   - 构建长图文排版提示词
@@ -136,7 +139,7 @@ SYNC --> DB
   - 应用状态（主题、字体、平台等）
 
 **章节来源**
-- [clipboard.ts:3-131](file://src/lib/clipboard.ts#L3-L131)
+- [clipboard.ts:3-122](file://src/lib/clipboard.ts#L3-L122)
 - [aiGuide.ts:172-274](file://src/lib/aiGuide.ts#L172-L274)
 - [extractHtml.ts:5-113](file://src/lib/extractHtml.ts#L5-L113)
 - [fonts.ts:1-16](file://src/lib/fonts.ts#L1-L16)
@@ -148,7 +151,7 @@ SYNC --> DB
 - [store.ts:1-242](file://src/lib/store.ts#L1-L242)
 
 ## 架构总览
-工具函数围绕“内容创作 → 预览渲染 → 导出”的闭环工作流组织，剪贴板与 HTML 提取负责与外部 AI 的交互，AI 提示词与设计提示词库提供创作约束与风格指导，字体管理与状态系统保障一致性与可定制性。
+工具函数围绕"内容创作 → 预览渲染 → 导出"的闭环工作流组织，剪贴板与 HTML 提取负责与外部 AI 的交互，AI 提示词与设计提示词库提供创作约束与风格指导，字体管理与状态系统保障一致性与可定制性。
 
 ```mermaid
 sequenceDiagram
@@ -161,7 +164,7 @@ participant DP as "设计提示词库<br/>designPrompts.ts"
 participant EI as "截图导出<br/>exportImage.ts"
 participant EP as "PDF 导出<br/>exportPdf.ts"
 U->>E : 输入/编辑内容
-E->>CB : 复制富文本/HTML
+E->>CB : 复制富文本含字体族参数
 U->>AG : 获取提示词
 U->>DP : 查询风格提示
 U->>EX : 从 AI 输出提取 HTML
@@ -171,7 +174,7 @@ EP-->>U : 下载文件
 ```
 
 **图表来源**
-- [clipboard.ts:64-100](file://src/lib/clipboard.ts#L64-L100)
+- [clipboard.ts:66-99](file://src/lib/clipboard.ts#L66-L99)
 - [extractHtml.ts:51-113](file://src/lib/extractHtml.ts#L51-L113)
 - [aiGuide.ts:172-274](file://src/lib/aiGuide.ts#L172-L274)
 - [designPrompts.ts:1-1132](file://src/data/designPrompts.ts#L1-L1132)
@@ -186,10 +189,12 @@ EP-->>U : 下载文件
   - 行为：优先使用 Clipboard API；失败时通过 textarea + execCommand 降级
   - 适用：快速复制纯文本，兼容性优先
 - 复制富文本
-  - 函数：copyRichText(contentEl: HTMLElement) -> Promise<boolean>
+  - 函数：copyRichText(contentEl: HTMLElement, fontFamily?: string) -> Promise<boolean>
+  - 参数：contentEl（要复制的元素），fontFamily（可选字体族名称）
   - 行为：克隆节点，编译本地图片占位符为 base64，构造 ClipboardItem 同时包含 text/html 与 text/plain；失败时降级为选区 + execCommand
   - 数据处理：compileElementImages 会遍历 img 标签，将 blob: 或 img:// 替换为 base64
-  - 适用：复制带样式的富文本，确保粘贴到支持富文本的应用中仍保留结构
+  - **新增功能**：当提供 fontFamily 参数时，会在复制的 HTML 中注入字体族样式，确保粘贴到支持富文本的应用中保持指定字体
+  - 适用：复制带样式的富文本，确保粘贴到支持富文本的应用中仍保留结构和字体
 - 复制 HTML 源码
   - 函数：copyHtmlSource(contentEl: HTMLElement) -> Promise<boolean>
   - 行为：编译图片后复制 innerHTML；失败时降级为 textarea + execCommand
@@ -201,15 +206,19 @@ Start(["进入复制流程"]) --> TryClipboard["尝试 Clipboard API"]
 TryClipboard --> Ok{"成功？"}
 Ok --> |是| Compile["编译本地图片为 base64"]
 Ok --> |否| Fallback["降级：textarea + execCommand"]
-Compile --> Done(["返回成功"])
+Compile --> FontCheck{"是否提供字体参数？"}
+FontCheck --> |是| InjectFont["注入字体样式"]
+FontCheck --> |否| SkipFont["跳过字体注入"]
+InjectFont --> Done(["返回成功"])
+SkipFont --> Done
 Fallback --> Done
 ```
 
 **图表来源**
-- [clipboard.ts:64-100](file://src/lib/clipboard.ts#L64-L100)
+- [clipboard.ts:66-99](file://src/lib/clipboard.ts#L66-L99)
 
 **章节来源**
-- [clipboard.ts:3-131](file://src/lib/clipboard.ts#L3-L131)
+- [clipboard.ts:3-122](file://src/lib/clipboard.ts#L3-L122)
 
 ### AI 辅助 API
 - 构建长图文排版提示词
@@ -250,28 +259,27 @@ User-->>Dev : 返回 Markdown/HTML
 
 ```mermaid
 flowchart TD
-S(["输入流式文本"]) --> Fence["匹配并去除
-```html 围栏"]
-  Fence -->|命中| ReturnFence["返回去围栏内容"]
-  Fence -->|未命中| Doctype["查找 <!DOCTYPE html ... </html>"]
-  Doctype -->|命中| ReturnDoctype["返回片段"]
-  Doctype -->|未命中| HtmlTag["查找 <html> ... </html>"]
-  HtmlTag -->|命中| ReturnHtml["返回片段"]
-  HtmlTag -->|未命中| TrustOpen["若以 < 开头则信任"]
-  TrustOpen -->|是| ReturnOpen["返回原文"]
-  TrustOpen -->|否| Wrap["兜底：注入 Tailwind CDN 与 pre 包裹"]
-  ReturnFence --> End(["输出 HTML"])
-  ReturnDoctype --> End
-  ReturnHtml --> End
-  ReturnOpen --> End
-  Wrap --> End
+S(["输入流式文本"]) --> Fence["匹配并去除代码块围栏"]
+Fence --> |命中| ReturnFence["返回去围栏内容"]
+Fence --> |未命中| Doctype["查找 <!DOCTYPE html ... </html>"]
+Doctype --> |命中| ReturnDoctype["返回片段"]
+Doctype --> |未命中| HtmlTag["查找 <html> ... </html>"]
+HtmlTag --> |命中| ReturnHtml["返回片段"]
+HtmlTag --> |未命中| TrustOpen["若以 < 开头则信任"]
+TrustOpen --> |是| ReturnOpen["返回原文"]
+TrustOpen --> |否| Wrap["兜底：注入 Tailwind CDN 与 pre 包裹"]
+ReturnFence --> End(["输出 HTML"])
+ReturnDoctype --> End
+ReturnHtml --> End
+ReturnOpen --> End
+Wrap --> End
 ```
 
 **图表来源**
-- [extractHtml.ts](file://src/lib/extractHtml.ts#L5-L48)
+- [extractHtml.ts:5-48](file://src/lib/extractHtml.ts#L5-L48)
 
 **章节来源**
-- [extractHtml.ts](file://src/lib/extractHtml.ts#L1-L113)
+- [extractHtml.ts:1-113](file://src/lib/extractHtml.ts#L1-L113)
 
 ### 字体管理 API
 - 字体族选项
@@ -279,6 +287,9 @@ S(["输入流式文本"]) --> Fence["匹配并去除
 - 字体族 CSS 生成
   - 函数：getFontFamilyCss(option: FontFamilyOption) -> string
   - 行为：根据选项返回对应的 CSS 字体声明，包含回退字体与系统默认
+- 字体选择组件
+  - 组件：FontSelect（供 ArticleMode、DocumentMode、CardMode 共用）
+  - 功能：提供宋体、仿宋、黑体、霞鹜文楷四种字体选择
 
 ```mermaid
 classDiagram
@@ -291,14 +302,21 @@ class FontFamilyOption {
 class FontsAPI {
 +getFontFamilyCss(option) string
 }
+class FontSelect {
++value : FontFamilyOption
++onChange : Function
+}
 FontsAPI --> FontFamilyOption : "使用"
+FontSelect --> FontFamilyOption : "显示"
 ```
 
 **图表来源**
-- [fonts.ts](file://src/lib/fonts.ts#L1-L16)
+- [fonts.ts:1-16](file://src/lib/fonts.ts#L1-L16)
+- [FontSelect.tsx:1-34](file://src/components/ui/FontSelect.tsx#L1-L34)
 
 **章节来源**
-- [fonts.ts](file://src/lib/fonts.ts#L1-L16)
+- [fonts.ts:1-16](file://src/lib/fonts.ts#L1-L16)
+- [FontSelect.tsx:1-34](file://src/components/ui/FontSelect.tsx#L1-L34)
 
 ### 设计提示词库 API
 - 数据模型
@@ -307,7 +325,7 @@ FontsAPI --> FontFamilyOption : "使用"
   - 元数据映射：STYLE_METADATA（按 id 分组）
 - 构建提示词
   - 函数：buildDesignPrompt(style: DesignStyle) -> string
-  - 行为：基于样式元数据与内容约束生成提示词，包含“内容优先”“风格锁定”“强制分页”等约束
+  - 行为：基于样式元数据与内容约束生成提示词，包含"内容优先""风格锁定""强制分页"等约束
 - 查询与筛选
   - 支持按 outputType、visualTone、family、displayLevel 进行筛选
   - 支持按 category 前缀分组（演示汇报、科技产品、设计创意、媒体内容、数据分析、文档知识）
@@ -329,11 +347,11 @@ string style
 ```
 
 **图表来源**
-- [designPrompts.ts](file://src/data/designPrompts.ts#L6-L44)
+- [designPrompts.ts:6-44](file://src/data/designPrompts.ts#L6-L44)
 
 **章节来源**
-- [designPrompts.ts](file://src/data/designPrompts.ts#L1-L1132)
-- [designPrompts.test.ts](file://src/data/designPrompts.test.ts#L1-L149)
+- [designPrompts.ts:1-1132](file://src/data/designPrompts.ts#L1-L1132)
+- [designPrompts.test.ts:1-149](file://src/data/designPrompts.test.ts#L1-L149)
 
 ### 通用工具函数 API
 - 字符串与文本处理
@@ -389,12 +407,12 @@ Helpers <.. Components : "被使用"
 ```
 
 **图表来源**
-- [helpers.ts](file://src/engine/utils/helpers.ts#L1-L115)
-- [components.ts](file://src/engine/utils/components.ts#L1-L333)
+- [helpers.ts:1-115](file://src/engine/utils/helpers.ts#L1-L115)
+- [components.ts:1-333](file://src/engine/utils/components.ts#L1-L333)
 
 **章节来源**
-- [helpers.ts](file://src/engine/utils/helpers.ts#L1-L115)
-- [components.ts](file://src/engine/utils/components.ts#L1-L333)
+- [helpers.ts:1-115](file://src/engine/utils/helpers.ts#L1-L115)
+- [components.ts:1-333](file://src/engine/utils/components.ts#L1-L333)
 
 ### 状态与 Hooks API
 - 防抖 Hook
@@ -422,13 +440,13 @@ Hook-->>UI : externalVersion++
 ```
 
 **图表来源**
-- [useEditorDocSync.ts](file://src/lib/useEditorDocSync.ts#L20-L49)
-- [store.ts](file://src/lib/store.ts#L54-L92)
+- [useEditorDocSync.ts:20-49](file://src/lib/useEditorDocSync.ts#L20-L49)
+- [store.ts:54-92](file://src/lib/store.ts#L54-L92)
 
 **章节来源**
-- [useDebounce.ts](file://src/lib/useDebounce.ts#L1-L18)
-- [useEditorDocSync.ts](file://src/lib/useEditorDocSync.ts#L1-L50)
-- [store.ts](file://src/lib/store.ts#L1-L242)
+- [useDebounce.ts:1-18](file://src/lib/useDebounce.ts#L1-L18)
+- [useEditorDocSync.ts:1-50](file://src/lib/useEditorDocSync.ts#L1-L50)
+- [store.ts:1-242](file://src/lib/store.ts#L1-L242)
 
 ### 导出能力 API
 - 截图导出（PNG/JPEG/WEBP）
@@ -458,12 +476,12 @@ PDF-->>Preview : 下载 PDF
 ```
 
 **图表来源**
-- [exportImage.ts](file://src/lib/exportImage.ts#L152-L387)
-- [exportPdf.ts](file://src/lib/exportPdf.ts#L21-L192)
+- [exportImage.ts:152-387](file://src/lib/exportImage.ts#L152-L387)
+- [exportPdf.ts:21-192](file://src/lib/exportPdf.ts#L21-L192)
 
 **章节来源**
-- [exportImage.ts](file://src/lib/exportImage.ts#L1-L387)
-- [exportPdf.ts](file://src/lib/exportPdf.ts#L1-L192)
+- [exportImage.ts:1-387](file://src/lib/exportImage.ts#L1-L387)
+- [exportPdf.ts:1-192](file://src/lib/exportPdf.ts#L1-L192)
 
 ## 依赖分析
 - 组件耦合
@@ -516,8 +534,6 @@ ST["store.ts"] --> FG["fonts.ts"]
 - 防抖与回写
   - 编辑器输入使用防抖减少 Store 写入频率，避免冗余与竞态
 
-[本节为通用指导，无需特定文件引用]
-
 ## 故障排查指南
 - 剪贴板不可用
   - 现象：复制失败或返回 false
@@ -525,7 +541,7 @@ ST["store.ts"] --> FG["fonts.ts"]
   - 参考：clipboard.ts 的降级方案
 - 富文本粘贴样式丢失
   - 现象：粘贴后无样式
-  - 排查：确认本地图片占位符已编译为 base64；检查 ClipboardItem 的 MIME 类型
+  - 排查：确认本地图片占位符已编译为 base64；检查 ClipboardItem 的 MIME 类型；**检查是否正确传入字体参数**
   - 参考：compileElementImages 的替换逻辑
 - HTML 提取失败
   - 现象：返回空或兜底 HTML
@@ -541,15 +557,13 @@ ST["store.ts"] --> FG["fonts.ts"]
   - 参考：exportIframeToPdf 的 orientation 判定
 
 **章节来源**
-- [clipboard.ts:64-100](file://src/lib/clipboard.ts#L64-L100)
+- [clipboard.ts:66-99](file://src/lib/clipboard.ts#L66-L99)
 - [extractHtml.ts:5-48](file://src/lib/extractHtml.ts#L5-L48)
 - [exportImage.ts:61-117](file://src/lib/exportImage.ts#L61-L117)
 - [exportPdf.ts:66-78](file://src/lib/exportPdf.ts#L66-L78)
 
 ## 结论
-本工具函数库围绕“内容创作 → 预览渲染 → 导出”的工作流，提供了完善的剪贴板、AI 提示词、HTML 提取与预览、字体管理、设计提示词库、通用工具与导出能力。通过合理的降级与稳定性策略，能够在不同环境下稳定运行，并为扩展与自定义提供清晰的接口与最佳实践。
-
-[本节为总结性内容，无需特定文件引用]
+本工具函数库围绕"内容创作 → 预览渲染 → 导出"的工作流，提供了完善的剪贴板、AI 提示词、HTML 提取与预览、字体管理、设计提示词库、通用工具与导出能力。通过合理的降级与稳定性策略，能够在不同环境下稳定运行，并为扩展与自定义提供清晰的接口与最佳实践。
 
 ## 附录
 
@@ -558,17 +572,22 @@ ST["store.ts"] --> FG["fonts.ts"]
   - 步骤：准备素材 → 生成提示词 → 发送给 AI → 从 AI 输出提取 HTML → 预览与导出
   - 关键点：使用 buildArticleAiGuide/buildDocumentAiGuide/buildCardAiGuide 生成约束性提示词；使用 extractHtml 与 previewHtml 确保可渲染
 - 复制与粘贴
-  - 富文本：优先使用 copyRichText，确保样式与图片可粘贴
+  - 富文本：优先使用 copyRichText，确保样式与图片可粘贴；**可选传入字体参数保持字体一致性**
   - HTML：使用 copyHtmlSource，便于二次处理
 - 导出
   - 截图：使用 iframeToBlob 或 captureElementInIframeToBlob，确保字体与背景正确
   - PDF：使用 exportIframeToPdf 或 exportSinglePageToPdf，逐页导出更稳定
 
-[本节为通用指导，无需特定文件引用]
+**更新** 在富文本复制中新增字体族参数支持，可通过 fontFamily 参数控制复制内容的字体样式
+
+**章节来源**
+- [ArticlePreview.tsx:51-51](file://src/modes/article/ArticlePreview.tsx#L51-L51)
+- [documentModel.ts:43-43](file://src/modes/document/documentModel.ts#L43-L43)
 
 ### 扩展接口与自定义开发
 - 扩展剪贴板
   - 新增 MIME 类型：在 ClipboardItem 中增加类型，或扩展编译逻辑以支持更多图片格式
+  - **新增字体参数支持**：在 copyRichText 函数中扩展字体族参数，支持更多字体控制选项
 - 扩展 AI 提示词
   - 新增场景：在 aiGuide.ts 中新增构建函数，遵循现有结构与约束
 - 扩展设计提示词库
@@ -576,4 +595,6 @@ ST["store.ts"] --> FG["fonts.ts"]
 - 扩展导出能力
   - 新增导出格式：在 exportImage.ts/exportPdf.ts 中增加参数与分支，确保等待与尺寸处理一致
 
-[本节为通用指导，无需特定文件引用]
+**章节来源**
+- [clipboard.ts:66-99](file://src/lib/clipboard.ts#L66-L99)
+- [fonts.ts:1-16](file://src/lib/fonts.ts#L1-L16)

@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: markdown2view
+title: 多模态 Markdown/HTML 可视化工作台
+scope:
+    - src/
+source_files: []
+depends_on: []
+related_to:
+    - path: decisions/70214b184e46_73bdacd0b1fa
+    - path: decisions/70214b184e46_b831b0baaa0e

@@ -2,11 +2,11 @@
 schema_version: 1
 locale: zh-CN
 branch: master
-exported_at: "2026-06-11T18:34:15Z"
+exported_at: "2026-06-12T18:22:03Z"
 modules:
     "":
-        dir_name: 多模态 Markdown 可视化创作平台
-        title: 多模态 Markdown 可视化创作平台
+        dir_name: 多模态 Markdown_HTML 可视化创作平台
+        title: 多模态 Markdown/HTML 可视化创作平台
         scope: []
         source_files: []
         children: []
@@ -18,9 +18,9 @@ modules:
         scope: []
         source_files: []
         children:
+            - decisions/70214b184e46_b831b0baaa0e
             - decisions/70214b184e46_73bdacd0b1fa
             - decisions/70214b184e46_44604519f0e9
-            - decisions/70214b184e46_b831b0baaa0e
         depends_on: []
         related_to: []
     decisions/70214b184e46_73bdacd0b1fa:
@@ -30,7 +30,8 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: markdown2view
     decisions/70214b184e46_44604519f0e9:
         dir_name: 维持Zustand v5原子Selector模式而非合并为对象Hook
         title: 维持Zustand v5原子Selector模式而非合并为对象Hook
@@ -46,13 +47,16 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: markdown2view
     markdown2view:
-        dir_name: 多模态 Markdown 可视化渲染引擎
-        title: 多模态 Markdown 可视化渲染引擎
+        dir_name: 多模态 Markdown_HTML 可视化工作台
+        title: 多模态 Markdown/HTML 可视化工作台
         scope:
             - src/
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: decisions/70214b184e46_73bdacd0b1fa
+            - path: decisions/70214b184e46_b831b0baaa0e
