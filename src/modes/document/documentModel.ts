@@ -57,7 +57,7 @@ export const DEFAULT_DOCUMENT_SETTINGS: DocumentSettings = {
   headerHeight: 36,
   footerHeight: 34,
   headerLeft: '',
-  headerRight: '',
+  headerRight: 'Pintley Tasia',
   footerText: '第 {page} / {total} 页',
   theme: 'business',
   fontFamily: 'songti',
