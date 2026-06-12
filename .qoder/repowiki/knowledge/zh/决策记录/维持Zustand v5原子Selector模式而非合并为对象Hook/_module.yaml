@@ -4,4 +4,5 @@ title: 维持Zustand v5原子Selector模式而非合并为对象Hook
 scope: []
 source_files: []
 depends_on: []
-related_to: []
+related_to:
+    - path: decisions/976215bd2500_eade52846f6f

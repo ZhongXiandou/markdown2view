@@ -2,7 +2,7 @@
 schema_version: 1
 locale: zh-CN
 branch: master
-exported_at: "2026-06-12T18:22:03Z"
+exported_at: "2026-06-12T20:14:10Z"
 modules:
     "":
         dir_name: 多模态 Markdown_HTML 可视化创作平台
@@ -18,9 +18,39 @@ modules:
         scope: []
         source_files: []
         children:
-            - decisions/70214b184e46_b831b0baaa0e
+            - decisions/976215bd2500_eade52846f6f
             - decisions/70214b184e46_73bdacd0b1fa
             - decisions/70214b184e46_44604519f0e9
+            - decisions/1d42e71463d0_d649656b4c95
+            - decisions/976215bd2500_6b1a38644c61
+            - decisions/976215bd2500_3bdf9ce94031
+            - decisions/70214b184e46_b831b0baaa0e
+            - decisions/1d42e71463d0_ad4c54b4cd7d
+            - decisions/1d42e71463d0_f1c7463e36a9
+        depends_on: []
+        related_to: []
+    decisions/1d42e71463d0_ad4c54b4cd7d:
+        dir_name: 基于 Zustand Persist 扩展自定义指令持久化
+        title: 基于 Zustand Persist 扩展自定义指令持久化
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    decisions/1d42e71463d0_d649656b4c95:
+        dir_name: 采用「上传即复制URL」的图片交互模式
+        title: 采用「上传即复制URL」的图片交互模式
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    decisions/1d42e71463d0_f1c7463e36a9:
+        dir_name: 使用纯 CSS_SVG 微型组件实现风格预览缩略图
+        title: 使用纯 CSS/SVG 微型组件实现风格预览缩略图
+        scope: []
+        source_files: []
+        children: []
         depends_on: []
         related_to: []
     decisions/70214b184e46_73bdacd0b1fa:
@@ -30,8 +60,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: markdown2view
+        related_to: []
     decisions/70214b184e46_44604519f0e9:
         dir_name: 维持Zustand v5原子Selector模式而非合并为对象Hook
         title: 维持Zustand v5原子Selector模式而非合并为对象Hook
@@ -39,7 +68,8 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: decisions/976215bd2500_eade52846f6f
     decisions/70214b184e46_b831b0baaa0e:
         dir_name: A4文档封面页采用内容结构自动推导机制
         title: A4文档封面页采用内容结构自动推导机制
@@ -49,14 +79,40 @@ modules:
         depends_on: []
         related_to:
             - path: markdown2view
+    decisions/976215bd2500_3bdf9ce94031:
+        dir_name: 采用「上传即复制URL」的图片交互模式_2
+        title: 采用「上传即复制URL」的图片交互模式
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    decisions/976215bd2500_6b1a38644c61:
+        dir_name: 使用微型 HTML 片段渲染风格预览缩略图
+        title: 使用微型 HTML 片段渲染风格预览缩略图
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: markdown2view
+    decisions/976215bd2500_eade52846f6f:
+        dir_name: 通过扩展 Zustand Persist Store 管理自定义指令
+        title: 通过扩展 Zustand Persist Store 管理自定义指令
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: decisions/70214b184e46_44604519f0e9
     markdown2view:
-        dir_name: 多模态 Markdown_HTML 可视化工作台
-        title: 多模态 Markdown/HTML 可视化工作台
+        dir_name: 多模态 Markdown_HTML 可视化渲染引擎
+        title: 多模态 Markdown/HTML 可视化渲染引擎
         scope:
             - src/
         source_files: []
         children: []
         depends_on: []
         related_to:
-            - path: decisions/70214b184e46_73bdacd0b1fa
             - path: decisions/70214b184e46_b831b0baaa0e
+            - path: decisions/976215bd2500_6b1a38644c61

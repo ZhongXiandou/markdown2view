@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: decisions/976215bd2500_6b1a38644c61
+title: 使用微型 HTML 片段渲染风格预览缩略图
+scope: []
+source_files: []
+depends_on: []
+related_to:
+    - path: markdown2view

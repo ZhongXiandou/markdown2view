@@ -1,6 +1,6 @@
 schema_version: 1
-module_path: ""
-title: 多模态 Markdown/HTML 可视化创作平台
+module_path: decisions
+title: 决策记录
 scope: []
 source_files: []
 depends_on: []

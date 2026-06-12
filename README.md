@@ -80,6 +80,53 @@ pnpm preview
 
 ---
 
+## 📏 开发与提交规范
+
+> 完整规范详见 [`docs/代码与提交规范.md`](./docs/代码与提交规范.md)，以下为核心要点。
+
+### 开发命令速查
+
+```bash
+pnpm dev          # 启动开发服务器（热更新）
+pnpm typecheck    # TypeScript 静态类型检查
+pnpm test         # 运行全部单元测试（Vitest）
+pnpm build        # 生产构建（= typecheck + vite build）
+```
+
+### 提交前检查清单
+
+每次提交前**必须**确保以下三项全部通过：
+
+1. `pnpm typecheck` — 无类型错误
+2. `pnpm test` — 全部测试通过
+3. `pnpm build` — 构建成功且无异常体积膨胀
+
+### Git Commit 规范（Angular Convention）
+
+```
+<type>(<scope>): <subject>
+
+<body>  // 可选，说明"为什么"而非"做了什么"
+```
+
+**Type 类型**：`feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `build` / `chore`
+
+**示例**：
+```
+feat(article): 增加长图文模式的一键去重功能
+
+为工具栏增加了去重按钮，使用基于正则匹配的方式过滤重复段落。
+```
+
+### 代码风格要点
+
+- **中文注释**：业务逻辑、避坑指南用中文；变量名/函数名按英文技术惯例
+- **简单优先**：不做过度抽象，不为"可能的未来"写代码
+- **手术刀修改**：只触碰必须改动的部分，不顺手重构未坏掉的代码
+- **构建体积保护**：大型 SDK 必须 `await import()` 按需加载，禁止顶部静态导入
+
+---
+
 ## 📂 目录结构
 
 ```
