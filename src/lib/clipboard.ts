@@ -1,28 +1,31 @@
 import { getLocalImage, blobToBase64, localImageUrls } from '@/lib/editor/imageStorage'
 
+function createHiddenTextarea(text: string): HTMLTextAreaElement {
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:none;outline:none;box-shadow:none;opacity:0;'
+  ta.setAttribute('readonly', 'readonly')
+  document.body.appendChild(ta)
+  return ta
+}
+
 /** 复制纯文本（带降级方案） */
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text)
     return true
   } catch {
-    try {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      ta.style.top = '0'
-      ta.setAttribute('readonly', 'readonly')
-      document.body.appendChild(ta)
-      ta.focus()
-      ta.select()
-      ta.setSelectionRange(0, ta.value.length)
-      const ok = document.execCommand('copy')
-      document.body.removeChild(ta)
-      return ok
-    } catch {
-      return false
-    }
+  }
+  try {
+    const ta = createHiddenTextarea(text)
+    ta.focus()
+    ta.select()
+    ta.setSelectionRange(0, ta.value.length)
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
   }
 }
 
@@ -62,69 +65,56 @@ async function compileElementImages(contentEl: HTMLElement): Promise<HTMLElement
 
 /** 复制富文本：保留内联样式，并在后台自动编译本地图片为 base64 */
 export async function copyRichText(contentEl: HTMLElement): Promise<boolean> {
-  try {
-    const compiledEl = await compileElementImages(contentEl)
-    const html = `<section style="background-color:#fff;color:#333;padding:0">${compiledEl.innerHTML}</section>`
-    const text = compiledEl.innerText
+  const compiledEl = await compileElementImages(contentEl)
+  const html = `<section style="background-color:#fff;color:#333;padding:0">${compiledEl.innerHTML}</section>`
+  const text = compiledEl.innerText
 
+  try {
     const item = new ClipboardItem({
       'text/html': new Blob([html], { type: 'text/html' }),
       'text/plain': new Blob([text], { type: 'text/plain;charset=utf-8' }),
     })
     await navigator.clipboard.write([item])
     return true
-  } catch (err) {
-    console.warn('ClipboardItem copy failed, fallback to execCommand:', err)
-    // 降级：选区 + execCommand
-    try {
-      const compiledEl = await compileElementImages(contentEl)
-      const html = `<section style="background-color:#fff;color:#333;padding:0">${compiledEl.innerHTML}</section>`
-      const tmp = document.createElement('div')
-      tmp.innerHTML = html
-      tmp.style.position = 'fixed'
-      tmp.style.left = '-9999px'
-      document.body.appendChild(tmp)
-      const range = document.createRange()
-      range.selectNodeContents(tmp)
-      const sel = window.getSelection()
-      sel?.removeAllRanges()
-      sel?.addRange(range)
-      const ok = document.execCommand('copy')
-      sel?.removeAllRanges()
-      document.body.removeChild(tmp)
-      return ok
-    } catch {
-      return false
-    }
+  } catch {
+  }
+  try {
+    const tmp = document.createElement('div')
+    tmp.innerHTML = html
+    tmp.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;'
+    document.body.appendChild(tmp)
+    const range = document.createRange()
+    range.selectNodeContents(tmp)
+    const sel = window.getSelection()
+    sel?.removeAllRanges()
+    sel?.addRange(range)
+    const ok = document.execCommand('copy')
+    sel?.removeAllRanges()
+    document.body.removeChild(tmp)
+    return ok
+  } catch {
+    return false
   }
 }
 
 /** 复制 HTML 源码（将图片动态替换为 base64） */
 export async function copyHtmlSource(contentEl: HTMLElement): Promise<boolean> {
+  const compiledEl = await compileElementImages(contentEl)
+  const html = compiledEl.innerHTML
   try {
-    const compiledEl = await compileElementImages(contentEl)
-    const html = compiledEl.innerHTML
     await navigator.clipboard.writeText(html)
     return true
   } catch {
-    try {
-      const compiledEl = await compileElementImages(contentEl)
-      const html = compiledEl.innerHTML
-      const ta = document.createElement('textarea')
-      ta.value = html
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      ta.style.top = '0'
-      ta.setAttribute('readonly', 'readonly')
-      document.body.appendChild(ta)
-      ta.focus()
-      ta.select()
-      ta.setSelectionRange(0, ta.value.length)
-      const ok = document.execCommand('copy')
-      document.body.removeChild(ta)
-      return ok
-    } catch {
-      return false
-    }
+  }
+  try {
+    const ta = createHiddenTextarea(html)
+    ta.focus()
+    ta.select()
+    ta.setSelectionRange(0, ta.value.length)
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
   }
 }

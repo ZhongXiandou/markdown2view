@@ -29,6 +29,8 @@ describe('AI Guide Prompts', () => {
     expect(guide).toContain('**表 1: xxxx**')
     expect(guide).toContain('<page-break>')
     expect(guide).toContain('导航栏主题色')
+    expect(guide).toContain('附录必须另起一页')
+    expect(guide).toContain('长文档建议按大章节分页')
     // 确保去除了微信花哨的社交、互动组件的详细讲解模块
     expect(guide).not.toContain('## 四、块级组件（直接以标签形式写在正文中）')
   })
