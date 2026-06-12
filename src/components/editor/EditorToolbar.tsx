@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, ChangeEvent } from 'react'
 import { EditorView } from '@uiw/react-codemirror'
 import { useStore } from '@/lib/store'
 import { toolbarGroups } from '@/lib/editor/toolbarConfig'
@@ -14,7 +14,7 @@ export function EditorToolbar({ view }: EditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 处理图片选择与上传流程
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !view) return
 

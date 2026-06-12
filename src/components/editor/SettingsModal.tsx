@@ -13,38 +13,40 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const setImageHostConfig = useStore((s) => s.setImageHostConfig)
 
   // 临时状态，用户点击保存时才写入 store
-  const [activeType, setActiveType] = useState<ImageHostType>(imageHostConfig.activeType)
-  const [smmsToken, setSmmsToken] = useState(imageHostConfig.smms?.token || '')
-  
-  // OSS
-  const [ossRegion, setOssRegion] = useState(imageHostConfig.oss?.region || '')
-  const [ossKeyId, setOssKeyId] = useState(imageHostConfig.oss?.accessKeyId || '')
-  const [ossKeySecret, setOssKeySecret] = useState(imageHostConfig.oss?.accessKeySecret || '')
-  const [ossBucket, setOssBucket] = useState(imageHostConfig.oss?.bucket || '')
-
-  // COS
-  const [cosSecretId, setCosSecretId] = useState(imageHostConfig.cos?.SecretId || '')
-  const [cosSecretKey, setCosSecretKey] = useState(imageHostConfig.cos?.SecretKey || '')
-  const [cosBucket, setCosBucket] = useState(imageHostConfig.cos?.Bucket || '')
-  const [cosRegion, setCosRegion] = useState(imageHostConfig.cos?.Region || '')
+  const [form, setForm] = useState({
+    activeType: imageHostConfig.activeType,
+    smmsToken: imageHostConfig.smms?.token || '',
+    ossRegion: imageHostConfig.oss?.region || '',
+    ossKeyId: imageHostConfig.oss?.accessKeyId || '',
+    ossKeySecret: imageHostConfig.oss?.accessKeySecret || '',
+    ossBucket: imageHostConfig.oss?.bucket || '',
+    cosSecretId: imageHostConfig.cos?.SecretId || '',
+    cosSecretKey: imageHostConfig.cos?.SecretKey || '',
+    cosBucket: imageHostConfig.cos?.Bucket || '',
+    cosRegion: imageHostConfig.cos?.Region || '',
+  })
 
   if (!isOpen) return null
 
+  const updateFormField = <K extends keyof typeof form>(key: K, value: typeof form[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
   const handleSave = () => {
     const patch: Partial<ImageHostConfig> = {
-      activeType,
-      smms: { token: smmsToken },
+      activeType: form.activeType,
+      smms: { token: form.smmsToken },
       oss: {
-        region: ossRegion,
-        accessKeyId: ossKeyId,
-        accessKeySecret: ossKeySecret,
-        bucket: ossBucket,
+        region: form.ossRegion,
+        accessKeyId: form.ossKeyId,
+        accessKeySecret: form.ossKeySecret,
+        bucket: form.ossBucket,
       },
       cos: {
-        SecretId: cosSecretId,
-        SecretKey: cosSecretKey,
-        Bucket: cosBucket,
-        Region: cosRegion,
+        SecretId: form.cosSecretId,
+        SecretKey: form.cosSecretKey,
+        Bucket: form.cosBucket,
+        Region: form.cosRegion,
       },
     }
     setImageHostConfig(patch)
@@ -83,9 +85,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               ).map((item) => (
                 <button
                   key={item.type}
-                  onClick={() => setActiveType(item.type)}
+                  onClick={() => updateFormField('activeType', item.type)}
                   className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all cursor-pointer ${
-                    activeType === item.type
+                    form.activeType === item.type
                       ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent)] font-semibold shadow-xs'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                   }`}
@@ -97,7 +99,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
 
           <div className="min-h-[160px] rounded-lg bg-slate-50 p-4 border border-slate-100">
-            {activeType === 'local' && (
+            {form.activeType === 'local' && (
               <div className="text-[13px] leading-relaxed text-slate-500">
                 <p className="font-semibold text-slate-700 mb-1.5">📁 本地 IndexedDB 模式</p>
                 <ul className="list-disc pl-4 space-y-1">
@@ -108,7 +110,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
-            {activeType === 'smms' && (
+            {form.activeType === 'smms' && (
               <div className="flex flex-col gap-3">
                 <div className="text-[13px] leading-relaxed text-slate-500 mb-1">
                   <p className="font-semibold text-slate-700">☁️ Sm.ms 免费图床</p>
@@ -119,15 +121,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <Input
                     type="password"
                     placeholder="输入 Sm.ms 秘钥 Token"
-                    value={smmsToken}
-                    onChange={(e) => setSmmsToken(e.target.value)}
+                    value={form.smmsToken}
+                    onChange={(e) => updateFormField('smmsToken', e.target.value)}
                     className="w-full"
                   />
                 </div>
               </div>
             )}
 
-            {activeType === 'oss' && (
+            {form.activeType === 'oss' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 text-[13px] leading-relaxed text-slate-500 mb-1">
                   <p className="font-semibold text-slate-700">📦 阿里云对象存储 (OSS)</p>
@@ -135,24 +137,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">Region (区域，如 oss-cn-hangzhou)</label>
-                  <Input value={ossRegion} onChange={(e) => setOssRegion(e.target.value)} placeholder="oss-cn-hangzhou" />
+                  <Input value={form.ossRegion} onChange={(e) => updateFormField('ossRegion', e.target.value)} placeholder="oss-cn-hangzhou" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">Bucket Name (存储空间名称)</label>
-                  <Input value={ossBucket} onChange={(e) => setOssBucket(e.target.value)} placeholder="my-bucket" />
+                  <Input value={form.ossBucket} onChange={(e) => updateFormField('ossBucket', e.target.value)} placeholder="my-bucket" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">AccessKey ID</label>
-                  <Input value={ossKeyId} onChange={(e) => setOssKeyId(e.target.value)} placeholder="LTAI..." />
+                  <Input value={form.ossKeyId} onChange={(e) => updateFormField('ossKeyId', e.target.value)} placeholder="LTAI..." />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">AccessKey Secret</label>
-                  <Input type="password" value={ossKeySecret} onChange={(e) => setOssKeySecret(e.target.value)} placeholder="Secret Key" />
+                  <Input type="password" value={form.ossKeySecret} onChange={(e) => updateFormField('ossKeySecret', e.target.value)} placeholder="Secret Key" />
                 </div>
               </div>
             )}
 
-            {activeType === 'cos' && (
+            {form.activeType === 'cos' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 text-[13px] leading-relaxed text-slate-500 mb-1">
                   <p className="font-semibold text-slate-700">📦 腾讯云对象存储 (COS)</p>
@@ -160,23 +162,32 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">Region (区域，如 ap-shanghai)</label>
-                  <Input value={cosRegion} onChange={(e) => setCosRegion(e.target.value)} placeholder="ap-shanghai" />
+                  <Input value={form.cosRegion} onChange={(e) => updateFormField('cosRegion', e.target.value)} placeholder="ap-shanghai" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">Bucket Name (存储桶，含 AppId)</label>
-                  <Input value={cosBucket} onChange={(e) => setCosBucket(e.target.value)} placeholder="my-bucket-125000" />
+                  <Input value={form.cosBucket} onChange={(e) => updateFormField('cosBucket', e.target.value)} placeholder="my-bucket-125000" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">SecretId</label>
-                  <Input value={cosSecretId} onChange={(e) => setCosSecretId(e.target.value)} placeholder="AKID..." />
+                  <Input value={form.cosSecretId} onChange={(e) => updateFormField('cosSecretId', e.target.value)} placeholder="AKID..." />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[12px] text-slate-600">SecretKey</label>
-                  <Input type="password" value={cosSecretKey} onChange={(e) => setCosSecretKey(e.target.value)} placeholder="Secret Key" />
+                  <Input type="password" value={form.cosSecretKey} onChange={(e) => updateFormField('cosSecretKey', e.target.value)} placeholder="Secret Key" />
                 </div>
               </div>
             )}
           </div>
+
+          {form.activeType !== 'local' && (
+            <div className="text-[11px] leading-relaxed text-amber-600 bg-amber-50 rounded-lg p-3 border border-amber-100 flex items-start gap-1.5">
+              <span className="shrink-0 mt-0.5">⚠️</span>
+              <span>
+                <strong>安全提示</strong>：由于本应用为纯前端无后端运行，所有图床 API 密钥或密钥对（AccessKey/SecretKey）均以<strong>明文形式</strong>直接保存在您本地浏览器的 LocalStorage 中。请务必保护好您的设备，切勿在不受信任的公共计算机上配置生产环境密钥。
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

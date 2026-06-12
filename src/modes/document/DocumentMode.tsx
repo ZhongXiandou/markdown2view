@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ThemeColors } from '@engine'
 import { parseMarkdown } from '@engine'
 import { CodeEditor } from '@/components/editor/CodeEditor'
@@ -22,6 +22,9 @@ import { UI_LABELS } from '@/lib/uiLabels'
 import { PreviewToolbar, type ToolbarItem } from '@/components/layout/PreviewToolbar'
 import { CustomPromptPopover } from '@/components/layout/CustomPromptPopover'
 import { exportMarkdownSource } from '@/lib/exportSource'
+import { useBlockHeights } from '@/lib/useBlockHeights'
+import { useExportAction } from '@/lib/useExportAction'
+import { getFontFamilyCss } from '@/lib/fonts'
 
 
 interface DocumentModeProps {
@@ -51,6 +54,20 @@ export function DocumentMode({
 
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady])
 
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  useEffect(() => {
+    const el = previewScrollRef.current
+    if (!el) return
+
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect
+      setContainerWidth(rect.width)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   // store ↔ 编辑器双向同步（防抖回写 + 外部变更信号）
   const {
     localValue: localMarkdown,
@@ -66,99 +83,49 @@ export function DocumentMode({
   )
   const firstHeadingId = model.blocks.find((block) => block.kind === 'heading')?.id
 
-  const [actualHeights, setActualHeights] = useState<Record<string, number>>({})
   const measuringRef = useRef<HTMLDivElement>(null)
-
-  // 测量隐藏 DOM 中的所有块的高度
-  useLayoutEffect(() => {
-    if (!measuringRef.current) return
-
-    const measure = () => {
-      const newHeights: Record<string, number> = {}
-      const elements = measuringRef.current!.children
-      
-      let lastBottom = 0
-      let isFirst = true
-
-      for (let i = 0; i < elements.length; i++) {
-        const el = elements[i] as HTMLElement
-        const id = el.getAttribute('data-block-id')
-        if (id) {
-          if (isFirst) {
-            lastBottom = el.offsetTop
-            isFirst = false
-          }
-          
-          const bottom = el.offsetTop + el.offsetHeight
-          const h = bottom - lastBottom
-          lastBottom = bottom
-
-          newHeights[id] = h
-        }
-      }
-
-      setActualHeights(prev => {
-        let hasChange = Object.keys(newHeights).length !== Object.keys(prev).length
-        if (!hasChange) {
-          for (const key in newHeights) {
-            if (prev[key] !== newHeights[key]) {
-              hasChange = true
-              break
-            }
-          }
-        }
-        return hasChange ? newHeights : prev
-      })
-    }
-
-    measure()
-
-    const resizeObserver = new ResizeObserver(() => measure())
-    const handleLoad = (e: Event) => {
-      if ((e.target as HTMLElement).tagName === 'IMG') {
-        measure()
-      }
-    }
-    measuringRef.current.addEventListener('load', handleLoad, true)
-    
-    const elements = Array.from(measuringRef.current.children)
-    elements.forEach(el => resizeObserver.observe(el))
-
-    return () => {
-      resizeObserver.disconnect()
-      measuringRef.current?.removeEventListener('load', handleLoad, true)
-    }
-  }, [model.blocks, settings.pageWidth, settings.fontScale, settings.fontFamily, colors])
+  const [actualHeights] = useBlockHeights(measuringRef, [
+    model.blocks,
+    settings.pageWidth,
+    settings.fontScale,
+    settings.fontFamily,
+    colors,
+  ])
 
   const pages = useMemo(() => {
     return paginateDocumentBlocks(model.blocks, settings, actualHeights)
   }, [model.blocks, settings, actualHeights])
 
-  const [exporting, setExporting] = useState(false)
-  const [exportProgress, setExportProgress] = useState('')
+  const printAreaScale = containerWidth > 0 
+    ? Math.min(1, (containerWidth - 48) / settings.pageWidth) 
+    : 1
 
-  const handleExportPdf = async () => {
-    const container = document.querySelector('.document-print-area')
+  const [exportProgress, setExportProgress] = useState('')
+  const [exporting, runExport] = useExportAction(onToast)
+
+  const handleExportPdf = () => {
+    const container = document.querySelector('.document-print-area') as HTMLElement
     if (!container) return
     const elements = Array.from(container.querySelectorAll('article.document-page')) as HTMLElement[]
     if (elements.length === 0) return
 
-    setExporting(true)
-    try {
-      const { exportElementsToPdf } = await import('@/lib/exportPdf')
-      await exportElementsToPdf(
-        elements,
-        model.filename,
-        { width: settings.pageWidth, height: settings.pageHeight },
-        (current, total) => setExportProgress(`(${current}/${total})`)
-      )
-      onToast('PDF 导出成功')
-    } catch (err) {
-      onToast('PDF 导出失败: ' + err)
-    } finally {
-      setExporting(false)
-      setExportProgress('')
-    }
+    runExport(async () => {
+      const prevZoom = container.style.zoom
+      container.style.zoom = '1'
+      try {
+        const { exportElementsToPdf } = await import('@/lib/exportPdf')
+        await exportElementsToPdf(
+          elements,
+          model.filename,
+          { width: settings.pageWidth, height: settings.pageHeight },
+          (current, total) => setExportProgress(`(${current}/${total})`)
+        )
+        return 'PDF 导出成功'
+      } finally {
+        container.style.zoom = prevZoom
+        setExportProgress('')
+      }
+    })
   }
 
   const handleCopyGuide = async () => {
@@ -259,7 +226,7 @@ export function DocumentMode({
   )
 
   return (
-    <main className="document-shell grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(620px,1.08fr)] gap-px bg-gray-200">
+    <main className="document-shell grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
       <section className="document-editor-pane min-h-0 overflow-hidden bg-white">
         <CodeEditor
           value={localMarkdown}
@@ -275,17 +242,23 @@ export function DocumentMode({
       <section ref={previewScrollRef} className="document-workspace min-h-0 overflow-y-auto bg-slate-100">
         <PreviewToolbar leftContent={toolbarLeftContent} actions={toolbarActions} className="document-toolbar" />
 
-        <div className="document-print-area mx-auto flex w-full flex-col items-center gap-6 px-6 py-6">
+        <div 
+          className="document-print-area mx-auto flex w-full flex-col items-center gap-6 px-6 py-6"
+          style={{
+            zoom: printAreaScale < 1 ? printAreaScale : undefined,
+          }}
+        >
           {/* 隐藏测量容器 */}
           <div
             ref={measuringRef}
-            className={`document-page document-content document-font-${settings.fontFamily} document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
+            className={`document-page document-content document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
             style={{
               ...DOCUMENT_TITLE_STYLE_VARS,
               position: 'absolute',
               visibility: 'hidden',
               top: -9999,
               width: settings.pageWidth - settings.marginLeft - settings.marginRight,
+              fontFamily: getFontFamilyCss(settings.fontFamily),
             }}
           >
             {model.blocks.map((block) => (
@@ -302,12 +275,13 @@ export function DocumentMode({
           {pages.map((page) => (
             <article
               key={page.pageNumber}
-              className={`document-page document-font-${settings.fontFamily} document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
+              className={`document-page document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
               style={{
                 ...DOCUMENT_TITLE_STYLE_VARS,
                 width: settings.pageWidth,
                 height: settings.pageHeight,
                 position: 'relative',
+                fontFamily: getFontFamilyCss(settings.fontFamily),
               }}
             >
               {/* Header - absolute positioned at top */}

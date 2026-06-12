@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useScrollSync } from "@/lib/useScrollSync";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { copyText } from "@/lib/clipboard";
@@ -28,6 +28,8 @@ import {
 } from "@/components/layout/PreviewToolbar";
 import { CustomPromptPopover } from "@/components/layout/CustomPromptPopover";
 import { exportMarkdownSource } from '@/lib/exportSource'
+import { useBlockHeights } from '@/lib/useBlockHeights'
+import { useExportAction } from '@/lib/useExportAction'
 
 interface CardModeProps {
   markdown: string;
@@ -58,19 +60,31 @@ export function CardMode({
   onToast,
 }: CardModeProps) {
   const [aspect, setAspect] = useState<XhsAspect>("3:4");
-  const [exporting, setExporting] = useState(false);
+  const [exporting, runExport] = useExportAction(onToast);
   const cardFont = useStore((s) => s.cardFont);
   const setCardFont = useStore((s) => s.setCardFont);
   const [authorName, setAuthorName] = useState("Pintley Tasia");
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
 
   const editorScrollerRef = useRef<HTMLElement | null>(null);
   const previewScrollRef = useRef<HTMLDivElement>(null);
   const [editorReady, setEditorReady] = useState(0);
 
-  const [actualHeights, setActualHeights] = useState<Record<string, number>>(
-    {},
-  );
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = previewScrollRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      setContainerWidth(rect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const measuringRef = useRef<HTMLDivElement>(null);
 
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady]);
@@ -79,6 +93,10 @@ export function CardMode({
   // 给四周留出均匀的呼吸感：卡片总高 - 页脚高度(44) - 顶部留白(32) - 底部留白(24)
   const pixelBudget = size.h - 44 - 32 - 24;
 
+  const cardScale = containerWidth > 0
+    ? Math.min(1, (containerWidth - 40) / size.w)
+    : 1;
+
   // store ↔ 编辑器双向同步（防抖回写 + 外部变更信号）
   const {
     localValue: localMarkdown,
@@ -86,6 +104,12 @@ export function CardMode({
     setLocalValue: setLocalMarkdown,
     externalVersion,
   } = useEditorDocSync(markdown, setMarkdown);
+
+  const [actualHeights] = useBlockHeights(measuringRef, [
+    debouncedMarkdown,
+    aspect,
+    colors,
+  ]);
 
   const model = useMemo(
     () =>
@@ -98,60 +122,6 @@ export function CardMode({
       ),
     [debouncedMarkdown, aspect, platform, actualHeights, pixelBudget],
   );
-
-  useLayoutEffect(() => {
-    if (!measuringRef.current) return;
-
-    const measure = () => {
-      const newHeights: Record<string, number> = {};
-      let changed = false;
-      const elements = measuringRef.current!.children;
-
-      let lastBottom = 0;
-      let isFirst = true;
-
-      for (let i = 0; i < elements.length; i++) {
-        const el = elements[i] as HTMLElement;
-        const id = el.getAttribute("data-block-id");
-        if (id) {
-          if (isFirst) {
-            lastBottom = el.offsetTop;
-            isFirst = false;
-          }
-
-          const bottom = el.offsetTop + el.offsetHeight;
-          const h = bottom - lastBottom;
-          lastBottom = bottom;
-
-          if (actualHeights[id] !== h) {
-            changed = true;
-          }
-          newHeights[id] = h;
-        }
-      }
-      if (changed) {
-        setActualHeights(newHeights);
-      }
-    };
-
-    measure();
-
-    const resizeObserver = new ResizeObserver(() => measure());
-    const handleLoad = (e: Event) => {
-      if ((e.target as HTMLElement).tagName === "IMG") {
-        measure();
-      }
-    };
-    measuringRef.current.addEventListener("load", handleLoad, true);
-
-    const elements = Array.from(measuringRef.current.children);
-    elements.forEach((el) => resizeObserver.observe(el));
-
-    return () => {
-      resizeObserver.disconnect();
-      measuringRef.current?.removeEventListener("load", handleLoad, true);
-    };
-  }, [model.rawBlocks, aspect, colors]);
 
   const finalBrand = authorName || model.meta.brand;
 
@@ -186,80 +156,86 @@ export function CardMode({
     ];
   }, [model, aspect, colors, cardFont]);
 
-  const exportOne = async (card: PreviewCard, index: number) => {
+  const exportOne = (card: PreviewCard, index: number) => {
     const node = cardRefs.current[card.id];
     if (!node) {
       onToast("卡片尚未渲染完成");
       return;
     }
 
-    setExporting(true);
-    try {
-      const blob = await elementToBlob(node, {
-        scale: 3,
-        backgroundColor: card.kind === "cover" ? XHS.bg : "#ffffff",
-      });
-      const prefix = "card";
-      downloadBlob(
-        blob,
-        `${prefix}-${String(index + 1).padStart(2, "0")}-${fileSafe(model.meta.title)}.png`,
-      );
-      onToast(`已导出 ${card.label}`);
-    } catch (e) {
-      onToast(`导出失败：${e instanceof Error ? e.message : "未知错误"}`);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const exportAll = async () => {
-    setExporting(true);
-    try {
-      for (let i = 0; i < cards.length; i += 1) {
-        const node = cardRefs.current[cards[i].id];
-        if (!node) throw new Error(`${cards[i].label} 尚未渲染完成`);
+    runExport(async () => {
+      const container = cardsContainerRef.current;
+      const prevZoom = container ? container.style.zoom : '';
+      if (container) container.style.zoom = '1';
+      try {
         const blob = await elementToBlob(node, {
           scale: 3,
-          backgroundColor: cards[i].kind === "cover" ? XHS.bg : "#ffffff",
+          backgroundColor: card.kind === "cover" ? XHS.bg : "#ffffff",
         });
         const prefix = "card";
         downloadBlob(
           blob,
-          `${prefix}-${String(i + 1).padStart(2, "0")}-${fileSafe(model.meta.title)}.png`,
+          `${prefix}-${String(index + 1).padStart(2, "0")}-${fileSafe(model.meta.title)}.png`,
         );
+        return `已导出 ${card.label}`;
+      } finally {
+        if (container) container.style.zoom = prevZoom;
       }
-      onToast(`已导出 ${cards.length} 张图片`);
-    } catch (e) {
-      onToast(`导出失败：${e instanceof Error ? e.message : "未知错误"}`);
-    } finally {
-      setExporting(false);
-    }
+    });
   };
 
-  const exportZip = async () => {
-    setExporting(true);
-    try {
-      const entries: ZipEntry[] = [];
-      for (let i = 0; i < cards.length; i++) {
-        const node = cardRefs.current[cards[i].id];
-        if (!node) throw new Error(`${cards[i].label} 尚未渲染完成`);
-        const blob = await elementToBlob(node, {
-          scale: 3,
-          backgroundColor: cards[i].kind === "cover" ? XHS.bg : "#ffffff",
-        });
-        entries.push({
-          filename: `card-${String(i + 1).padStart(2, "0")}-${fileSafe(model.meta.title)}.png`,
-          blob,
-        });
+  const exportAll = () => {
+    runExport(async () => {
+      const container = cardsContainerRef.current;
+      const prevZoom = container ? container.style.zoom : '';
+      if (container) container.style.zoom = '1';
+      try {
+        for (let i = 0; i < cards.length; i += 1) {
+          const node = cardRefs.current[cards[i].id];
+          if (!node) throw new Error(`${cards[i].label} 尚未渲染完成`);
+          const blob = await elementToBlob(node, {
+            scale: 3,
+            backgroundColor: cards[i].kind === "cover" ? XHS.bg : "#ffffff",
+          });
+          const prefix = "card";
+          downloadBlob(
+            blob,
+            `${prefix}-${String(i + 1).padStart(2, "0")}-${fileSafe(model.meta.title)}.png`,
+          );
+        }
+        return `已导出 ${cards.length} 张图片`;
+      } finally {
+        if (container) container.style.zoom = prevZoom;
       }
-      const zipName = `${fileSafe(model.meta.title) || "cards"}.zip`;
-      await downloadAsZip(entries, zipName);
-      onToast(`已打包 ${entries.length} 张图片`);
-    } catch (e) {
-      onToast(`导出失败：${e instanceof Error ? e.message : "未知错误"}`);
-    } finally {
-      setExporting(false);
-    }
+    });
+  };
+
+  const exportZip = () => {
+    runExport(async () => {
+      const container = cardsContainerRef.current;
+      const prevZoom = container ? container.style.zoom : '';
+      if (container) container.style.zoom = '1';
+      try {
+        const entries: ZipEntry[] = [];
+        for (let i = 0; i < cards.length; i++) {
+          const node = cardRefs.current[cards[i].id];
+          if (!node) throw new Error(`${cards[i].label} 尚未渲染完成`);
+          const blob = await elementToBlob(node, {
+            scale: 3,
+            backgroundColor: cards[i].kind === "cover" ? XHS.bg : "#ffffff",
+          });
+          entries.push({
+            filename: `card-${String(i + 1).padStart(2, "0")}-${fileSafe(model.meta.title)}.png`,
+            blob,
+          });
+        }
+        const zipName = `${fileSafe(model.meta.title) || "cards"}.zip`;
+        await downloadAsZip(entries, zipName);
+        return `已打包 ${entries.length} 张图片`;
+      } finally {
+        if (container) container.style.zoom = prevZoom;
+      }
+    });
   };
 
   const copyCaption = async () => {
@@ -344,7 +320,7 @@ export function CardMode({
   );
 
   return (
-    <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(620px,1.1fr)] gap-px bg-gray-200">
+    <main className="grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
       <section className="min-h-0 overflow-hidden bg-white">
         <CodeEditor
           value={localMarkdown}
@@ -389,7 +365,13 @@ export function CardMode({
             </pre>
           </aside>
 
-          <div className="flex flex-col items-center gap-6 pb-12">
+            <div 
+              ref={cardsContainerRef}
+              className="flex flex-col items-center gap-6 pb-12"
+              style={{
+                zoom: cardScale < 1 ? cardScale : undefined,
+              }}
+            >
             {/* 隐藏测量容器 */}
             <div
               ref={measuringRef}

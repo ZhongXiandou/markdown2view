@@ -15,6 +15,7 @@ import { useImageUpload } from '@/lib/useImageUpload'
 import { exportHtmlSource } from '@/lib/exportSource'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { UserGuidePopover } from './UserGuidePopover'
+import { useExportAction } from '@/lib/useExportAction'
 
 interface HtmlModeProps {
   html: string
@@ -104,7 +105,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const [refreshKey, setRefreshKey] = useState(0)
   const [promptOpen, setPromptOpen] = useState(false)
   const [editorReady, setEditorReady] = useState(0)
-  const [exporting, setExporting] = useState(false)
+  const [exporting, runExport] = useExportAction(onToast)
   const [allowScripts, setAllowScripts] = useState(false)
 
   // 提前通过 DOMParser 检测预期的页面数量，避免 iframe 加载完成前后工具栏发生抖动闪烁（即所谓的“加载两次”视觉效果）
@@ -341,63 +342,51 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     }
   }, [debouncedHtml, refreshKey, pages, currentPage])
 
-  const handleExport = async () => {
+  const handleExport = () => {
     if (!iframeRef.current) {
       onToast('预览尚未就绪')
       return
     }
-    setExporting(true)
     const doc = iframeRef.current.contentDocument
     if (!doc) {
       onToast('预览尚未就绪')
-      setExporting(false)
       return
     }
-    try {
+    runExport(async () => {
       await withScaleReset(doc, async () => {
         const blob = await captureIframeElement(iframeRef.current!, firstContentElement(doc))
         downloadBlob(blob, `html-${Date.now()}.png`)
       })
-      onToast('已导出 PNG')
-    } catch (e) {
-      onToast(`导出失败：${e instanceof Error ? e.message : '未知错误'}`)
-    } finally {
-      setExporting(false)
-    }
+      return '已导出 PNG'
+    })
   }
 
-  const handleExportCurrentPage = async () => {
+  const handleExportCurrentPage = () => {
     const iframe = iframeRef.current
     const doc = iframe?.contentDocument
     if (!doc || !pages.length) return
     const page = pages[currentPage]
     if (!page) return
     
-    setExporting(true)
     const allNodes = pages.map(p => p.node)
-    try {
+    runExport(async () => {
       await withScaleReset(doc, async () => {
         await withVisiblePage(allNodes, currentPage, async () => {
           const blob = await captureIframeElement(iframe, page.node)
           downloadBlob(blob, `html-page-${currentPage + 1}.png`)
         })
       })
-      onToast(`已导出 ${page.label}`)
-    } catch (e) {
-      onToast(`导出失败：${e instanceof Error ? e.message : '未知错误'}`)
-    } finally {
-      setExporting(false)
-    }
+      return `已导出 ${page.label}`
+    })
   }
 
-  const handleExportPagesZip = async () => {
+  const handleExportPagesZip = () => {
     const iframe = iframeRef.current
     const doc = iframe?.contentDocument
     if (!doc || !pages.length) return
     
-    setExporting(true)
     const allNodes = pages.map(p => p.node)
-    try {
+    runExport(async () => {
       const entries: ZipEntry[] = []
 
       await withScaleReset(doc, async () => {
@@ -410,14 +399,10 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
         }
       })
       await downloadAsZip(entries, `html-pages-${Date.now()}.zip`)
-      onToast(`已打包 ${pages.length} 页`)
-    } catch (e) {
-      onToast(`导出失败：${e instanceof Error ? e.message : '未知错误'}`)
-    } finally {
-      setExporting(false)
-    }
+      return `已打包 ${pages.length} 页`
+    })
   }
-  const handleExportPdf = async () => {
+  const handleExportPdf = () => {
     const iframe = iframeRef.current
     const doc = iframe?.contentDocument
     if (!doc) {
@@ -425,8 +410,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       return
     }
 
-    setExporting(true)
-    try {
+    runExport(async () => {
       await withScaleReset(doc, async () => {
         if (pages.length > 0) {
           // 多页模式：在 iframe 内逐页截图，保留完整样式
@@ -442,12 +426,8 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
           await exportSinglePageToPdf(iframe, `html-${Date.now()}.pdf`)
         }
       })
-      onToast('PDF 导出成功')
-    } catch (e) {
-      onToast(`PDF 导出失败：${e instanceof Error ? e.message : '未知错误'}`)
-    } finally {
-      setExporting(false)
-    }
+      return 'PDF 导出成功'
+    })
   }
 
 
