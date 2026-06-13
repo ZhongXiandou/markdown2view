@@ -608,22 +608,22 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       <UserGuidePopover
         guideKey="m2v-html-guide-seen"
         title="自由画布 快速开始"
-        subtitle="三步生成精美的可视化 HTML 作品"
+        subtitle="利用 AI 提示词库快速生成精美的动态或静态 HTML 页面"
         steps={[
           {
             icon: '📚',
-            title: '选择风格并复制指令',
-            desc: '打开「指令库」，选择喜欢的风格，点击「复制提示词」',
+            title: '复制风格排版指令',
+            desc: '在上方工具栏打开「指令库」，选择心仪的组件风格，点击「复制提示词」复制对应的排版规则。',
           },
           {
             icon: '🤖',
-            title: '发送给 AI 生成 HTML',
-            desc: '将指令 + 你的内容发送给 AI。推荐使用 Claude / ChatGPT / Gemini',
+            title: '发给 AI 优化并生成 HTML',
+            desc: '将复制的指令与你的原始草稿内容一起发给 AI，让其输出符合特定风格排版的 HTML 源码。',
           },
           {
             icon: '📋',
-            title: '粘贴 HTML 到编辑器',
-            desc: '将 AI 返回的 HTML 代码粘贴到左侧编辑器中，右侧即可实时渲染',
+            title: '粘贴 HTML 实时预览与导出',
+            desc: '将 AI 返回的 HTML 代码粘贴到左侧编辑器，右侧即可实时加载并渲染，支持一键打包下载。',
           },
         ]}
       />

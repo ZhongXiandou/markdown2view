@@ -346,22 +346,22 @@ export function DocumentMode({
       <UserGuidePopover
         guideKey="m2v-document-guide-seen"
         title="A4 规范文档 快速开始"
-        subtitle="编写并排版符合 A4 标准的学术与正式报告"
+        subtitle="利用 AI 智能排版指令，生成符合 A4 物理分页规范的专业报告/文档"
         steps={[
           {
-            icon: '📝',
-            title: '编写 Markdown 内容',
-            desc: '在左侧编辑器中使用 Markdown 编写文档，支持标题、表格、代码块及公式。',
+            icon: '📚',
+            title: '复制排版指令',
+            desc: '点击右上角「复制排版指令」，获取包含智能跨页、防孤立标题、封面表格等排版规范的 AI 提示词。',
           },
           {
-            icon: '📐',
-            title: '配置排版参数',
-            desc: '在控制面板设置页眉页脚、页码、字体、字号以及首行缩进等样式参数。',
+            icon: '🤖',
+            title: '发给 AI 优化文档结构',
+            desc: '将复制的指令与你的报告大纲或草稿内容发给 AI，让其按物理分页与严谨格式输出 Markdown 结构。',
           },
           {
             icon: '🖨️',
-            title: '预览与完美导出',
-            desc: '预览区支持精准的智能跨页分页，点击右上角「导出 PDF」即可生成无损的 A4 打印文件。',
+            title: '粘贴并无损导出 PDF',
+            desc: '将 AI 输出的 Markdown 粘贴到左侧，右侧将呈现完美分页预览，在顶部栏微调字体页眉后，点击「导出 PDF」保存即可。',
           },
         ]}
       />

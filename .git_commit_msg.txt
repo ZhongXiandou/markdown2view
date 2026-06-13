@@ -1,20 +1,5 @@
-feat: 抽象通用引导组件、新增隐私数据说明与 GitHub 开源属性关联
+docs: 优化各模式下的首次使用指引文案，突出 AI 优化与回填工作流
 
-1. 重构与抽象通用指引组件 (UserGuidePopover)：
-   - 将原 HtmlMode 下的指引组件提取到 src/components/ui/UserGuidePopover.tsx，支持完全的 Props 定制；
-   - 指引组件底部集成了“隐私与开源声明小卡片”，告知用户纯前端、零上传及本地 localStorage 存储属性，并直链 GitHub；
-   - 适配到所有四个模式（自由画布、长图文排版、A4规范文档、分页图文卡片）中，提供针对性的操作指引。
-
-2. 新增隐私与数据安全说明模态框 (PrivacyModal)：
-   - 创建 src/components/layout/PrivacyModal.tsx，采用磨砂玻璃与渐变设计；
-   - 详细公示了纯前端沙箱运行零上传、本地持久化存储机制、以及图床直连 API 拒绝中转的安全细节。
-
-3. 整合导航栏 GitHub 开源属性与外部链接：
-   - App.tsx 顶部栏右上角新增“隐私说明”按钮与“GitHub 开源”图标链接；
-   - 添加了悬浮 Tooltip 声明以增强开源受信任度；
-   - 挂载 PrivacyModal 控制其展示状态；
-   - 整合了用户追加的 BeeEffy 待办复盘项目链接。
-
-4. 优化浏览器页签图标 (Favicon)：
-   - 创建 public/favicon.svg，采用渐变绿色背景与羽毛笔 Logo 组合；
-   - index.html 的 head 引入 favicon.svg 作为浏览器页签图标。
+- 更新四个模式下使用指引（UserGuidePopover）的配置与文案；
+- 将引导流程重塑为以“复制排版指令 -> 发给 AI 优化排版 -> 将排版内容回填编辑器并导出成果”为主线的 AI 协作工作流；
+- 协助用户高效利用 AI 提示词和系统排版引擎，生成完全符合规则的 Markdown / HTML 结构。
