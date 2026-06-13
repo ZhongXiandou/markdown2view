@@ -466,6 +466,9 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
 
     // 表格
     if (line.indexOf('|') >= 0 && i + 1 < lines.length && /\|[\s-:]+\|/.test(lines[i + 1])) {
+      // 检测是否为续表（前一行包含"（续表）"）
+      const isContinuation = i > 0 && lines[i - 1].includes('（续表）')
+      
       const headers = line
         .split('|')
         .map((s) => s.trim())
@@ -481,6 +484,12 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
         )
         i++
       }
+      
+      // 如果是续表，在表格前添加续表标记
+      if (isContinuation) {
+        html += `<section style="margin:0px 0px 10px;text-align:center;font-size:12px;color:rgb(100,116,139);font-style:italic">（续表）</section>`
+      }
+      
       html += `<section style="margin:0px 0px 30px;display:flex;justify-content:center;width:100%"><section style="box-shadow:rgba(15,23,42,0.05) 0px 10px 24px;border-radius:12px;border:1px solid rgba(229,231,235,0.9);overflow:hidden;background:#ffffff;max-width:100%;width:max-content"><section style="padding:16px;background:#ffffff"><section class="tableWrapper" style="width:100%;overflow-x:auto"><table style="border-collapse:collapse;table-layout:auto;width:100%;border:1px solid rgb(226,232,240)"><thead><tr style="background-color:rgb(248,250,252)">`
       headers.forEach((h) => {
         html += `<th valign="top" align="left" style="vertical-align:top;border:1px solid rgb(226,232,240);padding:10px 14px;text-align:left;font-size:13px;font-weight:700;color:rgb(51,65,85)">${inlineFormat(h, t)}</th>`
@@ -601,4 +610,80 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
 
   // 回填数学公式的 KaTeX HTML
   return restoreMath(html, mathStore)
+}
+
+export interface TableData {
+  headers: string[]
+  rows: string[][]
+  rawMarkdown: string
+}
+
+export function parseTableMarkdown(markdown: string): TableData | null {
+  const lines = markdown.split('\n').filter(line => line.trim())
+  
+  // 查找表头行（包含 | 的行）
+  let headerIndex = -1
+  let separatorIndex = -1
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.includes('|')) {
+      if (headerIndex === -1) {
+        headerIndex = i
+      } else if (/^[\|\s:-]+$/.test(line)) {
+        separatorIndex = i
+        break
+      }
+    }
+  }
+  
+  if (headerIndex === -1 || separatorIndex === -1) return null
+  
+  // 解析表头
+  const headers = lines[headerIndex]
+    .split('|')
+    .map(s => s.trim())
+    .filter(Boolean)
+  
+  // 解析数据行
+  const rows: string[][] = []
+  for (let i = separatorIndex + 1; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.includes('|')) {
+      const cells = line
+        .split('|')
+        .map(s => s.trim())
+        .filter(Boolean)
+      rows.push(cells)
+    }
+  }
+  
+  return {
+    headers,
+    rows,
+    rawMarkdown: markdown
+  }
+}
+
+export function estimateTableRowHeight(row: string[], isHeader: boolean = false): number {
+  // 基础行高
+  const baseHeight = isHeader ? 40 : 36
+  // 单元格内容高度估算（假设每行28px）
+  const maxLines = Math.max(...row.map(cell => 
+    Math.ceil(cell.length / 20) // 假设每行20字符
+  ))
+  return baseHeight + (maxLines - 1) * 28
+}
+
+export function estimateTableHeight(tableData: TableData): number {
+  let height = 0
+  // 表头高度
+  height += estimateTableRowHeight(tableData.headers, true)
+  // 数据行高度
+  for (const row of tableData.rows) {
+    height += estimateTableRowHeight(row, false)
+  }
+  // 容器边距和内边距
+  height += 60 // 30px margin top + 30px margin bottom
+  return height
 }

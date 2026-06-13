@@ -1,4 +1,5 @@
 import type { ContentMeta } from '@/lib/render/metadata'
+import { parseTableMarkdown, estimateTableRowHeight, estimateTableHeight, type TableData } from '@/engine/utils/markdownParser'
 
 export type DocumentBlockKind =
   | 'heading'
@@ -163,6 +164,11 @@ function estimateBlockHeight(markdown: string, kind: DocumentBlockKind): number 
     case 'image':
       return 280
     case 'table': {
+      const tableData = parseTableMarkdown(markdown)
+      if (tableData) {
+        return estimateTableHeight(tableData)
+      }
+      // 回退到简单估算
       const rows = markdown.split('\n').filter((line) => line.includes('|')).length
       return 48 + Math.max(1, rows) * 36
     }
@@ -281,6 +287,93 @@ function isCoverPageBlocks(blocks: DocumentBlock[]): boolean {
   return headingCount === 1 && tableCount <= 1
 }
 
+interface SplitTableResult {
+  pages: Array<{
+    tableMarkdown: string
+    isContinuation: boolean
+    height: number
+  }>
+}
+
+function splitTableByHeight(
+  tableMarkdown: string,
+  availableHeight: number,
+  settings: { marginTop: number; marginBottom: number }
+): SplitTableResult | null {
+  const tableData = parseTableMarkdown(tableMarkdown)
+  if (!tableData) return null
+  
+  const pages: SplitTableResult['pages'] = []
+  let currentPageRows: string[][] = []
+  let currentHeight = 0
+  const headerHeight = estimateTableRowHeight(tableData.headers, true)
+  const containerPadding = 60 // 表格容器的内边距和边距
+  
+  // 计算第一页可用高度（减去表格容器开销）
+  const firstPageAvailable = availableHeight - containerPadding
+  
+  // 计算后续页可用高度（需要重新添加表头）
+  const continuationPageAvailable = availableHeight - containerPadding - headerHeight
+  
+  for (let i = 0; i < tableData.rows.length; i++) {
+    const row = tableData.rows[i]
+    const rowHeight = estimateTableRowHeight(row, false)
+    
+    const isFirstPage = pages.length === 0
+    const currentAvailable = isFirstPage ? firstPageAvailable : continuationPageAvailable
+    
+    if (currentHeight + rowHeight > currentAvailable && currentPageRows.length > 0) {
+      // 当前页已满，生成页面
+      const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, pages.length > 0)
+      pages.push({
+        tableMarkdown: pageMarkdown,
+        isContinuation: pages.length > 0,
+        height: currentHeight + containerPadding + (pages.length > 0 ? headerHeight : 0)
+      })
+      
+      // 开始新页
+      currentPageRows = [row]
+      currentHeight = rowHeight
+    } else {
+      // 添加到当前页
+      currentPageRows.push(row)
+      currentHeight += rowHeight
+    }
+  }
+  
+  // 处理最后一页
+  if (currentPageRows.length > 0) {
+    const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, pages.length > 0)
+    pages.push({
+      tableMarkdown: pageMarkdown,
+      isContinuation: pages.length > 0,
+      height: currentHeight + containerPadding + (pages.length > 0 ? headerHeight : 0)
+    })
+  }
+  
+  return { pages }
+}
+
+function buildTableMarkdown(headers: string[], rows: string[][], isContinuation: boolean): string {
+  let markdown = ''
+  
+  // 如果是续表，添加续表标记
+  if (isContinuation) {
+    markdown += '**（续表）**\n\n'
+  }
+  
+  // 表头
+  markdown += '| ' + headers.join(' | ') + ' |\n'
+  markdown += '| ' + headers.map(() => '---').join(' | ') + ' |\n'
+  
+  // 数据行
+  for (const row of rows) {
+    markdown += '| ' + row.join(' | ') + ' |\n'
+  }
+  
+  return markdown.trim()
+}
+
 export function paginateDocumentBlocks(
   blocks: DocumentBlock[],
   settings: Pick<DocumentSettings, 'pageHeight' | 'marginTop' | 'marginBottom' | 'fontScale'>,
@@ -323,6 +416,52 @@ export function paginateDocumentBlocks(
         pushPage()
       }
       continue // Drop the pagebreak marker itself from rendering
+    }
+
+    // 处理表格跨页
+    if (block.kind === 'table') {
+      const tableData = parseTableMarkdown(block.markdown)
+      if (tableData) {
+        const availableHeight = effectiveHeight - usedHeight
+        const splitResult = splitTableByHeight(block.markdown, availableHeight, settings)
+        
+        if (splitResult && splitResult.pages.length > 1) {
+          // 表格需要跨页
+          for (let i = 0; i < splitResult.pages.length; i++) {
+            const page = splitResult.pages[i]
+            
+            if (i === 0) {
+              // 第一页：添加到当前页
+              const tableBlock: DocumentBlock = {
+                id: `${block.id}-part-${i}`,
+                kind: 'table',
+                markdown: page.tableMarkdown,
+                estimatedHeight: page.height,
+                avoidBreak: false,
+              }
+              current.push(tableBlock)
+              usedHeight += page.height
+              pushPage()
+            } else {
+              // 后续页：新页面开始
+              const tableBlock: DocumentBlock = {
+                id: `${block.id}-part-${i}`,
+                kind: 'table',
+                markdown: page.tableMarkdown,
+                estimatedHeight: page.height,
+                avoidBreak: false,
+              }
+              current = [tableBlock]
+              usedHeight = page.height
+              
+              if (i < splitResult.pages.length - 1) {
+                pushPage()
+              }
+            }
+          }
+          continue
+        }
+      }
     }
 
     const height = actualHeights?.[block.id] ?? block.estimatedHeight

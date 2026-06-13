@@ -162,4 +162,59 @@ describe('documentModel', () => {
     expect(pages.map((p) => p.blocks.map((b) => b.id))).toEqual([['p'], ['img'], ['tail']])
     expect(pages[1].oversized).toBe(true)
   })
+
+  describe('Table Cross-Page Pagination', () => {
+    it('should split long table across pages', () => {
+      // 创建一个超长表格
+      const tableRows = Array.from({ length: 20 }, (_, i) => 
+        `| 行${i + 1} | 数据${i + 1} | 描述${i + 1} |`
+      ).join('\n')
+      
+      const markdown = `表 1: 测试表格\n| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n${tableRows}`
+      
+      const blocks = splitMarkdownBlocks(markdown)
+      const settings = {
+        pageHeight: 400, // 使用较小的页面高度强制分页
+        marginTop: 50,
+        marginBottom: 50,
+        fontScale: 'normal' as const
+      }
+      
+      const pages = paginateDocumentBlocks(blocks, settings)
+      
+      // 应该有多页
+      expect(pages.length).toBeGreaterThan(1)
+      
+      // 每页都应该有表格内容
+      pages.forEach(page => {
+        const tableBlocks = page.blocks.filter(b => b.kind === 'table')
+        expect(tableBlocks.length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should add continuation marker for split tables', () => {
+      const tableRows = Array.from({ length: 15 }, (_, i) => 
+        `| 行${i + 1} | 数据${i + 1} |`
+      ).join('\n')
+      
+      const markdown = `表 1: 测试表格\n| 列1 | 列2 |\n| --- | --- |\n${tableRows}`
+      
+      const blocks = splitMarkdownBlocks(markdown)
+      const settings = {
+        pageHeight: 300,
+        marginTop: 50,
+        marginBottom: 50,
+        fontScale: 'normal' as const
+      }
+      
+      const pages = paginateDocumentBlocks(blocks, settings)
+      
+      // 第二页及之后的表格应该包含续表标记
+      if (pages.length > 1) {
+        const secondPage = pages[1]
+        const tableBlock = secondPage.blocks.find(b => b.kind === 'table')
+        expect(tableBlock?.markdown).toContain('（续表）')
+      }
+    })
+  })
 })
