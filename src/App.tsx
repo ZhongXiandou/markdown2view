@@ -136,6 +136,7 @@ export default function App() {
               <path d="M50.74 1.97 L62.55 10.84 L50.74 19.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M64.32 1.97 L76.13 10.84 L64.32 19.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.45"/>
             </svg>
+            BeeEffy
           </a>
 
           <div className="w-px h-4 bg-slate-200" />
