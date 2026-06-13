@@ -271,3 +271,17 @@ body {
     break-after: auto;
   }
 }
+
+/* 隐藏表格的滚动条轨道和滑块，并防止 Y 轴方向因 X 轴 overflow-x 引起的副作用渲染滚动条 */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+.tableWrapper::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
