@@ -2,7 +2,7 @@
 schema_version: 1
 locale: zh-CN
 branch: master
-exported_at: "2026-06-12T20:14:10Z"
+exported_at: "2026-06-12T20:42:43Z"
 modules:
     "":
         dir_name: 多模态 Markdown_HTML 可视化创作平台
@@ -18,15 +18,15 @@ modules:
         scope: []
         source_files: []
         children:
-            - decisions/976215bd2500_eade52846f6f
-            - decisions/70214b184e46_73bdacd0b1fa
-            - decisions/70214b184e46_44604519f0e9
-            - decisions/1d42e71463d0_d649656b4c95
-            - decisions/976215bd2500_6b1a38644c61
-            - decisions/976215bd2500_3bdf9ce94031
+            - decisions/1d42e71463d0_f1c7463e36a9
             - decisions/70214b184e46_b831b0baaa0e
             - decisions/1d42e71463d0_ad4c54b4cd7d
-            - decisions/1d42e71463d0_f1c7463e36a9
+            - decisions/1d42e71463d0_d649656b4c95
+            - decisions/976215bd2500_eade52846f6f
+            - decisions/976215bd2500_6b1a38644c61
+            - decisions/976215bd2500_3bdf9ce94031
+            - decisions/70214b184e46_73bdacd0b1fa
+            - decisions/70214b184e46_44604519f0e9
         depends_on: []
         related_to: []
     decisions/1d42e71463d0_ad4c54b4cd7d:
@@ -106,13 +106,11 @@ modules:
         related_to:
             - path: decisions/70214b184e46_44604519f0e9
     markdown2view:
-        dir_name: 多模态 Markdown_HTML 可视化渲染引擎
-        title: 多模态 Markdown/HTML 可视化渲染引擎
+        dir_name: 多模态 Markdown_HTML 可视化与导出引擎
+        title: 多模态 Markdown/HTML 可视化与导出引擎
         scope:
             - src/
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: decisions/70214b184e46_b831b0baaa0e
-            - path: decisions/976215bd2500_6b1a38644c61
+        related_to: []

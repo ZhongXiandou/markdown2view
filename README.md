@@ -162,6 +162,42 @@ src/
 
 ---
 
+## 🧑‍💻 开发与提交规范
+
+详细规范请参阅 [`docs/代码与提交规范.md`](./docs/代码与提交规范.md)，以下为核心要点：
+
+### 命名与注释
+- 组件文件用 PascalCase（如 `PreviewToolbar.tsx`），工具函数用 camelCase（如 `useDebounce.ts`）
+- 注释使用中文，只写"为什么"（Why），不写"是什么"（What）
+
+### Git 提交规范（Angular 规范）
+```
+<type>(<scope>): <subject>
+
+<body>
+```
+
+| Type | 说明 |
+| :--- | :--- |
+| `feat` | 新增功能 |
+| `fix` | 修复 bug |
+| `docs` | 文档变更 |
+| `style` | 代码格式（不影响运行） |
+| `refactor` | 重构 |
+| `perf` | 性能优化 |
+| `test` | 测试相关 |
+| `build` | 构建系统或依赖变更 |
+| `chore` | 辅助工具/库的更改 |
+
+### 提交前检查清单
+1. `pnpm typecheck` — TypeScript 类型检查通过
+2. `pnpm test` — 全部 Vitest 单元测试通过
+3. `pnpm build` — 构建无报错，核心 chunk 无异常膨胀
+
+> 💡 更多开发经验与踩坑记录请参阅 [`docs/开发经验与偏好记录.md`](./docs/开发经验与偏好记录.md)。
+
+---
+
 ## 📄 开源协议
 
 [MIT License](./LICENSE)
