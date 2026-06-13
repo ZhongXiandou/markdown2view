@@ -137,6 +137,7 @@ describe('documentModel', () => {
     const blocks = [
       { id: 'body', kind: 'paragraph' as const, markdown: 'body', estimatedHeight: 720, avoidBreak: false },
       { id: 'heading', kind: 'heading' as const, markdown: '## 下一章', estimatedHeight: 80, avoidBreak: true },
+      { id: 'content', kind: 'paragraph' as const, markdown: '正文内容', estimatedHeight: 100, avoidBreak: false },
     ]
 
     const pages = paginateDocumentBlocks(blocks, {
@@ -147,7 +148,7 @@ describe('documentModel', () => {
       fontScale: 'normal',
     })
 
-    expect(pages.map((p) => p.blocks.map((b) => b.id))).toEqual([['body'], ['heading']])
+    expect(pages.map((p) => p.blocks.map((b) => b.id))).toEqual([['body'], ['heading', 'content']])
   })
 
   it('places an oversized image on its own page', () => {
@@ -215,6 +216,50 @@ describe('documentModel', () => {
         const tableBlock = secondPage.blocks.find(b => b.kind === 'table')
         expect(tableBlock?.markdown).toContain('（续表）')
       }
+    })
+
+    it('should NOT split table on the cover page', () => {
+      // 封面页结构：1个 heading + 1个 table，后面跟着 pagebreak
+      const markdown = [
+        '# 封面标题',
+        '',
+        '| 属性 | 值 |',
+        '| --- | --- |',
+        '| 编写 | 钟私豆 |',
+        '| 日期 | 2026-06-13 |',
+        '| 审核 | 李四 |',
+        '| 状态 | 草稿 |',
+        '',
+        '<page-break />',
+        '',
+        '# 正文第一章',
+        '这里是正文内容。',
+      ].join('\n')
+
+      const blocks = splitMarkdownBlocks(markdown)
+      const settings = {
+        pageHeight: 300, // 非常小的页高，强迫分页
+        marginTop: 50,
+        marginBottom: 50,
+        fontScale: 'normal' as const
+      }
+
+      const pages = paginateDocumentBlocks(blocks, settings)
+
+      // 验证第一页是封面页，且包含完整的表格没有被拆分
+      expect(pages.length).toBeGreaterThan(1)
+      expect(pages[0].isCover).toBe(true)
+      
+      const coverTable = pages[0].blocks.find(b => b.kind === 'table')
+      expect(coverTable).toBeDefined()
+      // 表格不应当被拆分，所有的属性都应该在这一页的表格中
+      expect(coverTable?.markdown).toContain('编写')
+      expect(coverTable?.markdown).toContain('日期')
+      expect(coverTable?.markdown).toContain('审核')
+      expect(coverTable?.markdown).toContain('状态')
+      
+      // 且不能有“-part-”的分裂 id
+      expect(coverTable?.id).not.toContain('part')
     })
   })
 })

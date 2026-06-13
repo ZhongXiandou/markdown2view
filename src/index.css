@@ -286,3 +286,9 @@ body {
   display: none !important; /* Chrome, Safari, Opera */
 }
 
+/* 解决 A4 文档模式下表格卡片容器在导出/克隆时因 max-content 导致宽度塌陷、列宽被极度压缩挤压的问题 */
+.document-content section[style*="width:max-content"],
+.document-content section[style*="width: max-content"] {
+  width: 100% !important;
+}
+

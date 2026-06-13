@@ -429,8 +429,15 @@ export function paginateDocumentBlocks(
     usedHeight = 0
   }
 
+  // 找出第一个 pagebreak 之前的所有块，以判定是否存在符合规范的封面页
+  const firstPagebreakIndex = blocks.findIndex((b) => b.kind === 'pagebreak')
+  const firstPageBlocks = firstPagebreakIndex !== -1 ? blocks.slice(0, firstPagebreakIndex) : []
+  const hasCoverPage = firstPagebreakIndex !== -1 && isCoverPageBlocks(firstPageBlocks)
+
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
+    const isCoverBlock = hasCoverPage && i < firstPagebreakIndex
+
     if (block.kind === 'pagebreak') {
       // 第一个 pagebreak 触发分页时，检测是否为封面页
       if (pages.length === 0 && isCoverPageBlocks(current)) {
@@ -450,8 +457,8 @@ export function paginateDocumentBlocks(
       continue // Drop the pagebreak marker itself from rendering
     }
 
-    // 处理表格跨页
-    if (block.kind === 'table') {
+    // 处理表格跨页（封面页表格绝对不进行跨页切分，作为整体保留在封面页）
+    if (block.kind === 'table' && !isCoverBlock) {
       const tableData = parseTableMarkdown(block.markdown)
       if (tableData) {
         let availableHeight = effectiveHeight - usedHeight
@@ -505,10 +512,10 @@ export function paginateDocumentBlocks(
     }
 
     const height = actualHeights?.[block.id] ?? block.estimatedHeight
-    const oversized = height > effectiveHeight
+    const oversized = !isCoverBlock && (height > effectiveHeight)
     
     let headingNearBottom = false
-    if (block.kind === 'heading' && current.length > 0) {
+    if (block.kind === 'heading' && current.length > 0 && !isCoverBlock) {
       // 智能防孤立标题算法：向后看，确保标题能和紧随其后的正文留在同一页
       let contentHeightToKeep = 0
       for (let j = i + 1; j < blocks.length; j++) {
@@ -536,7 +543,7 @@ export function paginateDocumentBlocks(
       continue
     }
 
-    if (current.length && (usedHeight + height > effectiveHeight || headingNearBottom)) {
+    if (current.length && !isCoverBlock && (usedHeight + height > effectiveHeight || headingNearBottom)) {
       pushPage()
     }
 

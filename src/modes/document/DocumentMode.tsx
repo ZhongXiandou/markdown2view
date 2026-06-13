@@ -107,13 +107,18 @@ export function DocumentMode({
   const handleExportPdf = () => {
     const container = document.querySelector('.document-print-area') as HTMLElement
     if (!container) return
-    const elements = Array.from(container.querySelectorAll('article.document-page')) as HTMLElement[]
-    if (elements.length === 0) return
 
     runExport(async () => {
       const prevZoom = container.style.zoom
       container.style.zoom = '1'
       try {
+        // 增加 100ms 延时等待浏览器重绘和 Layout 稳定
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        // 重新获取最新的元素，避免因 layout 重绘导致节点引用失效/丢失
+        const elements = Array.from(container.querySelectorAll('article.document-page')) as HTMLElement[]
+        if (elements.length === 0) throw new Error('未找到可导出的页面')
+
         const { exportElementsToPdf } = await import('@/lib/exportPdf')
         await exportElementsToPdf(
           elements,
