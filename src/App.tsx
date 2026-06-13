@@ -74,7 +74,7 @@ export default function App() {
 
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* 顶部导航栏 */}
       <header className="app-header relative z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 shadow-sm">
         <div className="flex items-center gap-6">

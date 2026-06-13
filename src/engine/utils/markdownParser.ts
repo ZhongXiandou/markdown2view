@@ -469,19 +469,18 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
       // 检测是否为续表（前一行包含"（续表）"）
       const isContinuation = i > 0 && lines[i - 1].includes('（续表）')
       
-      const headers = line
-        .split('|')
-        .map((s) => s.trim())
-        .filter(Boolean)
+      const parseRow = (rowStr: string) => {
+        let s = rowStr.trim()
+        if (s.startsWith('|')) s = s.substring(1)
+        if (s.endsWith('|')) s = s.substring(0, s.length - 1)
+        return s.split('|').map(x => x.trim())
+      }
+      
+      const headers = parseRow(line)
       i += 2
       const rows: string[][] = []
       while (i < lines.length && lines[i].indexOf('|') >= 0 && lines[i].trim() !== '') {
-        rows.push(
-          lines[i]
-            .split('|')
-            .map((s) => s.trim())
-            .filter(Boolean),
-        )
+        rows.push(parseRow(lines[i]))
         i++
       }
       
@@ -615,7 +614,9 @@ export function parseMarkdown(md: string, t: ThemeColors): string {
 export interface TableData {
   headers: string[]
   rows: string[][]
+  caption?: string
   rawMarkdown: string
+  colChars?: number[]
 }
 
 export function parseTableMarkdown(markdown: string): TableData | null {
@@ -658,32 +659,57 @@ export function parseTableMarkdown(markdown: string): TableData | null {
     }
   }
   
+  // 提取前面的内容作为 caption（比如 "表 1：xxx"）
+  const captionLines = lines.slice(0, headerIndex).join('\n').trim()
+  
+  // 智能估算每列的相对宽度（模拟 table-layout: auto）
+  const maxChars = Array(headers.length).fill(2)
+  const calcLen = (s: string) => s.trim().replace(/[^\x00-\xff]/g, 'aa').length / 2
+  
+  headers.forEach((h, i) => {
+    maxChars[i] = Math.max(maxChars[i], calcLen(h))
+  })
+  rows.forEach(row => {
+    row.forEach((cell, i) => {
+      if (i < headers.length) {
+        maxChars[i] = Math.max(maxChars[i], calcLen(cell))
+      }
+    })
+  })
+  
+  const totalChars = maxChars.reduce((a, b) => a + b, 0)
+  const totalAvailableChars = 46 // 约 650px 宽度能容纳的基准中文字符数
+  const colChars = maxChars.map(chars => Math.max(3, Math.floor((chars / totalChars) * totalAvailableChars)))
+  
   return {
     headers,
     rows,
-    rawMarkdown: markdown
+    caption: captionLines ? captionLines : undefined,
+    rawMarkdown: markdown,
+    colChars
   }
 }
 
-export function estimateTableRowHeight(row: string[], isHeader: boolean = false): number {
+export function estimateTableRowHeight(row: string[], isHeader: boolean = false, colChars?: number[]): number {
   // 基础行高
-  const baseHeight = isHeader ? 40 : 36
-  // 单元格内容高度估算（假设每行28px）
-  const maxLines = Math.max(...row.map(cell => 
-    Math.ceil(cell.length / 20) // 假设每行20字符
-  ))
-  return baseHeight + (maxLines - 1) * 28
+  const baseHeight = isHeader ? 46 : 42
+  let maxLines = 1
+  row.forEach((cell, i) => {
+    // 如果有智能列宽估算则使用，否则默认 18 字符
+    const charsPerLine = colChars && colChars[i] ? colChars[i] : 18
+    const cellLen = cell.trim().replace(/[^\x00-\xff]/g, 'aa').length / 2
+    // 考虑到标点符号避头尾和英文单词不截断，实际能利用的宽度打个 85% 的折扣
+    const effectiveChars = Math.max(1, charsPerLine * 0.85)
+    maxLines = Math.max(maxLines, Math.ceil(cellLen / effectiveChars))
+  })
+  return baseHeight + (maxLines - 1) * 24
 }
 
 export function estimateTableHeight(tableData: TableData): number {
-  let height = 0
-  // 表头高度
-  height += estimateTableRowHeight(tableData.headers, true)
-  // 数据行高度
+  let height = estimateTableRowHeight(tableData.headers, true, tableData.colChars)
   for (const row of tableData.rows) {
-    height += estimateTableRowHeight(row, false)
+    height += estimateTableRowHeight(row, false, tableData.colChars)
   }
-  // 容器边距和内边距
   height += 60 // 30px margin top + 30px margin bottom
   return height
 }

@@ -69,7 +69,6 @@ export const DEFAULT_DOCUMENT_SETTINGS: DocumentSettings = {
 
 const INVALID_FILENAME_CHARS = /[\\/:*?"<>|]/g
 const PAGE_BOTTOM_SAFETY_GAP = 36
-const HEADING_NEAR_BOTTOM_RATIO = 0.78
 
 function compactPlainText(text: string): string {
   return text
@@ -298,37 +297,60 @@ interface SplitTableResult {
 function splitTableByHeight(
   tableMarkdown: string,
   availableHeight: number,
-  settings: { marginTop: number; marginBottom: number }
+  effectiveHeight: number,
+  settings: { marginTop: number; marginBottom: number },
+  actualTableHeight?: number
 ): SplitTableResult | null {
   const tableData = parseTableMarkdown(tableMarkdown)
   if (!tableData) return null
   
+  let heightRatio = 1.0
+  let baseCaptionHeight = 0
+  if (tableData.caption) {
+    // text height + bottom margin 8px
+    baseCaptionHeight = Math.ceil(tableData.caption.length / 30) * 18 + 8
+  }
+  
+  if (actualTableHeight) {
+    // actualTableHeight (offsetHeight) does NOT include collapsed margins (top 16px, bottom 30px).
+    // It only includes the physical text height of caption and table.
+    const estimatedTotal = estimateTableHeight(tableData) + baseCaptionHeight
+    heightRatio = actualTableHeight / estimatedTotal
+  }
+  
   const pages: SplitTableResult['pages'] = []
   let currentPageRows: string[][] = []
   let currentHeight = 0
-  const headerHeight = estimateTableRowHeight(tableData.headers, true)
-  const containerPadding = 60 // 表格容器的内边距和边距
+  const headerHeight = estimateTableRowHeight(tableData.headers, true, tableData.colChars) * heightRatio
+  const containerPadding = 46 // 顶部 16px 底部 30px 外边距
+  const safetyBuffer = 30 // 安全缓冲
   
-  // 计算第一页可用高度（减去表格容器开销）
-  const firstPageAvailable = availableHeight - containerPadding
+  const captionHeight = tableData.caption ? baseCaptionHeight * heightRatio : 0
+  const continuationCaptionHeight = tableData.caption ? captionHeight : 30 * heightRatio
   
-  // 计算后续页可用高度（需要重新添加表头）
-  const continuationPageAvailable = availableHeight - containerPadding - headerHeight
+  // 计算第一页可用高度
+  const firstPageAvailable = availableHeight - containerPadding - headerHeight - captionHeight - safetyBuffer
+  
+  // 计算后续页可用高度
+  const continuationPageAvailable = effectiveHeight - containerPadding - headerHeight - continuationCaptionHeight - safetyBuffer
   
   for (let i = 0; i < tableData.rows.length; i++) {
     const row = tableData.rows[i]
-    const rowHeight = estimateTableRowHeight(row, false)
+    const rowHeight = estimateTableRowHeight(row, false, tableData.colChars) * heightRatio
     
     const isFirstPage = pages.length === 0
     const currentAvailable = isFirstPage ? firstPageAvailable : continuationPageAvailable
     
     if (currentHeight + rowHeight > currentAvailable && currentPageRows.length > 0) {
       // 当前页已满，生成页面
-      const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, pages.length > 0)
+      const caption = tableData.caption
+      const isCont = pages.length > 0
+      const currentCapHeight = isCont ? continuationCaptionHeight : captionHeight
+      const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, isCont, caption)
       pages.push({
         tableMarkdown: pageMarkdown,
-        isContinuation: pages.length > 0,
-        height: currentHeight + containerPadding + (pages.length > 0 ? headerHeight : 0)
+        isContinuation: isCont,
+        height: currentHeight + containerPadding + headerHeight + currentCapHeight
       })
       
       // 开始新页
@@ -343,22 +365,31 @@ function splitTableByHeight(
   
   // 处理最后一页
   if (currentPageRows.length > 0) {
-    const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, pages.length > 0)
+    const caption = tableData.caption
+    const isCont = pages.length > 0
+    const currentCapHeight = isCont ? continuationCaptionHeight : captionHeight
+    const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, isCont, caption)
     pages.push({
       tableMarkdown: pageMarkdown,
-      isContinuation: pages.length > 0,
-      height: currentHeight + containerPadding + (pages.length > 0 ? headerHeight : 0)
+      isContinuation: isCont,
+      height: currentHeight + containerPadding + headerHeight + currentCapHeight
     })
   }
   
   return { pages }
 }
 
-function buildTableMarkdown(headers: string[], rows: string[][], isContinuation: boolean): string {
+function buildTableMarkdown(headers: string[], rows: string[][], isContinuation: boolean, caption?: string): string {
   let markdown = ''
   
-  // 如果是续表，添加续表标记
-  if (isContinuation) {
+  if (caption) {
+    if (isContinuation) {
+      markdown += caption.trim() + '（续表）\n\n'
+    } else {
+      markdown += caption.trim() + '\n\n'
+    }
+  } else if (isContinuation) {
+    // 如果没有原标题，则使用普通加粗文字表示续表
     markdown += '**（续表）**\n\n'
   }
   
@@ -398,7 +429,8 @@ export function paginateDocumentBlocks(
     usedHeight = 0
   }
 
-  for (const block of blocks) {
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
     if (block.kind === 'pagebreak') {
       // 第一个 pagebreak 触发分页时，检测是否为封面页
       if (pages.length === 0 && isCoverPageBlocks(current)) {
@@ -422,18 +454,26 @@ export function paginateDocumentBlocks(
     if (block.kind === 'table') {
       const tableData = parseTableMarkdown(block.markdown)
       if (tableData) {
-        const availableHeight = effectiveHeight - usedHeight
-        const splitResult = splitTableByHeight(block.markdown, availableHeight, settings)
+        let availableHeight = effectiveHeight - usedHeight
+        
+        // 如果当前页剩余高度连表格的开头（包含头部和一行内容）都放不下，直接整体推到下一页
+        if (availableHeight < 160 && current.length > 0) {
+          pushPage()
+          availableHeight = effectiveHeight
+        }
+        
+        const actualTableHeight = actualHeights?.[block.id]
+        const splitResult = splitTableByHeight(block.markdown, availableHeight, effectiveHeight, settings, actualTableHeight)
         
         if (splitResult && splitResult.pages.length > 1) {
           // 表格需要跨页
-          for (let i = 0; i < splitResult.pages.length; i++) {
-            const page = splitResult.pages[i]
+          for (let k = 0; k < splitResult.pages.length; k++) {
+            const page = splitResult.pages[k]
             
-            if (i === 0) {
+            if (k === 0) {
               // 第一页：添加到当前页
               const tableBlock: DocumentBlock = {
-                id: `${block.id}-part-${i}`,
+                id: `${block.id}-part-${k}`,
                 kind: 'table',
                 markdown: page.tableMarkdown,
                 estimatedHeight: page.height,
@@ -445,7 +485,7 @@ export function paginateDocumentBlocks(
             } else {
               // 后续页：新页面开始
               const tableBlock: DocumentBlock = {
-                id: `${block.id}-part-${i}`,
+                id: `${block.id}-part-${k}`,
                 kind: 'table',
                 markdown: page.tableMarkdown,
                 estimatedHeight: page.height,
@@ -454,7 +494,7 @@ export function paginateDocumentBlocks(
               current = [tableBlock]
               usedHeight = page.height
               
-              if (i < splitResult.pages.length - 1) {
+              if (k < splitResult.pages.length - 1) {
                 pushPage()
               }
             }
@@ -466,8 +506,28 @@ export function paginateDocumentBlocks(
 
     const height = actualHeights?.[block.id] ?? block.estimatedHeight
     const oversized = height > effectiveHeight
-    const headingNearBottom =
-      block.kind === 'heading' && current.length > 0 && usedHeight > effectiveHeight * HEADING_NEAR_BOTTOM_RATIO
+    
+    let headingNearBottom = false
+    if (block.kind === 'heading' && current.length > 0) {
+      // 智能防孤立标题算法：向后看，确保标题能和紧随其后的正文留在同一页
+      let contentHeightToKeep = 0
+      for (let j = i + 1; j < blocks.length; j++) {
+        const nb = blocks[j]
+        const nh = actualHeights?.[nb.id] ?? nb.estimatedHeight
+        contentHeightToKeep += nh
+        if (nb.kind !== 'heading') break // 只绑定紧随其后的首个非标题块
+      }
+      
+      const canFitOnEmptyPage = height + contentHeightToKeep <= effectiveHeight
+      // 如果标题和它的内容可以完整放在新的一页，那就要求当前页必须能容纳它们俩，否则把标题推到下一页
+      // 如果内容实在太长（连新的一页都放不下），退而求其次，只要当前页能容纳标题 + 120px 的前奏内容就不换页
+      const nextContentRequirement = canFitOnEmptyPage ? contentHeightToKeep : Math.min(contentHeightToKeep, 120)
+      
+      if (usedHeight + height + nextContentRequirement > effectiveHeight) {
+        headingNearBottom = true
+      }
+    }
+
     if (oversized) {
       pushPage()
       current = [block]

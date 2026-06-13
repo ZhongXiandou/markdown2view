@@ -248,28 +248,27 @@ export function DocumentMode({
             zoom: printAreaScale < 1 ? printAreaScale : undefined,
           }}
         >
-          {/* 隐藏测量容器 */}
-          <div
-            ref={measuringRef}
-            className={`document-page document-content document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
-            style={{
-              ...DOCUMENT_TITLE_STYLE_VARS,
-              position: 'absolute',
-              visibility: 'hidden',
-              top: -9999,
-              width: settings.pageWidth - settings.marginLeft - settings.marginRight,
-              fontFamily: getFontFamilyCss(settings.fontFamily),
-            }}
-          >
-            {model.blocks.map((block) => (
-              <section
-                key={block.id}
-                data-block-id={block.id}
-                className={`document-block ${block.id === firstHeadingId ? 'document-title-block' : ''}`}
-                data-kind={block.kind}
-                dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, colors) }}
-              />
-            ))}
+          {/* 隐藏测量容器，包裹在 0x0 隐藏外壳中，防止撑开滚动区域 */}
+          <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', visibility: 'hidden', pointerEvents: 'none' }}>
+            <div
+              ref={measuringRef}
+              className={`document-page document-content document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
+              style={{
+                ...DOCUMENT_TITLE_STYLE_VARS,
+                width: settings.pageWidth - settings.marginLeft - settings.marginRight,
+                fontFamily: getFontFamilyCss(settings.fontFamily),
+              }}
+            >
+              {model.blocks.map((block) => (
+                <section
+                  key={block.id}
+                  data-block-id={block.id}
+                  className={`document-block ${block.id === firstHeadingId ? 'document-title-block' : ''}`}
+                  data-kind={block.kind}
+                  dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, colors) }}
+                />
+              ))}
+            </div>
           </div>
 
           {pages.map((page) => (
