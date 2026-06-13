@@ -14,6 +14,9 @@ export interface UserGuidePopoverProps {
   delay?: number
 }
 
+// 内存中记录在当前页面运行周期（刷新即重置）中已关闭的引导 Key
+const sessionSeenKeys = new Set<string>()
+
 export function UserGuidePopover({
   guideKey,
   title = '快速开始',
@@ -25,8 +28,10 @@ export function UserGuidePopover({
 
   useEffect(() => {
     if (typeof localStorage === 'undefined') return
-    const seen = localStorage.getItem(guideKey)
-    if (!seen) {
+    const isPermanentSeen = localStorage.getItem(guideKey) === '1'
+    const isSessionSeen = sessionSeenKeys.has(guideKey)
+
+    if (!isPermanentSeen && !isSessionSeen) {
       const t = setTimeout(() => setVisible(true), delay)
       return () => clearTimeout(t)
     }
@@ -35,8 +40,12 @@ export function UserGuidePopover({
   if (!visible) return null
 
   const handleDismiss = (permanent: boolean) => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(guideKey, permanent ? '1' : 'session')
+    if (permanent) {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(guideKey, '1')
+      }
+    } else {
+      sessionSeenKeys.add(guideKey)
     }
     setVisible(false)
   }
