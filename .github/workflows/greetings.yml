@@ -1,0 +1,33 @@
+name: Greetings
+
+on: [pull_request_target, issues]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 欢迎来到 **markdown2view**！感谢你开启了你的第一个 Issue。
+            
+            为了帮助我们更高效地定位和解决问题，请尽可能在正文中提供：
+            - **Bug 报告**：详细的复现步骤、预期的结果以及相关的运行环境信息。
+            - **功能建议**：详细描述你的核心诉求及预期的使用场景。
+            
+            （注：如果是 Bug 相关的 Issue，请留意后续是否有 AI 助手的总结补充。）
+            
+            我们会尽快跟进处理，感谢你的反馈！
+            
+          pr-message: |
+            🎉 感谢你为 **markdown2view** 提交的第一个 Pull Request！你的贡献对我们非常重要。
+            
+            在进入代码 Review 阶段之前，请帮忙确认：
+            - 你的代码已经过本地测试并运行正常。
+            - 如果引入了新功能或修改了核心逻辑，是否已包含必要的注释或文档更新。
+            
+            维护团队会在近期审阅你的代码，请留意此页面的后续评论通知。再次感谢你的参与！
