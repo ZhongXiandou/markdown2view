@@ -705,7 +705,7 @@ export function parseMarkdown(md: string, t: ThemeColors, formulaMap?: Map<strin
       const captionClass = isTableCaption ? 'document-caption document-caption-table' : 'document-caption document-caption-image'
       const captionKind = isTableCaption ? 'table' : 'image'
       const sectionStyle = isTableCaption ? 'margin:16px 0px 8px' : 'margin:8px 0px 16px'
-      html += `<section data-caption-kind="${captionKind}" style="${sectionStyle};display:flex;justify-content:center;width:100%"><p class="${captionClass}" style="margin:0px;font-size:13px;color:rgb(100,116,139);line-height:1.5;text-align:center;overflow-wrap:break-word">${inlineFormat(trimmedLine, t, formulaMap)}</p></section>`
+      html += `<section data-caption-kind="${captionKind}" style="${sectionStyle};display:flex;justify-content:center;width:100%"><p class="${captionClass}" style="margin:0px;font-size:13px;color:rgb(100,116,139);line-height:1.5;text-align:center;white-space:nowrap">${inlineFormat(trimmedLine, t, formulaMap)}</p></section>`
     } else {
       html += `<section style="margin:0px 0px 24px"><p style="margin:0px;font-size:16px;color:rgb(51,65,85);line-height:1.85;letter-spacing:0.5px;text-align:justify;overflow-wrap:break-word">${inlineFormat(line, t, formulaMap)}</p></section>`
     }

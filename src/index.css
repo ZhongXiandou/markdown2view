@@ -215,6 +215,7 @@ body {
 
 /* Captions centering and sizing */
 .document-page .document-caption {
+  width: 100% !important;
   text-align: center !important;
   font-size: 13px !important;
   color: #64748b !important;
