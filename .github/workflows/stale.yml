@@ -1,0 +1,30 @@
+name: Mark stale issues and pull requests
+
+on:
+  schedule:
+    # 每天 UTC 时间 00:00 运行一次 (北京时间早上 08:00)
+    - cron: '0 0 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # 多少天无活动后标记为 stale
+          days-before-stale: 30
+          # 标记为 stale 后，多少天无活动自动关闭
+          days-before-close: 7
+          # 标记为 stale 时的自动回复信息
+          stale-issue-message: '此 Issue 因超过 60 天未活动，已被自动标记为 stale。如果后续没有进一步的活动，它将在 7 天后被关闭。如果该问题仍然存在或你需要继续跟进，请留下评论以保持开启状态。'
+          stale-pr-message: '此 PR 因超过 60 天未活动，已被自动标记为 stale。如果后续没有进一步的活动，它将在 7 天后被关闭。请及时更新代码或留下评论。'
+          # 使用的标签名称
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          # 包含以下标签的 Issue/PR 将被豁免，永远不会被标记为 stale
+          exempt-issue-labels: 'bug,enhancement,security,help wanted'
+          exempt-pr-labels: 'dependencies,wip'
