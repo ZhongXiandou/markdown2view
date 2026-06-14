@@ -131,9 +131,10 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   } = useEditorDocSync(html, setHtml)
 
   // 合并 DOMParser 调用：一次解析同时获取页面数量和标题，避免重复解析
+  // 使用 debouncedHtml 而非 localHtml，避免每次按键都执行 DOMParser
   const { expectedPageCount, htmlTitle } = useMemo(() => {
     try {
-      const doc = new DOMParser().parseFromString(localHtml || html, 'text/html')
+      const doc = new DOMParser().parseFromString(debouncedHtml, 'text/html')
       const pageCount = doc.querySelectorAll('.page, .slide, .card').length
       const titleText = doc.querySelector('title')?.textContent?.trim()
         || doc.querySelector('h1')?.textContent?.trim()
@@ -143,7 +144,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     } catch {
       return { expectedPageCount: 0, htmlTitle: '' }
     }
-  }, [html, localHtml])
+  }, [debouncedHtml])
 
   // 图片上传
   const { fileInputRef, uploading, triggerUpload, handleFileChange } = useImageUpload(onToast)

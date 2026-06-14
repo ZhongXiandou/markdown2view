@@ -61,12 +61,16 @@ async function waitForStability(element: HTMLElement | Document, win: Window = w
 async function waitForDocumentReady(doc: Document, win: Window): Promise<void> {
   if (doc.readyState !== 'complete') {
     await new Promise<void>((res) => {
-      const done = () => res()
-      doc.addEventListener('readystatechange', () => {
+      const done = () => {
+        doc.removeEventListener('readystatechange', onReadyStateChange)
+        res()
+      }
+      const onReadyStateChange = () => {
         if (doc.readyState === 'complete') done()
-      })
+      }
+      doc.addEventListener('readystatechange', onReadyStateChange)
       win.addEventListener?.('load', done, { once: true })
-      setTimeout(done, 3000)  // 从 8s 减少到 3s
+      setTimeout(done, 3000)
     })
   }
 
@@ -80,7 +84,7 @@ async function waitForDocumentReady(doc: Document, win: Window): Promise<void> {
           const done = () => res()
           link.addEventListener('load', done, { once: true })
           link.addEventListener('error', done, { once: true })
-          setTimeout(done, 3000)  // 从 6s 减少到 3s
+          setTimeout(done, 3000)
         }),
     ),
   )
@@ -104,7 +108,7 @@ async function waitForDocumentReady(doc: Document, win: Window): Promise<void> {
           img.addEventListener('load', done, { once: true })
           img.addEventListener('error', done, { once: true })
           if ('decode' in img) img.decode().then(done, done)
-          setTimeout(done, 3000)  // 从 6s 减少到 3s
+          setTimeout(done, 3000)
         }),
     ),
   )
@@ -113,13 +117,13 @@ async function waitForDocumentReady(doc: Document, win: Window): Promise<void> {
   await Promise.all([sheetsPromise, fontsPromise, imgsPromise])
 
   try {
-    await waitUntilLoad(doc.documentElement, { timeout: 3000 })  // 从 6s 减少到 3s
+    await waitUntilLoad(doc.documentElement, { timeout: 3000 })
   } catch {
     /* noop */
   }
 
   // Tailwind Play CDN 异步注入样式，等待 DOM 变动停止和帧渲染
-  await waitForStability(doc, win, 1000)  // 从 2000ms 减少到 1000ms
+  await waitForStability(doc, win, 1000)
 }
 
 export function resolveBackground(doc: Document, win: Window, override?: string): string {

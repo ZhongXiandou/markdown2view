@@ -96,7 +96,7 @@ export default function App() {
 
   // 统一 Toast 反馈
   const [toast, setToast] = useState<ToastState | null>(null);
-  const showToast = (message: string) => setToast({ message, key: Date.now() });
+  const showToast = useCallback((message: string) => setToast({ message, key: Date.now() }), []);
 
   const handleWidthChange = useCallback((w: number) => setHeaderWidth(w), []);
 
@@ -112,7 +112,7 @@ export default function App() {
     syncDemoContent(DEMOS);
   }, [syncDemoContent]);
 
-  const handleRestoreDemo = () => {
+  const handleRestoreDemo = useCallback(() => {
     if (
       window.confirm(
         "确定要恢复当前模块的示例内容吗？这将会覆盖当前编辑区内容。",
@@ -121,7 +121,7 @@ export default function App() {
       restoreDemo(mode, DEMOS);
       showToast("已恢复当前模块示例");
     }
-  };
+  }, [mode, restoreDemo, showToast]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

@@ -16,17 +16,39 @@ export async function copyText(text: string): Promise<boolean> {
     return true
   } catch {
   }
+  const ta = createHiddenTextarea(text)
   try {
-    const ta = createHiddenTextarea(text)
     ta.focus()
     ta.select()
     ta.setSelectionRange(0, ta.value.length)
-    const ok = document.execCommand('copy')
-    document.body.removeChild(ta)
-    return ok
+    return document.execCommand('copy')
   } catch {
     return false
+  } finally {
+    document.body.removeChild(ta)
   }
+}
+
+// 构建反向索引：url -> id，用于 O(1) 查找
+const urlToIdCache = new Map<string, string>()
+let urlToIdCacheDirty = true
+
+function getUrlToIdMap(): Map<string, string> {
+  if (urlToIdCacheDirty) {
+    urlToIdCache.clear()
+    for (const [id, url] of Object.entries(localImageUrls)) {
+      urlToIdCache.set(url, id)
+    }
+    urlToIdCacheDirty = false
+  }
+  return urlToIdCache
+}
+
+// 监听 localImageUrls 变化，标记缓存需要更新
+// 由于 localImageUrls 是普通对象，我们通过 Proxy 或在 resolveImageUrl 后标记
+// 这里采用简单方案：每次调用前重置标记
+export function markUrlCacheDirty() {
+  urlToIdCacheDirty = true
 }
 
 /**
@@ -42,9 +64,8 @@ async function compileElementImages(contentEl: HTMLElement): Promise<HTMLElement
       if (src.startsWith('img://')) {
         id = src.replace('img://', '')
       } else {
-        // 从内存 Map 中逆向查找 id
-        const found = Object.entries(localImageUrls).find(([_, url]) => url === src)
-        if (found) id = found[0]
+        // 从反向索引中 O(1) 查找 id
+        id = getUrlToIdMap().get(src) || ''
       }
 
       if (id) {

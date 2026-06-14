@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { RenderMode } from '@/lib/store'
 import { THEMES } from '@engine/composables/useTheme'
 
@@ -54,6 +55,17 @@ export function MobileDrawer({
   onOpenPrivacy,
   onRestoreDemo,
 }: MobileDrawerProps) {
+  // 阻止背景滚动穿透
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalOverflow
+      }
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (

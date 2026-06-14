@@ -188,7 +188,7 @@ applyCssVars(initAccent, initDark)
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       articleMarkdown: legacyState.articleMarkdown ?? FALLBACK_MARKDOWN,
       documentMarkdown: legacyState.documentMarkdown ?? FALLBACK_MARKDOWN,
       cardMarkdown: legacyState.cardMarkdown ?? FALLBACK_MARKDOWN,
@@ -267,11 +267,12 @@ export const useStore = create<AppState>()(
       // 自定义指令管理
       customInstructions: [],
       addCustomInstruction: (inst) => {
-        let success = false
+        // 在 set 之前检查长度，避免依赖 Zustand set 的同步返回值
+        const currentLength = get().customInstructions.length
+        if (currentLength >= MAX_CUSTOM_INSTRUCTIONS) return false
+        
         set((state) => {
-          if (state.customInstructions.length >= MAX_CUSTOM_INSTRUCTIONS) return state
           const now = Date.now()
-          success = true
           return {
             customInstructions: [
               ...state.customInstructions,
@@ -279,7 +280,7 @@ export const useStore = create<AppState>()(
             ],
           }
         })
-        return success
+        return true
       },
       updateCustomInstruction: (id, patch) =>
         set((state) => ({

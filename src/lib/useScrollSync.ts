@@ -16,7 +16,9 @@ export function useScrollSync(
 
     // 当前主导方：'a' | 'b' | null
     let leader: 'a' | 'b' | null = null
-    let raf = 0
+    // 使用独立的 raf 变量，避免两个方向的帧请求互相取消
+    let rafA = 0
+    let rafB = 0
 
     const apply = (src: HTMLElement, dst: HTMLElement) => {
       const srcMax = src.scrollHeight - src.clientHeight
@@ -28,13 +30,13 @@ export function useScrollSync(
 
     const onScrollA = () => {
       if (leader !== 'a') return
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => apply(a, b))
+      cancelAnimationFrame(rafA)
+      rafA = requestAnimationFrame(() => apply(a, b))
     }
     const onScrollB = () => {
       if (leader !== 'b') return
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => apply(b, a))
+      cancelAnimationFrame(rafB)
+      rafB = requestAnimationFrame(() => apply(b, a))
     }
 
     const makeLeaderA = () => (leader = 'a')
@@ -60,7 +62,8 @@ export function useScrollSync(
       b.removeEventListener('touchstart', makeLeaderB)
       a.removeEventListener('scroll', onScrollA)
       b.removeEventListener('scroll', onScrollB)
-      cancelAnimationFrame(raf)
+      cancelAnimationFrame(rafA)
+      cancelAnimationFrame(rafB)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)

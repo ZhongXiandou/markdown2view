@@ -1,8 +1,13 @@
 const DB_NAME = 'm2v-images-db'
 const STORE_NAME = 'images'
 
+// 缓存数据库连接，避免每次操作都新建连接
+let dbPromise: Promise<IDBDatabase> | null = null
+
 function getDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (dbPromise) return dbPromise
+  
+  dbPromise = new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
       reject(new Error('IndexedDB is not supported in this environment'))
       return
@@ -17,6 +22,8 @@ function getDB(): Promise<IDBDatabase> {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
+  
+  return dbPromise
 }
 
 /**
@@ -176,8 +183,7 @@ export async function uploadToOss(
     bucket: config.bucket,
     secure: true,
   })
-  const ext = file.name.split('.').pop() || 'jpg'
-  const filename = `m2v-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+  const filename = generateImageFilename(file)
   const result = await client.put(filename, file)
   return result.url
 }
@@ -194,8 +200,7 @@ export async function uploadToCos(
     SecretId: config.SecretId,
     SecretKey: config.SecretKey,
   })
-  const ext = file.name.split('.').pop() || 'jpg'
-  const filename = `m2v-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+  const filename = generateImageFilename(file)
   return new Promise((resolve, reject) => {
     cos.putObject(
       {
@@ -230,34 +235,53 @@ export function blobToBase64(blob: Blob): Promise<string> {
 
 /**
  * 异步编译 Markdown：将所有 img://img_xxx 本地占位符转换为 base64 内联 Data URL
+ * 使用并行处理提升多图片场景下的编译速度
  */
 export async function compileMarkdownImages(md: string): Promise<string> {
   const imgRegex = /(!\[[^\]]*\]\()(img:\/\/img_[a-zA-Z0-9_-]+)(\))/g
   const matches = Array.from(md.matchAll(imgRegex))
   if (matches.length === 0) return md
 
-  let compiledMd = md
-  for (const match of matches) {
-    const fullMatch = match[0]
-    const prefix = match[1]
-    const url = match[2]
-    const suffix = match[3]
-    const id = url.replace('img://', '')
+  // 并行处理所有图片查找和 base64 转换
+  const replacements = await Promise.all(
+    matches.map(async (match) => {
+      const fullMatch = match[0]
+      const prefix = match[1]
+      const url = match[2]
+      const suffix = match[3]
+      const id = url.replace('img://', '')
 
-    const blob = await getLocalImage(id)
-    if (blob) {
-      try {
-        const base64 = await blobToBase64(blob)
-        compiledMd = compiledMd.replace(fullMatch, `${prefix}${base64}${suffix}`)
-      } catch (e) {
-        console.error(`Failed to compile image ${id} to base64:`, e)
+      const blob = await getLocalImage(id)
+      if (blob) {
+        try {
+          const base64 = await blobToBase64(blob)
+          return { fullMatch, replacement: `${prefix}${base64}${suffix}` }
+        } catch (e) {
+          console.error(`Failed to compile image ${id} to base64:`, e)
+          return null
+        }
       }
+      return null
+    })
+  )
+
+  // 统一执行字符串替换
+  let compiledMd = md
+  for (const item of replacements) {
+    if (item) {
+      compiledMd = compiledMd.replace(item.fullMatch, item.replacement)
     }
   }
   return compiledMd
 }
 
 // ── 共享上传流程（压缩 → 按图床配置上传 → 返回 URL）───────────────────
+
+// 生成唯一的图片文件名
+function generateImageFilename(file: File): string {
+  const ext = file.name.split('.').pop() || 'jpg'
+  return `m2v-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+}
 
 export interface ImageHostConfig {
   activeType: 'local' | 'smms' | 'oss' | 'cos'
