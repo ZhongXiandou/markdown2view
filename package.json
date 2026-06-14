@@ -25,6 +25,7 @@
     "jspdf": "^4.2.1",
     "katex": "^0.17.0",
     "modern-screenshot": "^4.7.0",
+    "pagedjs": "^0.4.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.2"

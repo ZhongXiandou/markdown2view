@@ -7,11 +7,24 @@ import { uploadImageFile } from '@/lib/editor/imageStorage'
 
 interface EditorToolbarProps {
   view: EditorView | null
+  mode?: 'article' | 'document' | 'card' | 'html'
 }
 
-export function EditorToolbar({ view }: EditorToolbarProps) {
+export function EditorToolbar({ view, mode }: EditorToolbarProps) {
   const imageHostConfig = useStore((s) => s.imageHostConfig)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 快捷插入分页标识
+  const handleInsertPageBreak = () => {
+    if (!view) return
+    const insertText = '\n<page-break/>\n'
+    const { from, to } = view.state.selection.main
+    view.dispatch({
+      changes: { from, to, insert: insertText },
+      selection: { anchor: from + insertText.length },
+    })
+    view.focus()
+  }
 
   // 处理图片选择与上传流程
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -94,12 +107,28 @@ export function EditorToolbar({ view }: EditorToolbarProps) {
         </React.Fragment>
       ))}
 
-      {/* 附加：图片上传功能 */}
+      {/* 附加：图片与分页操作 */}
       <div className="w-px h-4 bg-slate-300 mx-1 hidden sm:block" />
       <div className="flex items-center gap-1">
+        {(mode === 'document' || mode === 'card') && (
+          <button
+            onClick={handleInsertPageBreak}
+            className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer text-slate-600"
+            title="插入分页标识 <page-break/>"
+          >
+            <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="3" y1="14" x2="21" y2="14" strokeDasharray="3 3"></line>
+              </svg>
+            </span>
+          </button>
+        )}
+
         <button
           onClick={triggerFileSelect}
-          className="flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-[13px] hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer"
+          className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer text-slate-600"
           title="上传图片"
         >
           <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paged.js 分页可行性验证 (POC)</title>
+  <style>
+    /* =========================================================
+       1) @page 规则：A4 尺寸 / 页边距 / 页眉页脚 margin box / 页码
+       验证点：页眉左(文档名) 右(当前章节 string-set) + 页脚页码 counter
+    ========================================================= */
+    @page {
+      size: A4;
+      margin: 18mm 16mm 16mm 16mm;
+      @top-left {
+        content: "markdown2view · A4 文档";
+        font-size: 9pt;
+        color: #94a3b8;
+      }
+      @top-right {
+        /* 运行页眉：随当前 h2 章节标题变化 */
+        content: string(chaptitle);
+        font-size: 9pt;
+        color: #94a3b8;
+      }
+      @bottom-center {
+        /* 页码：第 X / Y 页 —— 验证 counter(page)/counter(pages) */
+        content: "第 " counter(page) " / " counter(pages) " 页";
+        font-size: 9pt;
+        color: #94a3b8;
+      }
+    }
+
+    /* 封面页可用具名 page 单独配置（演示 page master） */
+    @page cover {
+      @top-left { content: none; }
+      @top-right { content: none; }
+      @bottom-center { content: none; }
+    }
+    .cover { page: cover; break-after: page; text-align: center; padding-top: 30mm; }
+    .cover h1 { font-size: 30pt; border: none; margin-bottom: 12pt; }
+    .cover .sub { color: #64748b; font-size: 13pt; }
+
+    /* =========================================================
+       2) 屏幕预览样式（Paged.js 会把内容切成 .pagedjs_page）
+    ========================================================= */
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #eef2f7;
+      font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+    .pagedjs_page {
+      background: #fff;
+      margin: 14px auto;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.14);
+    }
+
+    /* =========================================================
+       3) 正文样式 —— 同时混入"语义标签"和"引擎内联样式"两种结构，
+       验证 Paged.js 是否能正常吃我们引擎输出的内联样式 HTML
+    ========================================================= */
+    .content { font-size: 12pt; line-height: 1.78; color: #1f2937; }
+    .content h1 { font-size: 20pt; text-align: center; margin: 0 0 16pt; }
+    .content h2 {
+      font-size: 15pt;
+      margin: 18pt 0 8pt;
+      padding-left: 8pt;
+      border-left: 4px solid #6366f1;
+      /* 关键：把 h2 文本写入具名字符串，供 @top-right 运行页眉读取 */
+      string-set: chaptitle content(text);
+      /* 标题不与下一段被拆开 */
+      break-after: avoid;
+    }
+    .content p {
+      margin: 0 0 10pt;
+      text-align: justify;
+      /* 用户决策：孤寡行 1/0 —— CSS 最小值为 1（widows 无法为 0） */
+      orphans: 1;
+      widows: 1;
+    }
+    .content ul, .content ol { margin: 8pt 0; padding-left: 22pt; }
+    .content li { margin: 3pt 0; }
+    blockquote {
+      margin: 10pt 0;
+      padding: 8pt 14pt;
+      border-left: 3px solid #6366f1;
+      background: #f8fafc;
+      color: #475569;
+    }
+    pre {
+      background: #0f172a; color: #e2e8f0;
+      padding: 10pt 12pt; border-radius: 6px;
+      font-size: 10pt; line-height: 1.6;
+      white-space: pre-wrap; word-break: break-all;
+      /* 用户决策：代码 <10 行不拆；这里演示 break-inside 控制 */
+      break-inside: avoid;
+    }
+
+    /* 表格：thead 默认 table-header-group → 跨页自动重复表头 */
+    table { width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 10.5pt; }
+    caption { caption-side: top; text-align: left; font-weight: 700; margin-bottom: 4pt; }
+    th, td { border: 1px solid #cbd5e1; padding: 5pt 8pt; text-align: left; }
+    thead th { background: #eef2ff; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    /* 续表标题（由自定义 Handler 在续接片段前插入） */
+    .continued-caption { font-size: 9pt; color: #6366f1; font-style: italic; margin: 0 0 4pt; }
+
+    /* =========================================================
+       4) 屏幕上的验证说明面板（打印时隐藏，不进 PDF）
+    ========================================================= */
+    .poc-note {
+      position: fixed; top: 12px; right: 12px; z-index: 9999;
+      width: 300px; max-height: 88vh; overflow: auto;
+      background: #0f172a; color: #e2e8f0;
+      font-size: 12px; line-height: 1.6;
+      padding: 14px 16px; border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.35);
+    }
+    .poc-note h3 { margin: 0 0 8px; font-size: 13px; color: #a5b4fc; }
+    .poc-note ol { margin: 0; padding-left: 18px; }
+    .poc-note li { margin: 6px 0; }
+    .poc-note code { background: #1e293b; padding: 1px 5px; border-radius: 4px; }
+    .poc-note .ok { color: #4ade80; }
+    .poc-note button {
+      margin-top: 10px; width: 100%; padding: 8px;
+      background: #6366f1; color: #fff; border: none; border-radius: 6px;
+      font-size: 13px; cursor: pointer;
+    }
+    #pageCount { color: #fcd34d; font-weight: 700; }
+    @media print {
+      .poc-note { display: none !important; }
+      body { background: #fff; }
+      .pagedjs_page { margin: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 屏幕验证清单（不进 PDF） -->
+  <div class="poc-note">
+    <h3>Paged.js 可行性验证清单</h3>
+    <ol>
+      <li><b>单段中部按行跨页</b>：找到下方"超长段落"，确认它能在页面底部断开、续接到下一页（这是手动方案最难的点）。</li>
+      <li><b>A4 页眉/页脚/页码</b>：每页顶部左为文档名、右为当前章节；底部为<code>第 X / Y 页</code>。</li>
+      <li><b>运行页眉随章节变</b>：翻到不同 H2 章节，右上角标题应跟随变化。</li>
+      <li><b>长表格跨页</b>：30 行表格应拆到多页，且每页<b>自动重复表头</b>；续接页表格上方出现<code>（续表）</code>。</li>
+      <li><b>文本 PDF</b>：点下方按钮 → 浏览器打印 → 目标选"另存为 PDF"。导出后的 PDF<b>文字可选中</b>（非位图）。</li>
+    </ol>
+    <div>当前渲染页数：<span id="pageCount">…</span></div>
+    <button onclick="window.print()">打印 / 另存为 PDF</button>
+  </div>
+
+  <!-- ============ 正文内容 ============ -->
+  <div class="content" id="content">
+
+    <!-- 封面页 -->
+    <section class="cover">
+      <h1>Paged.js 分页可行性验证</h1>
+      <div class="sub">markdown2view · A4 文档分页引擎选型 POC</div>
+      <div class="sub" style="margin-top:8pt;">验证：段落中部分页 / 页眉页脚 / 续表 / 文本 PDF</div>
+    </section>
+
+    <h1>分页拆分引擎技术验证报告</h1>
+
+    <h2>第一章 背景与单段中部分页验证</h2>
+    <p>本页之后是一段刻意写得很长的段落，用于验证 Paged.js 能否在单个段落内部按视觉行断开并续接到下一页——这正是"测量后打包"方案中最难手搓的部分。在传统的整块分页策略里，一个超长段落如果在当前页放不下，就会被整体推到下一页，从而在页面底部留下大片空白；而基于 CSS Paged Media 的流式断点引擎会自动在合适的视觉行处断开，最大化利用版面空间。</p>
+
+    <p>在实际的报告与公文排版中，长段落极其常见：政策解读、技术说明、案情陈述、研究综述往往一段就有数百字。如果分页引擎不能在段落中部断开，排版结果就会出现明显的"莫名换页留白"，既浪费纸张也不专业。下面这一段会被刻意拉长到跨越整页边界，请重点观察它在页面底部的断开位置是否自然、续接到下一页后是否从正确的位置继续，并且断开处不应出现文字被截断或重叠的情况。这一段开始重复填充内容以确保跨页：分页是把连续内容按页面物理高度切分为若干页的过程，其核心难点在于"在哪里断开"。对于离散块（标题、图片、表格行）断点是天然的；但对于连续文本，断点存在于任意两个视觉行之间，必须由排版引擎结合字体、字号、行高、容器宽度计算出每一行的实际位置。Paged.js 通过在渲染流中检测溢出节点与字符偏移（breakToken）来定位断点，从而实现段落中部的精确分页。这一段继续重复以保证它一定会跨越页面边界：在浏览器中，我们可以利用 Range 对象逐步扩展并读取 getClientRects 的矩形数量来推断视觉行边界，这也是 Paged.js 内部寻找文本断点的原理之一。但若由我们自行实现，则需要处理二分查找优化、Safari 空白折叠差异、以及拆分后 DOM 重排带来的再测量问题，工程量与维护成本都不低。因此本 POC 旨在验证：直接复用 Paged.js 是否能以更低成本获得同等甚至更好的分页质量。继续填充以跨页：理想的结果是，这一长段在页面底部自然断行、在下一页顶部无缝续接，全程没有文字截断、没有重叠、没有多余留白，并且页眉页脚与页码在新页上正确显示。</p>
+
+    <p>在实际的报告与公文排版中，长段落极其常见：政策解读、技术说明、案情陈述、研究综述往往一段就有数百字。如果分页引擎不能在段落中部断开，排版结果就会出现明显的"莫名换页留白"，既浪费纸张也不专业。下面这一段会被刻意拉长到跨越整页边界，请重点观察它在页面底部的断开位置是否自然、续接到下一页后是否从正确的位置继续，并且断开处不应出现文字被截断或重叠的情况。这一段开始重复填充内容以确保跨页：分页是把连续内容按页面物理高度切分为若干页的过程，其核心难点在于"在哪里断开"。对于离散块（标题、图片、表格行）断点是天然的；但对于连续文本，断点存在于任意两个视觉行之间，必须由排版引擎结合字体、字号、行高、容器宽度计算出每一行的实际位置。Paged.js 通过在渲染流中检测溢出节点与字符偏移（breakToken）来定位断点，从而实现段落中部的精确分页。这一段继续重复以保证它一定会跨越页面边界：在浏览器中，我们可以利用 Range 对象逐步扩展并读取 getClientRects 的矩形数量来推断视觉行边界，这也是 Paged.js 内部寻找文本断点的原理之一。但若由我们自行实现，则需要处理二分查找优化、Safari 空白折叠差异、以及拆分后 DOM 重排带来的再测量问题，工程量与维护成本都不低。因此本 POC 旨在验证：直接复用 Paged.js 是否能以更低成本获得同等甚至更好的分页质量。继续填充以跨页：理想的结果是，这一长段在页面底部自然断行、在下一页顶部无缝续接，全程没有文字截断、没有重叠、没有多余留白，并且页眉页脚与页码在新页上正确显示。</p>
+
+    <p>如果上面的长段落成功在页面中部断开并续接，说明 Paged.js 原生解决了我们 Phase B 中最棘手的"单行 Markdown 实际折行切分"问题，无需我们再手写 Range 测量逻辑。</p>
+
+    <h2>第二章 列表、引用与代码块</h2>
+    <p>以下验证常见块级元素在跨页时的表现。列表项之间应可在页面边界自然断开，单个列表项内部尽量保持完整。</p>
+    <ul>
+      <li>列表项一：分页引擎应允许列表在项与项之间跨页。</li>
+      <li>列表项二：Paged.js 默认在合适位置断开，配合 break-inside 控制单项完整性。</li>
+      <li>列表项三：相比手动方案，无需把每个列表项预先拆成独立块。</li>
+      <li>列表项四：有序与无序列表的编号/项目符号应在续接页保持正确。</li>
+    </ul>
+
+    <blockquote>
+      引用块验证：引用块跨页时应保留左侧色条与背景内边距，续接页的引用样式不应丢失。这是手动方案中需要在每个续接片段重新补回 <code>&gt;</code> 包裹的麻烦点，而 CSS 引擎可自动延续容器样式。
+    </blockquote>
+
+    <pre>// 代码块（&lt;10 行，按用户决策保持整体不拆）
+function paginate(blocks, pageHeight) {
+  const pages = []
+  let cur = [], used = 0
+  for (const b of blocks) {
+    if (used + b.h > pageHeight) { pages.push(cur); cur = []; used = 0 }
+    cur.push(b); used += b.h
+  }
+  return pages
+}</pre>
+
+    <!-- 演示：引擎风格的内联样式 HTML 能否被 Paged.js 正常分页 -->
+    <section style="margin:0 0 10pt 0;">
+      <p style="margin:0 0 10pt 0;line-height:1.78;text-align:justify;color:#1f2937;">
+        【内联样式块验证】这一段使用与渲染引擎一致的内联样式（<code>style="margin:...;line-height:1.78"</code>）直接写在元素上，用于验证 Paged.js 不依赖外部类名也能正确分页带内联样式的内容。我们的引擎输出的就是这种逐行 <code>&lt;section&gt;&lt;p style="..."&gt;</code> 结构，因此此项通过即说明可直接喂入引擎产物。
+      </p>
+    </section>
+
+    <h2>第三章 长表格跨页与续表</h2>
+    <p>下表共 30 行，用于验证表格跨页时表头自动重复，以及续接页是否能加上"（续表）"标记（由自定义 Handler 通过 <code>data-split-from</code> 注入）。</p>
+    <table id="bigTable">
+      <caption>表 3-1 分页引擎能力对照（演示用 30 行）</caption>
+      <thead>
+        <tr><th>序号</th><th>能力项</th><th>手动方案</th><th>Paged.js</th></tr>
+      </thead>
+      <tbody id="bigTableBody"><!-- 行由脚本生成 --></tbody>
+    </table>
+
+    <h2>第四章 结论占位</h2>
+    <p>若以上四项均通过，则 Paged.js 在功能上满足我们对 A4 文档分页的核心诉求，下一步评估其与 React + Zustand 实时编辑的集成成本与性能。</p>
+  </div>
+
+  <!-- ============ Paged.js 加载与自定义 Handler ============ -->
+  <script>
+    // 先填充 30 行表格内容（在分页前注入 DOM）
+    (function fillTable() {
+      const rows = [
+        ['单段中部分页', '需自研 Range 测量', '原生支持'],
+        ['孤寡行控制', '需手写阈值', 'orphans/widows'],
+        ['页眉页脚', '绝对定位每页', '@page margin box'],
+        ['页码', '手动注入', 'counter(page/pages)'],
+        ['运行页眉', '不支持', 'string-set'],
+        ['表头重复', '手动复制 thead', 'table-header-group'],
+        ['文本 PDF', '位图(不可选)', '打印→文本可选'],
+      ];
+      const body = document.getElementById('bigTableBody');
+      let html = '';
+      for (let i = 1; i <= 30; i++) {
+        const r = rows[(i - 1) % rows.length];
+        html += `<tr><td>${i}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`;
+      }
+      body.innerHTML = html;
+    })();
+
+    // 关闭自动运行，待注册 Handler 后手动触发
+    window.PagedConfig = { auto: false };
+  </script>
+  <script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></script>
+  <script>
+    // 缓存原始表头 HTML，供被拆分表格的"续接片段"补回重复表头
+    let cachedTableHead = '';
+
+    // 自定义 Handler：续接片段补「重复表头」+「（续表）」标题
+    class TableContinuationHandler extends Paged.Handler {
+      afterPageLayout(pageElement) {
+        // Paged.js 给被拆分元素的"续接片段"打上 data-split-from 属性
+        const continuedTables = pageElement.querySelectorAll('table[data-split-from]');
+        continuedTables.forEach((table) => {
+          // 1) 强制表头重复：续接片段若没有 thead 或 thead 为空，则克隆原表头补回
+          const existingHead = table.querySelector('thead');
+          if (cachedTableHead && (!existingHead || !existingHead.querySelector('tr'))) {
+            if (existingHead) existingHead.remove();
+            table.insertAdjacentHTML('afterbegin', cachedTableHead);
+          }
+          // 2) 续表标题：在表格前插入「（续表）」（去重）
+          const prev = table.previousElementSibling;
+          if (prev && prev.classList.contains('continued-caption')) return;
+          const cap = document.createElement('div');
+          cap.className = 'continued-caption';
+          cap.textContent = '（续表）';
+          table.parentNode.insertBefore(cap, table);
+        });
+      }
+    }
+    Paged.registerHandlers(TableContinuationHandler);
+
+    // DOM 就绪后：先缓存原始表头，再手动启动分页，并回填总页数
+    window.addEventListener('load', () => {
+      const th = document.querySelector('#bigTable thead');
+      if (th) cachedTableHead = th.outerHTML;
+      window.PagedPolyfill.preview().then((flow) => {
+        const el = document.getElementById('pageCount');
+        if (el) el.textContent = flow.total + ' 页';
+        console.log('[POC] Paged.js 渲染完成，总页数：', flow.total);
+      });
+    });
+  </script>
+</body>
+</html>

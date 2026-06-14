@@ -19,6 +19,7 @@ interface CodeEditorProps {
   onScrollerReady?: (el: HTMLElement) => void
   onViewReady?: (view: EditorView) => void
   language?: 'markdown' | 'html'
+  mode?: 'article' | 'document' | 'card' | 'html'
 }
 
 const lightTheme = EditorView.theme({
@@ -52,6 +53,7 @@ export function CodeEditor({
   onScrollerReady,
   onViewReady,
   language = 'markdown',
+  mode,
 }: CodeEditorProps) {
   const [codeLangs, setCodeLangs] = useState<LanguageDescription[]>(() =>
     preloadedCodeLangs ?? []
@@ -181,7 +183,7 @@ export function CodeEditor({
 
   return (
     <div className="flex h-full flex-col">
-      {language === 'markdown' && <EditorToolbar view={editorView} />}
+      {language === 'markdown' && <EditorToolbar view={editorView} mode={mode} />}
       <div className="flex-1 min-h-0">
         <CodeMirror
           value={initialValue}

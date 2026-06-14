@@ -1,30 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ThemeColors } from '@engine'
-import { parseMarkdown } from '@engine'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { renderMarkdown } from '@/lib/render/markdown'
 import { useEditorDocSync } from '@/lib/useEditorDocSync'
 import {
-  DEFAULT_DOCUMENT_SETTINGS,
-  createDocumentModel,
-  paginateDocumentBlocks,
+  splitMarkdownBlocks,
+  buildDocumentFilename,
   type DocumentSettings,
 } from './documentModel'
+import { buildPagedContentHtml } from './paged/pagedContent'
+import { buildPageCss } from './paged/pagedPageCss'
+import { usePagedPreview } from './paged/usePagedPreview'
 import { buildDocumentAiGuide } from '@/lib/aiGuide'
 import { copyText } from '@/lib/clipboard'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { FontSelect } from '@/components/ui/FontSelect'
-import { DOCUMENT_TITLE_STYLE_VARS } from './documentStyles'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { PreviewToolbar, type ToolbarItem } from '@/components/layout/PreviewToolbar'
 import { CustomPromptPopover } from '@/components/layout/CustomPromptPopover'
 import { exportMarkdownSource } from '@/lib/exportSource'
-import { useBlockHeights } from '@/lib/useBlockHeights'
-import { useExportAction } from '@/lib/useExportAction'
-import { getFontFamilyCss } from '@/lib/fonts'
 import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
 import { useStore } from '@/lib/store'
 
@@ -38,10 +33,6 @@ interface DocumentModeProps {
   onToast: (message: string) => void
 }
 
-function footerText(template: string, page: number, total: number) {
-  return template.replace('{page}', String(page)).replace('{total}', String(total))
-}
-
 export function DocumentMode({
   markdown,
   setMarkdown,
@@ -53,6 +44,7 @@ export function DocumentMode({
   const guideTrigger = useStore((s) => s.guideTrigger.document)
   const editorScrollerRef = useRef<HTMLElement | null>(null)
   const previewScrollRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [editorReady, setEditorReady] = useState(0)
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit')
 
@@ -81,61 +73,39 @@ export function DocumentMode({
   } = useEditorDocSync(markdown, setMarkdown)
 
   const rendered = useMemo(() => renderMarkdown(debouncedMarkdown, colors), [debouncedMarkdown, colors])
-  const model = useMemo(
-    () => createDocumentModel(debouncedMarkdown, rendered.meta, settings),
-    [debouncedMarkdown, rendered.meta.title, rendered.meta.contentMarkdown, settings],
+  const contentMarkdown = rendered.meta.contentMarkdown || debouncedMarkdown
+
+  const blocks = useMemo(() => splitMarkdownBlocks(contentMarkdown), [contentMarkdown])
+  const filename = useMemo(
+    () => buildDocumentFilename(rendered.meta.title, contentMarkdown),
+    [rendered.meta.title, contentMarkdown],
   )
-  const firstHeadingId = model.blocks.find((block) => block.kind === 'heading')?.id
 
-  const measuringRef = useRef<HTMLDivElement>(null)
-  const [actualHeights, tableRowHeights, tableOverheads] = useBlockHeights(measuringRef, [
-    model.blocks,
-    settings.pageWidth,
-    settings.fontScale,
-    settings.fontFamily,
-    colors,
-  ])
+  // Paged.js 内容 HTML（段落/表格跨页由引擎完成；随内容与排版设置变化）
+  const contentHtml = useMemo(
+    () =>
+      buildPagedContentHtml(blocks, colors, {
+        fontFamily: settings.fontFamily,
+        fontScale: settings.fontScale,
+        centerTitle: settings.centerTitle,
+        indentParagraph: settings.indentParagraph,
+      }),
+    [blocks, colors, settings.fontFamily, settings.fontScale, settings.centerTitle, settings.indentParagraph],
+  )
 
-  const pages = useMemo(() => {
-    return paginateDocumentBlocks(model.blocks, settings, actualHeights, tableRowHeights, tableOverheads)
-  }, [model.blocks, settings, actualHeights, tableRowHeights, tableOverheads])
+  // @page 分页样式（随页面/页边距/页眉页脚/页码设置变化）
+  const pageCss = useMemo(() => buildPageCss(settings, rendered.meta.title), [settings, rendered.meta.title])
 
-  const printAreaScale = containerWidth > 0 
-    ? Math.min(1, (containerWidth - 48) / settings.pageWidth) 
-    : 1
+  // 屏幕预览缩放：把 A4 页宽适配到预览面板
+  const fitScale = containerWidth > 0 ? Math.min(1, (containerWidth - 48) / settings.pageWidth) : 1
 
-  const [exportProgress, setExportProgress] = useState('')
-  const [exporting, runExport] = useExportAction(onToast)
-
-  const handleExportPdf = () => {
-    const container = document.querySelector('.document-print-area') as HTMLElement
-    if (!container) return
-
-    runExport(async () => {
-      const prevZoom = container.style.zoom
-      container.style.zoom = '1'
-      try {
-        // 增加 100ms 延时等待浏览器重绘和 Layout 稳定
-        await new Promise((resolve) => setTimeout(resolve, 100))
-
-        // 重新获取最新的元素，避免因 layout 重绘导致节点引用失效/丢失
-        const elements = Array.from(container.querySelectorAll('article.document-page')) as HTMLElement[]
-        if (elements.length === 0) throw new Error('未找到可导出的页面')
-
-        const { exportElementsToPdf } = await import('@/lib/exportPdf')
-        await exportElementsToPdf(
-          elements,
-          model.filename,
-          { width: settings.pageWidth, height: settings.pageHeight },
-          (current, total) => setExportProgress(`(${current}/${total})`)
-        )
-        return 'PDF 导出成功'
-      } finally {
-        container.style.zoom = prevZoom
-        setExportProgress('')
-      }
-    })
-  }
+  const { status, pageCount, print } = usePagedPreview({
+    iframeRef,
+    contentHtml,
+    pageCss,
+    title: filename.replace(/\.pdf$/, ''),
+    fitScale,
+  })
 
   const handleCopyGuide = async () => {
     const ok = await copyText(buildDocumentAiGuide())
@@ -161,15 +131,15 @@ export function DocumentMode({
       icon: '💾',
       label: UI_LABELS.toolbar.exportSource.label,
       tooltip: '导出为 .md 文件',
-      onClick: () => exportMarkdownSource(debouncedMarkdown, model.filename.replace(/\.pdf$/, '.md')),
+      onClick: () => exportMarkdownSource(debouncedMarkdown, filename.replace(/\.pdf$/, '.md')),
     },
     {
       id: 'exportPdf',
       icon: '🖨️',
-      label: exporting ? `导出 ${exportProgress}` : UI_LABELS.toolbar.exportPdf.label,
-      tooltip: UI_LABELS.toolbar.exportPdf.tooltip,
-      onClick: handleExportPdf,
-      disabled: exporting,
+      label: '导出 PDF',
+      tooltip: '通过浏览器打印另存为 PDF（文字可选中、体积小）',
+      onClick: print,
+      disabled: status === 'rendering',
       variant: 'primary',
       className: 'shadow-sm',
     },
@@ -231,6 +201,9 @@ export function DocumentMode({
         />
         首行缩进
       </label>
+      <span className="text-[12px] text-slate-400 ml-1 shrink-0">
+        {status === 'rendering' ? '分页中…' : status === 'done' ? `共 ${pageCount} 页` : ''}
+      </span>
     </>
   )
 
@@ -266,6 +239,7 @@ export function DocumentMode({
             value={localMarkdown}
             onChange={setLocalMarkdown}
             externalVersion={externalVersion}
+            mode="document"
             onScrollerReady={(el) => {
               editorScrollerRef.current = el
               setEditorReady((n) => n + 1)
@@ -273,109 +247,17 @@ export function DocumentMode({
           />
         </section>
 
-        <section ref={previewScrollRef} className={`document-workspace min-h-0 overflow-y-auto bg-slate-100 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
+        <section className={`document-workspace min-h-0 overflow-hidden bg-slate-100 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
           <PreviewToolbar leftContent={toolbarLeftContent} actions={toolbarActions} className="document-toolbar shrink-0" />
 
-        <div 
-          className="document-print-area mx-auto flex w-full flex-col items-center gap-6 px-6 py-6"
-          style={{
-            zoom: printAreaScale < 1 ? printAreaScale : undefined,
-          }}
-        >
-          {/* 隐藏测量容器，包裹在 0x0 隐藏外壳中，防止撑开滚动区域 */}
-          <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', visibility: 'hidden', pointerEvents: 'none' }}>
-            <div
-              ref={measuringRef}
-              className={`document-page document-content document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
-              style={{
-                ...DOCUMENT_TITLE_STYLE_VARS,
-                width: settings.pageWidth - settings.marginLeft - settings.marginRight,
-                fontFamily: getFontFamilyCss(settings.fontFamily),
-              }}
-            >
-              {model.blocks.map((block) => (
-                <section
-                  key={block.id}
-                  data-block-id={block.id}
-                  className={`document-block ${block.id === firstHeadingId ? 'document-title-block' : ''}`}
-                  data-kind={block.kind}
-                  dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, colors) }}
-                />
-              ))}
-            </div>
+          <div ref={previewScrollRef} className="document-preview-area w-full flex-1 overflow-auto px-4 py-4">
+            <iframe
+              ref={iframeRef}
+              title="A4 文档预览"
+              className="block w-full min-h-[480px] border-0 bg-transparent"
+            />
           </div>
-
-          {pages.map((page) => (
-            <article
-              key={page.pageNumber}
-              className={`document-page document-fontscale-${settings.fontScale} ${settings.centerTitle ? 'document-center-title' : ''} ${settings.indentParagraph ? 'document-indent-paragraph' : ''}`}
-              style={{
-                ...DOCUMENT_TITLE_STYLE_VARS,
-                width: settings.pageWidth,
-                height: settings.pageHeight,
-                position: 'relative',
-                fontFamily: getFontFamilyCss(settings.fontFamily),
-              }}
-            >
-              {/* Header - absolute positioned at top */}
-              <header
-                className="document-header"
-                style={{
-                  position: 'absolute',
-                  top: settings.marginTop - settings.headerHeight,
-                  left: settings.marginLeft,
-                  right: settings.marginRight,
-                  height: settings.headerHeight,
-                }}
-              >
-                <span>{settings.headerLeft || rendered.meta.title || 'markdown2view'}</span>
-                <span>{settings.headerRight}</span>
-              </header>
-
-              {/* Content area */}
-              <section
-                className="document-content"
-                style={{
-                  position: 'absolute',
-                  top: settings.marginTop,
-                  left: settings.marginLeft,
-                  right: settings.marginRight,
-                  bottom: settings.marginBottom,
-                  overflow: 'hidden',
-                  ...(page.isCover ? { display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' } : {}),
-                }}
-              >
-                {page.blocks.map((block) => (
-                  <section
-                    key={block.id}
-                    className={`document-block ${block.id === firstHeadingId ? 'document-title-block' : ''}`}
-                    data-kind={block.kind}
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(block.markdown, colors) }}
-                  />
-                ))}
-              </section>
-
-              {/* Footer - absolute positioned at bottom */}
-              <footer
-                className="document-footer"
-                style={{
-                  position: 'absolute',
-                  bottom: settings.marginBottom - settings.footerHeight,
-                  left: settings.marginLeft,
-                  right: settings.marginRight,
-                  height: settings.footerHeight,
-                }}
-              >
-                {footerText(
-                  settings.footerText || DEFAULT_DOCUMENT_SETTINGS.footerText,
-                  page.pageNumber,
-                  pages.length,
-                )}
-              </footer>
-            </article>
-          ))}
-        </div>
-      </section>
+        </section>
       </div>
       <UserGuidePopover
         guideKey="m2v-document-guide-seen"
