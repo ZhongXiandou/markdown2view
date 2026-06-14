@@ -2,6 +2,8 @@
 // AI 常把输出包在 ```html ... ``` 代码块里，或在前面加一段解释文字。
 // 移植自 html-anything/next/src/lib/extract-html.ts。
 
+import { hasTailwindClasses, hasTailwindScript, generateTailwindScriptTag } from './tailwindHelper'
+
 export function extractHtml(streamed: string): string {
   if (!streamed) return ''
 
@@ -58,7 +60,16 @@ export function previewHtml(input: string): string {
     return match + ' crossorigin="anonymous"';
   });
 
-  
+  // 检测是否包含 Tailwind 类名但没有 Tailwind 脚本，自动注入本地版本
+  if (hasTailwindClasses(html) && !hasTailwindScript(html)) {
+    const tailwindTag = generateTailwindScriptTag()
+    if (/<\/head>/i.test(html)) {
+      html = html.replace(/<\/head>/i, `${tailwindTag}</head>`)
+    } else if (/<body/i.test(html)) {
+      html = html.replace(/(<body[^>]*>)/i, `${tailwindTag}$1`)
+    }
+  }
+
   // 注入打印所需的强制换页 CSS 与屏幕居中预览 CSS，以及防御性排版样式（防截图乱码/折行）
   const injectedCss = `
 <style>
