@@ -356,7 +356,8 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
 
     const stabilizeScale = () => {
       observeContent()
-      ;[0, 50, 150, 350, 800].forEach(scheduleResize)
+      // 减少定时器数量：初始 + 2 个延迟足够覆盖大部分场景
+      ;[0, 100, 400].forEach(scheduleResize)
     }
 
     stabilizeScale()
