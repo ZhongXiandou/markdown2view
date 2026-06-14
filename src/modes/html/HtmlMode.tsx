@@ -110,8 +110,18 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const [exporting, runExport] = useExportAction(onToast)
   const [allowScripts, setAllowScripts] = useState(false)
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
-  // 提前通过 DOMParser 检测预期的页面数量，避免 iframe 加载完成前后工具栏发生抖动闪烁（即所谓的“加载两次”视觉效果）
+  // 监听全屏状态变化，用于在全屏播放时隐藏工具栏
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === previewPaneRef.current)
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
+  
+  // 提前通过 DOMParser 检测预期的页面数量，避免 iframe 加载完成前后工具栏发生抖动闪烁（即所谓的"加载两次"视觉效果）
   const expectedPageCount = useMemo(() => {
     const doc = new DOMParser().parseFromString(html, 'text/html')
     return doc.querySelectorAll('.page, .slide, .card').length
@@ -625,7 +635,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
           />
         </section>
         <section ref={previewPaneRef} className={`min-h-0 overflow-hidden bg-white flex flex-col relative ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
-          <PreviewToolbar actions={toolbarActions} className="shrink-0" />
+          {!isFullscreen && <PreviewToolbar actions={toolbarActions} className="shrink-0" />}
           <div className="flex-1 min-h-0 relative">
             <HtmlSandbox 
               ref={iframeRef} 
