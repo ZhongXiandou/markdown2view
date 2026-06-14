@@ -13,6 +13,8 @@ export interface UserGuidePopoverProps {
   steps: GuideStep[]
   delay?: number
   forceOpenTrigger?: number
+  /** 可选的额外提示，显示在步骤与隐私声明之间 */
+  tip?: string
 }
 
 // 内存中记录在当前页面运行周期（刷新即重置）中已关闭的引导 Key
@@ -25,6 +27,7 @@ export function UserGuidePopover({
   steps,
   delay = 800,
   forceOpenTrigger,
+  tip,
 }: UserGuidePopoverProps) {
   const [visible, setVisible] = useState(false)
 
@@ -80,6 +83,14 @@ export function UserGuidePopover({
             </div>
           ))}
         </div>
+
+        {/* 可选的使用提示 */}
+        {tip && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 text-[12px] text-amber-900 leading-relaxed flex items-start gap-2.5">
+            <span className="text-[15px] shrink-0 leading-none">💡</span>
+            <div>{tip}</div>
+          </div>
+        )}
 
         {/* 隐私与开源声明小卡片 */}
         <div className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5 text-[12px] text-emerald-800 leading-relaxed flex items-start gap-2.5">

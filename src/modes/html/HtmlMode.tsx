@@ -658,6 +658,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
         forceOpenTrigger={guideTrigger}
         title="自由画布 快速开始"
         subtitle="利用 AI 提示词库快速生成精美的动态或静态 HTML 页面"
+        tip="为获得最佳体验，建议在电脑浏览器中使用本功能，并将浏览器窗口宽度调整至 1920 像素以上，以充分展现画布的宽屏排版效果。"
         steps={[
           {
             icon: '📚',
