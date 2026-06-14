@@ -29,30 +29,57 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
   const editorScrollerRef = useRef<HTMLElement | null>(null)
   const previewScrollRef = useRef<HTMLDivElement>(null)
   const [editorReady, setEditorReady] = useState(0)
+  const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit')
 
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady])
 
   return (
-    <main className="grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
-      <section className="min-h-0 overflow-hidden bg-white">
-        <CodeEditor
-          value={localMarkdown}
-          onChange={setLocalMarkdown}
-          externalVersion={externalVersion}
-          onScrollerReady={(el) => {
-            editorScrollerRef.current = el
-            setEditorReady((n) => n + 1)
-          }}
-        />
-      </section>
-      <section className="min-h-0 overflow-hidden bg-gray-50">
-        <ArticlePreview
-          rendered={rendered}
-          markdown={debouncedMarkdown}
-          scrollRef={previewScrollRef}
-          onToast={onToast}
-        />
-      </section>
+    <main className="flex flex-col min-h-0 flex-1 bg-gray-200">
+      {/* 移动端视图切换 Tab */}
+      <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
+        <button
+          onClick={() => setActiveView('edit')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'edit'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          编辑内容
+        </button>
+        <button
+          onClick={() => setActiveView('preview')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'preview'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          实时预览
+        </button>
+      </div>
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+        <section className={`min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
+          <CodeEditor
+            value={localMarkdown}
+            onChange={setLocalMarkdown}
+            externalVersion={externalVersion}
+            onScrollerReady={(el) => {
+              editorScrollerRef.current = el
+              setEditorReady((n) => n + 1)
+            }}
+          />
+        </section>
+        <section className={`min-h-0 overflow-hidden bg-gray-50 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
+          <ArticlePreview
+            rendered={rendered}
+            markdown={debouncedMarkdown}
+            scrollRef={previewScrollRef}
+            onToast={onToast}
+          />
+        </section>
+      </div>
       <UserGuidePopover
         guideKey="m2v-article-guide-seen"
         forceOpenTrigger={guideTrigger}

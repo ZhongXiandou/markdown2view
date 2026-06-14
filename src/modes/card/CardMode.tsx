@@ -74,6 +74,7 @@ export function CardMode({
   const [editorReady, setEditorReady] = useState(0);
 
   const [containerWidth, setContainerWidth] = useState(0);
+  const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
 
   useEffect(() => {
     const el = previewScrollRef.current;
@@ -325,27 +326,53 @@ export function CardMode({
   );
 
   return (
-    <main className="grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
-      <section className="min-h-0 overflow-hidden bg-white">
-        <CodeEditor
-          value={localMarkdown}
-          onChange={setLocalMarkdown}
-          externalVersion={externalVersion}
-          onScrollerReady={(el) => {
-            editorScrollerRef.current = el;
-            setEditorReady((n) => n + 1);
-          }}
-        />
-      </section>
+    <main className="flex flex-col min-h-0 flex-1 bg-gray-200">
+      {/* 移动端视图切换 Tab */}
+      <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
+        <button
+          onClick={() => setActiveView('edit')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'edit'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          编辑内容
+        </button>
+        <button
+          onClick={() => setActiveView('preview')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'preview'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          实时预览
+        </button>
+      </div>
 
-      <section
-        ref={previewScrollRef}
-        className="min-h-0 overflow-y-auto bg-slate-100"
-      >
-        <PreviewToolbar
-          leftContent={toolbarLeftContent}
-          actions={toolbarActions}
-        />
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+        <section className={`min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
+          <CodeEditor
+            value={localMarkdown}
+            onChange={setLocalMarkdown}
+            externalVersion={externalVersion}
+            onScrollerReady={(el) => {
+              editorScrollerRef.current = el;
+              setEditorReady((n) => n + 1);
+            }}
+          />
+        </section>
+
+        <section
+          ref={previewScrollRef}
+          className={`min-h-0 overflow-y-auto bg-slate-100 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}
+        >
+          <PreviewToolbar
+            leftContent={toolbarLeftContent}
+            actions={toolbarActions}
+            className="shrink-0"
+          />
 
         <div className="flex flex-col gap-4 px-5 py-5">
           <aside className="mx-auto w-full max-w-[480px] rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-[13px] leading-6 text-blue-800">
@@ -449,6 +476,7 @@ export function CardMode({
           </div>
         </div>
       </section>
+      </div>
       <UserGuidePopover
         guideKey="m2v-card-guide-seen"
         forceOpenTrigger={guideTrigger}

@@ -109,6 +109,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const [editorReady, setEditorReady] = useState(0)
   const [exporting, runExport] = useExportAction(onToast)
   const [allowScripts, setAllowScripts] = useState(false)
+  const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit')
 
   // 提前通过 DOMParser 检测预期的页面数量，避免 iframe 加载完成前后工具栏发生抖动闪烁（即所谓的“加载两次”视觉效果）
   const expectedPageCount = useMemo(() => {
@@ -462,7 +463,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       icon: '📺',
       label: UI_LABELS.toolbar.fullscreen.label,
       tooltip: UI_LABELS.toolbar.fullscreen.tooltip,
-      onClick: () => iframeRef.current?.requestFullscreen?.(),
+      onClick: () => previewPaneRef.current?.requestFullscreen?.(),
     },
     {
       id: 'refresh',
@@ -582,14 +583,36 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   })
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col">
-      {/* 工具栏 */}
-      <PreviewToolbar actions={toolbarActions} />
+    <main className="flex flex-col min-h-0 flex-1 bg-gray-200">
+      {/* 移动端视图切换 Tab */}
+      <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
+        <button
+          onClick={() => setActiveView('edit')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'edit'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          编辑内容
+        </button>
+        <button
+          onClick={() => setActiveView('preview')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'preview'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          实时预览
+        </button>
+      </div>
+
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
       {/* 左右分栏 */}
-      <div className="grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
-        <section className="min-h-0 overflow-hidden bg-white">
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+        <section className={`min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
           <CodeEditor
             value={localHtml}
             onChange={setLocalHtml}
@@ -601,22 +624,25 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
             }}
           />
         </section>
-        <section ref={previewPaneRef} className="min-h-0 overflow-hidden bg-white">
-          <HtmlSandbox 
-            ref={iframeRef} 
-            html={debouncedHtml} 
-            refreshKey={refreshKey}
-            allowScripts={allowScripts}
-            onLoad={() => {
-              const iframe = iframeRef.current
-              if (!iframe?.contentDocument) return
-              setTimeout(() => {
-                const detected = detectPages(iframe.contentDocument!)
-                setPages(detected)
-                setCurrentPage(0)
-              }, 500)
-            }}
-          />
+        <section ref={previewPaneRef} className={`min-h-0 overflow-hidden bg-white flex flex-col relative ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
+          <PreviewToolbar actions={toolbarActions} className="shrink-0" />
+          <div className="flex-1 min-h-0 relative">
+            <HtmlSandbox 
+              ref={iframeRef} 
+              html={debouncedHtml} 
+              refreshKey={refreshKey}
+              allowScripts={allowScripts}
+              onLoad={() => {
+                const iframe = iframeRef.current
+                if (!iframe?.contentDocument) return
+                setTimeout(() => {
+                  const detected = detectPages(iframe.contentDocument!)
+                  setPages(detected)
+                  setCurrentPage(0)
+                }, 500)
+              }}
+            />
+          </div>
         </section>
       </div>
 

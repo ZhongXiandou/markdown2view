@@ -27,13 +27,16 @@ interface PreviewToolbarProps {
 
 export function PreviewToolbar({ leftContent, actions, className = '' }: PreviewToolbarProps) {
   return (
-    <div className={`preview-toolbar sticky top-0 z-10 flex flex-wrap items-center justify-end gap-y-2 gap-x-4 border-b border-slate-200 bg-white/95 px-5 py-2 shadow-sm backdrop-blur ${className}`}>
+    <div className={`preview-toolbar sticky top-0 z-10 flex flex-nowrap items-center gap-x-3 border-b border-slate-200 bg-white/95 px-4 py-2 shadow-sm backdrop-blur overflow-x-auto no-scrollbar md:flex-wrap md:justify-end md:overflow-x-visible md:px-5 ${className}`}>
       {leftContent && (
-        <div className="flex items-center flex-wrap justify-end gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {leftContent}
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+      {leftContent && actions.length > 0 && (
+        <div className="w-px h-4 bg-slate-200 shrink-0" />
+      )}
+      <div className="flex items-center gap-1.5 shrink-0">
         {actions.map((action, idx) => {
           if (action === 'separator') {
             return <div key={`sep-${idx}`} className="w-px h-5 bg-slate-200 mx-0.5" />

@@ -54,6 +54,7 @@ export function DocumentMode({
   const editorScrollerRef = useRef<HTMLElement | null>(null)
   const previewScrollRef = useRef<HTMLDivElement>(null)
   const [editorReady, setEditorReady] = useState(0)
+  const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit')
 
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady])
 
@@ -234,21 +235,46 @@ export function DocumentMode({
   )
 
   return (
-    <main className="document-shell grid min-h-0 flex-1 grid-cols-2 gap-px bg-gray-200">
-      <section className="document-editor-pane min-h-0 overflow-hidden bg-white">
-        <CodeEditor
-          value={localMarkdown}
-          onChange={setLocalMarkdown}
-          externalVersion={externalVersion}
-          onScrollerReady={(el) => {
-            editorScrollerRef.current = el
-            setEditorReady((n) => n + 1)
-          }}
-        />
-      </section>
+    <main className="document-shell flex flex-col min-h-0 flex-1 bg-gray-200">
+      {/* 移动端视图切换 Tab */}
+      <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
+        <button
+          onClick={() => setActiveView('edit')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'edit'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          编辑内容
+        </button>
+        <button
+          onClick={() => setActiveView('preview')}
+          className={`flex-1 py-3 text-center text-[13px] font-bold transition-all cursor-pointer ${
+            activeView === 'preview'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] bg-slate-50/50'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          实时预览
+        </button>
+      </div>
 
-      <section ref={previewScrollRef} className="document-workspace min-h-0 overflow-y-auto bg-slate-100">
-        <PreviewToolbar leftContent={toolbarLeftContent} actions={toolbarActions} className="document-toolbar" />
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+        <section className={`document-editor-pane min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
+          <CodeEditor
+            value={localMarkdown}
+            onChange={setLocalMarkdown}
+            externalVersion={externalVersion}
+            onScrollerReady={(el) => {
+              editorScrollerRef.current = el
+              setEditorReady((n) => n + 1)
+            }}
+          />
+        </section>
+
+        <section ref={previewScrollRef} className={`document-workspace min-h-0 overflow-y-auto bg-slate-100 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
+          <PreviewToolbar leftContent={toolbarLeftContent} actions={toolbarActions} className="document-toolbar shrink-0" />
 
         <div 
           className="document-print-area mx-auto flex w-full flex-col items-center gap-6 px-6 py-6"
@@ -350,6 +376,7 @@ export function DocumentMode({
           ))}
         </div>
       </section>
+      </div>
       <UserGuidePopover
         guideKey="m2v-document-guide-seen"
         forceOpenTrigger={guideTrigger}
