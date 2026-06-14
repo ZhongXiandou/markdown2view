@@ -88,7 +88,7 @@ export function DocumentMode({
   const firstHeadingId = model.blocks.find((block) => block.kind === 'heading')?.id
 
   const measuringRef = useRef<HTMLDivElement>(null)
-  const [actualHeights, tableRowHeights] = useBlockHeights(measuringRef, [
+  const [actualHeights, tableRowHeights, tableOverheads] = useBlockHeights(measuringRef, [
     model.blocks,
     settings.pageWidth,
     settings.fontScale,
@@ -97,8 +97,8 @@ export function DocumentMode({
   ])
 
   const pages = useMemo(() => {
-    return paginateDocumentBlocks(model.blocks, settings, actualHeights, tableRowHeights)
-  }, [model.blocks, settings, actualHeights, tableRowHeights])
+    return paginateDocumentBlocks(model.blocks, settings, actualHeights, tableRowHeights, tableOverheads)
+  }, [model.blocks, settings, actualHeights, tableRowHeights, tableOverheads])
 
   const printAreaScale = containerWidth > 0 
     ? Math.min(1, (containerWidth - 48) / settings.pageWidth) 

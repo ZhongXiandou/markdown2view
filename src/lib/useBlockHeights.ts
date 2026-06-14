@@ -6,16 +6,19 @@ import { useLayoutEffect, useState } from 'react'
  *
  * @param measuringRef 隐藏测量容器的 Ref
  * @param deps 重新测量高度所依赖的外部属性（如宽度、缩放比例、字体、主题等）
- * @returns [actualHeights, tableRowHeights]
+ * @returns [actualHeights, tableRowHeights, tableOverheads]
  *   - actualHeights: 每个 block 的总高度映射 { blockId: height }
  *   - tableRowHeights: 每个表格块的逐行高度映射 { blockId: [headerHeight, row0Height, row1Height, ...] }
+ *   - tableOverheads: 每个表格块的非行开销（caption + 外边距 + 容器内边距 + 表格边框等）
+ *                     = 块总高度 - 所有行高之和
  */
 export function useBlockHeights(
   measuringRef: React.RefObject<HTMLElement | null>,
   deps: React.DependencyList
-): [Record<string, number>, Record<string, number[]>] {
+): [Record<string, number>, Record<string, number[]>, Record<string, number>] {
   const [actualHeights, setActualHeights] = useState<Record<string, number>>({})
   const [tableRowHeights, setTableRowHeights] = useState<Record<string, number[]>>({})
+  const [tableOverheads, setTableOverheads] = useState<Record<string, number>>({})
 
   useLayoutEffect(() => {
     const container = measuringRef.current
@@ -24,6 +27,7 @@ export function useBlockHeights(
     const measure = () => {
       const newHeights: Record<string, number> = {}
       const newRowHeights: Record<string, number[]> = {}
+      const newOverheads: Record<string, number> = {}
       const elements = container.children
 
       let lastBottom = 0
@@ -57,6 +61,10 @@ export function useBlockHeights(
             }
             if (rowHeights.length > 0) {
               newRowHeights[id] = rowHeights
+              // 非行开销 = 块总高度 - 所有行高之和
+              // 包含：caption 高度、外边距（上16px + 下30px）、容器内边距（上下各16px）、表格边框等
+              const rowSum = rowHeights.reduce((s, v) => s + v, 0)
+              newOverheads[id] = Math.max(0, h - rowSum)
             }
           }
         }
@@ -89,6 +97,19 @@ export function useBlockHeights(
         }
         return prev
       })
+
+      setTableOverheads(prev => {
+        let hasChange = Object.keys(newOverheads).length !== Object.keys(prev).length
+        if (!hasChange) {
+          for (const key in newOverheads) {
+            if (prev[key] !== newOverheads[key]) {
+              hasChange = true
+              break
+            }
+          }
+        }
+        return hasChange ? newOverheads : prev
+      })
     }
 
     measure()
@@ -116,5 +137,5 @@ export function useBlockHeights(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
-  return [actualHeights, tableRowHeights] as const
+  return [actualHeights, tableRowHeights, tableOverheads] as const
 }

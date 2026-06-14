@@ -304,6 +304,8 @@ interface SplitTableResult {
  * @param actualTableHeight 整表实测高度（用于降级估算时的全局校正）
  * @param tableRowHeights  实测逐行高度 [headerHeight, row0Height, row1Height, ...]
  *                          若提供则直接使用，否则降级到估算 × heightRatio
+ * @param tableOverhead    实测非行开销（caption + 外边距 + 容器内边距 + 表格边框等）
+ *                          = 块总高度 - 所有行高之和；实测模式下替代 containerPadding
  */
 function splitTableByHeight(
   tableMarkdown: string,
@@ -311,7 +313,8 @@ function splitTableByHeight(
   effectiveHeight: number,
   settings: { marginTop: number; marginBottom: number },
   actualTableHeight?: number,
-  tableRowHeights?: number[]
+  tableRowHeights?: number[],
+  tableOverhead?: number
 ): SplitTableResult | null {
   const tableData = parseTableMarkdown(tableMarkdown)
   if (!tableData) return null
@@ -342,18 +345,25 @@ function splitTableByHeight(
     ? tableRowHeights![0]
     : estimateTableRowHeight(tableData.headers, true, tableData.colChars) * heightRatio
 
-  const containerPadding = 46 // 顶部 16px 底部 30px 外边距
+  // 非行开销：实测模式优先使用 DOM 测量值（包含 caption、外边距、容器内边距、表格边框等全部开销）
+  // 估算模式使用固定值 46px（仅含块间外边距 上16px + 下30px）
+  const measuredOverhead = (useActual && tableOverhead != null) ? tableOverhead : 46
   // 实测行高时安全缓冲可减小（误差极小）；估算时保留较大缓冲
   const safetyBuffer = useActual ? 10 : 30
 
-  const captionHeight = tableData.caption ? baseCaptionHeight * (useActual ? 1 : heightRatio) : 0
-  const continuationCaptionHeight = tableData.caption ? captionHeight : 30 * (useActual ? 1 : heightRatio)
+  // 标题高度估算（用于从总开销中分离出容器开销）
+  const captionHeightEstimated = tableData.caption ? baseCaptionHeight * (useActual ? 1 : heightRatio) : 0
+  const continuationCaptionHeight = tableData.caption ? captionHeightEstimated : 30 * (useActual ? 1 : heightRatio)
 
-  // 计算第一页可用高度
-  const firstPageAvailable = availableHeight - containerPadding - headerHeight - captionHeight - safetyBuffer
+  // 将 caption 从总开销中分离：wrapperOverhead = 外边距 + 容器内边距 + 表格边框（不含 caption）
+  // 这样 captionHeight 可在可用高度公式中独立扣减，避免双重扣减或漏算
+  const wrapperOverhead = Math.max(0, measuredOverhead - captionHeightEstimated)
 
-  // 计算后续页可用高度
-  const continuationPageAvailable = effectiveHeight - containerPadding - headerHeight - continuationCaptionHeight - safetyBuffer
+  // 计算第一页可用高度（caption = 原标题）
+  const firstPageAvailable = availableHeight - wrapperOverhead - captionHeightEstimated - headerHeight - safetyBuffer
+
+  // 计算后续页可用高度（caption = "（续表）"标题，高度可能不同）
+  const continuationPageAvailable = effectiveHeight - wrapperOverhead - continuationCaptionHeight - headerHeight - safetyBuffer
 
   for (let i = 0; i < tableData.rows.length; i++) {
     const row = tableData.rows[i]
@@ -369,12 +379,12 @@ function splitTableByHeight(
       // 当前页已满，生成页面
       const caption = tableData.caption
       const isCont = pages.length > 0
-      const currentCapHeight = isCont ? continuationCaptionHeight : captionHeight
+      const currentCapHeight = isCont ? continuationCaptionHeight : captionHeightEstimated
       const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, isCont, caption)
       pages.push({
         tableMarkdown: pageMarkdown,
         isContinuation: isCont,
-        height: currentHeight + containerPadding + headerHeight + currentCapHeight
+        height: currentHeight + wrapperOverhead + headerHeight + currentCapHeight
       })
 
       // 开始新页
@@ -391,12 +401,12 @@ function splitTableByHeight(
   if (currentPageRows.length > 0) {
     const caption = tableData.caption
     const isCont = pages.length > 0
-    const currentCapHeight = isCont ? continuationCaptionHeight : captionHeight
+    const currentCapHeight = isCont ? continuationCaptionHeight : captionHeightEstimated
     const pageMarkdown = buildTableMarkdown(tableData.headers, currentPageRows, isCont, caption)
     pages.push({
       tableMarkdown: pageMarkdown,
       isContinuation: isCont,
-      height: currentHeight + containerPadding + headerHeight + currentCapHeight
+      height: currentHeight + wrapperOverhead + headerHeight + currentCapHeight
     })
   }
 
@@ -433,7 +443,8 @@ export function paginateDocumentBlocks(
   blocks: DocumentBlock[],
   settings: Pick<DocumentSettings, 'pageHeight' | 'marginTop' | 'marginBottom' | 'fontScale'>,
   actualHeights?: Record<string, number>,
-  tableRowHeights?: Record<string, number[]>
+  tableRowHeights?: Record<string, number[]>,
+  tableOverheads?: Record<string, number>
 ): DocumentPage[] {
   const scale = fontScaleFactor(settings.fontScale ?? 'normal')
   const contentHeight = settings.pageHeight - settings.marginTop - settings.marginBottom
@@ -496,7 +507,8 @@ export function paginateDocumentBlocks(
         
         const actualTableHeight = actualHeights?.[block.id]
         const blockRowHeights = tableRowHeights?.[block.id]
-        const splitResult = splitTableByHeight(block.markdown, availableHeight, effectiveHeight, settings, actualTableHeight, blockRowHeights)
+        const blockOverhead = tableOverheads?.[block.id]
+        const splitResult = splitTableByHeight(block.markdown, availableHeight, effectiveHeight, settings, actualTableHeight, blockRowHeights, blockOverhead)
         
         if (splitResult && splitResult.pages.length > 1) {
           // 表格需要跨页
