@@ -305,16 +305,32 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'm2v-store',
-      partialize: (state) => {
-        const { guideTrigger, ...rest } = state
-        return rest
-      },
+      partialize: (state) => ({
+        articleMarkdown: state.articleMarkdown,
+        documentMarkdown: state.documentMarkdown,
+        cardMarkdown: state.cardMarkdown,
+        html: state.html,
+        mode: state.mode,
+        inputType: state.inputType,
+        platform: state.platform,
+        documentSettings: state.documentSettings,
+        articleFont: state.articleFont,
+        cardFont: state.cardFont,
+        accent: state.accent,
+        accentDark: state.accentDark,
+        colors: state.colors,
+        imageHostConfig: state.imageHostConfig,
+        demoVersion: state.demoVersion,
+        articleDirty: state.articleDirty,
+        documentDirty: state.documentDirty,
+        cardDirty: state.cardDirty,
+        htmlDirty: state.htmlDirty,
+        customInstructions: state.customInstructions,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           applyCssVars(state.accent, state.accentDark)
-          if (!state.customInstructions) {
-            (state as any).customInstructions = []
-          }
+          state.customInstructions ??= []
         }
       },
     }
