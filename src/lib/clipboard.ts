@@ -29,26 +29,21 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-// 构建反向索引：url -> id，用于 O(1) 查找
+// 构建反向索引：url -> id，用于 O(1) 查找。
+// 惰性重建：通过比对 localImageUrls 的条目数检测增删变化，避免缓存过期。
 const urlToIdCache = new Map<string, string>()
-let urlToIdCacheDirty = true
+let cachedEntryCount = -1
 
 function getUrlToIdMap(): Map<string, string> {
-  if (urlToIdCacheDirty) {
+  const currentCount = Object.keys(localImageUrls).length
+  if (currentCount !== cachedEntryCount) {
     urlToIdCache.clear()
     for (const [id, url] of Object.entries(localImageUrls)) {
       urlToIdCache.set(url, id)
     }
-    urlToIdCacheDirty = false
+    cachedEntryCount = currentCount
   }
   return urlToIdCache
-}
-
-// 监听 localImageUrls 变化，标记缓存需要更新
-// 由于 localImageUrls 是普通对象，我们通过 Proxy 或在 resolveImageUrl 后标记
-// 这里采用简单方案：每次调用前重置标记
-export function markUrlCacheDirty() {
-  urlToIdCacheDirty = true
 }
 
 /**

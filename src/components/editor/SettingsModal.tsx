@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore, type ImageHostType, type ImageHostConfig } from '@/lib/store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -25,6 +25,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     cosBucket: imageHostConfig.cos?.Bucket || '',
     cosRegion: imageHostConfig.cos?.Region || '',
   })
+
+  // 每次打开弹窗时，从 store 重新初始化表单，避免「取消后重开看到上次未保存的脏值」。
+  // 组件常驻挂载（hooks 之后才 return null），故必须在 isOpen 切换时重置。
+  useEffect(() => {
+    if (!isOpen) return
+    setForm({
+      activeType: imageHostConfig.activeType,
+      smmsToken: imageHostConfig.smms?.token || '',
+      ossRegion: imageHostConfig.oss?.region || '',
+      ossKeyId: imageHostConfig.oss?.accessKeyId || '',
+      ossKeySecret: imageHostConfig.oss?.accessKeySecret || '',
+      ossBucket: imageHostConfig.oss?.bucket || '',
+      cosSecretId: imageHostConfig.cos?.SecretId || '',
+      cosSecretKey: imageHostConfig.cos?.SecretKey || '',
+      cosBucket: imageHostConfig.cos?.Bucket || '',
+      cosRegion: imageHostConfig.cos?.Region || '',
+    })
+  }, [isOpen, imageHostConfig])
 
   if (!isOpen) return null
 

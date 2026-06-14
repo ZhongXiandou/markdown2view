@@ -7,21 +7,21 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/基础幻灯",
       accent: "#2563eb",
       description: "通用 16:9 横版幻灯片，适合作为空白起点",
-      previewHtml: `<div style="font-family: sans-serif; background: #002FA7; color: #fff; padding: 16px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; justify-content: space-between;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
-      <span style="font-size: 9px; font-weight: bold; letter-spacing: 1px;">PRESENTATION</span>
-      <span style="font-size: 9px; opacity: 0.5;">01</span>
+      previewHtml: `<div style="font-family: sans-serif; background: #002FA7; color: #fff; padding: 18px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; justify-content: space-between;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
+      <span style="font-size: 11px; font-weight: bold; letter-spacing: 1.5px;">PRESENTATION</span>
+      <span style="font-size: 11px; opacity: 0.6;">01</span>
     </div>
-    <div style="margin-top: 10px; margin-bottom: auto;">
-      <div style="font-size: 18px; font-weight: 700; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.2px;">构建纯前端渲染工作台</div>
-      <div style="font-size: 10px; opacity: 0.7;">An elegant way to export PDF and PNG files.</div>
+    <div style="margin: auto 0;">
+      <div style="font-size: 22px; font-weight: 700; line-height: 1.15; margin-bottom: 8px; letter-spacing: -0.3px;">构建纯前端渲染工作台</div>
+      <div style="font-size: 12px; opacity: 0.75; line-height: 1.4;">An elegant way to export PDF and PNG files.</div>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 6px;">
-      <span style="font-size: 8px; opacity: 0.5;">Antigravity Design</span>
-      <div style="display: flex; gap: 3px;">
-        <div style="width: 4px; height: 4px; border-radius: 50%; background: #fff;"></div>
-        <div style="width: 4px; height: 4px; border-radius: 50%; background: #fff; opacity: 0.3;"></div>
-        <div style="width: 4px; height: 4px; border-radius: 50%; background: #fff; opacity: 0.3;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">
+      <span style="font-size: 10px; opacity: 0.6;">Antigravity Design</span>
+      <div style="display: flex; gap: 5px;">
+        <div style="width: 6px; height: 6px; border-radius: 50%; background: #fff;"></div>
+        <div style="width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: 0.35;"></div>
+        <div style="width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: 0.35;"></div>
       </div>
     </div>
   </div>`,
@@ -43,13 +43,13 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/发布会",
       accent: "#f59e0b",
       description: "Keynote 式大屏演示，深色舞台、超大标题、强节奏单页信息",
-      previewHtml: `<div style="font-family: sans-serif; background: radial-gradient(circle at center, #1b2030 0%, #05070c 100%); color: #fff; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-align: center; align-items: center;">
-    <div style="font-size: 10px; font-weight: bold; color: #f59e0b; letter-spacing: 2px; text-transform: uppercase;">SPECIAL EVENT</div>
-    <div style="margin-top: 12px; margin-bottom: auto;">
-      <div style="font-size: 20px; font-weight: 700; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 6px;">ONE MORE THING.</div>
-      <div style="font-size: 10px; color: #cbd5e1; font-weight: 300;">The next generation of web publishing starts today.</div>
+      previewHtml: `<div style="font-family: sans-serif; background: radial-gradient(circle at center, #1b2030 0%, #05070c 100%); color: #fff; padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-align: center; align-items: center;">
+    <div style="font-size: 12px; font-weight: bold; color: #f59e0b; letter-spacing: 2.5px; text-transform: uppercase;">SPECIAL EVENT</div>
+    <div style="margin: auto 0;">
+      <div style="font-size: 26px; font-weight: 700; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 8px;">ONE MORE THING.</div>
+      <div style="font-size: 12px; color: #cbd5e1; font-weight: 300; line-height: 1.4;">The next generation of web publishing starts today.</div>
     </div>
-    <div style="font-size: 9px; opacity: 0.5;">LIVE FROM THE THEATER</div>
+    <div style="font-size: 10px; opacity: 0.55; letter-spacing: 1px;">LIVE FROM THE THEATER</div>
   </div>`,
       style: `【视觉主题】电影级产品发布会幻灯片，适合大屏演讲与发布稿
   【色彩系统】
@@ -70,21 +70,21 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/咨询顾问",
       accent: "#1d4ed8",
       description: "咨询公司式汇报页，结论先行、矩阵图、分栏和数据证据清楚",
-      previewHtml: `<div style="font-family: sans-serif; background: #ffffff; padding: 14px; height: 100%; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+      previewHtml: `<div style="font-family: sans-serif; background: #ffffff; padding: 16px; height: 100%; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
     <div>
-      <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1d4ed8; padding-bottom: 4px; margin-bottom: 8px;">
-        <span style="font-size: 11px; font-weight: bold; color: #0f172a;">2x2 Matrix Strategy</span>
-        <span style="font-size: 8px; color: #64748b; font-weight: bold;">CONSULTING</span>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1d4ed8; padding-bottom: 6px; margin-bottom: 10px;">
+        <span style="font-size: 13px; font-weight: bold; color: #0f172a;">2x2 Matrix Strategy</span>
+        <span style="font-size: 10px; color: #64748b; font-weight: bold;">CONSULTING</span>
       </div>
-      <div style="font-size: 10px; font-weight: bold; color: #1d4ed8; margin-bottom: 6px;">Market Attractiveness vs Competency</div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-        <div style="background: rgba(29,78,216,0.06); border: 1px solid rgba(29,78,216,0.15); padding: 4px; font-size: 8px; border-radius: 4px;">★ Stars</div>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px; font-size: 8px; border-radius: 4px;">? Question</div>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px; font-size: 8px; border-radius: 4px;">💵 Cash Cow</div>
-        <div style="background: rgba(220,38,38,0.05); border: 1px solid rgba(220,38,38,0.1); padding: 4px; font-size: 8px; border-radius: 4px; color: #dc2626;">🚯 Dogs</div>
+      <div style="font-size: 11px; font-weight: bold; color: #1d4ed8; margin-bottom: 8px;">Market Attractiveness vs Competency</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <div style="background: rgba(29,78,216,0.07); border: 1px solid rgba(29,78,216,0.2); padding: 8px; font-size: 11px; border-radius: 4px; font-weight: 600;">★ Stars</div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; font-size: 11px; border-radius: 4px;">? Question</div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; font-size: 11px; border-radius: 4px;">💵 Cash Cow</div>
+        <div style="background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.15); padding: 8px; font-size: 11px; border-radius: 4px; color: #dc2626; font-weight: 600;">🚯 Dogs</div>
       </div>
     </div>
-    <div style="font-size: 8px; color: #94a3b8; text-align: right;">Page 12 / Source: Industry Research</div>
+    <div style="font-size: 10px; color: #94a3b8; text-align: right;">Page 12 / Source: Industry Research</div>
   </div>`,
       style: `【视觉主题】咨询公司董事会汇报，结论先行、结构严谨、证据可追踪
   【色彩系统】
@@ -105,18 +105,18 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/年轻路演",
       accent: "#ff4d8d",
       description: "年轻清爽的 Pitch Deck，故事线、市场机会和产品证据突出",
-      previewHtml: `<div style="font-family: sans-serif; background: #171329; color: #fff; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #2d264d; border-radius: 8px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #171329; color: #fff; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #2d264d; border-radius: 8px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 10px; font-weight: bold; color: #ff4d8d;">PITCH DECK</span>
-      <span style="background: rgba(34,211,238,0.2); color: #22d3ee; font-size: 8px; padding: 1px 5px; border-radius: 4px; font-weight: bold;">SERIES A</span>
+      <span style="font-size: 12px; font-weight: bold; color: #ff4d8d;">PITCH DECK</span>
+      <span style="background: rgba(34,211,238,0.2); color: #22d3ee; font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: bold;">SERIES A</span>
     </div>
-    <div style="margin-top: 10px; margin-bottom: auto;">
-      <div style="font-size: 16px; font-weight: 800; line-height: 1.25; color: #fff;">Disrupting SaaS Workflows</div>
-      <div style="font-size: 9px; color: #cbd5e1; margin-top: 4px;">Market Size: $42B / CAGR: 24%</div>
+    <div style="margin: 12px 0 auto 0;">
+      <div style="font-size: 20px; font-weight: 800; line-height: 1.2; color: #fff;">Disrupting SaaS Workflows</div>
+      <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">Market Size: $42B / CAGR: 24%</div>
     </div>
-    <div style="display: flex; align-items: flex-end; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
-      <span style="font-size: 8px; color: #8b5cf6;">Traction Graph 📈</span>
-      <span style="font-size: 9px; font-weight: bold; color: #22d3ee;">10x Growth</span>
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+      <span style="font-size: 11px; color: #8b5cf6;">Traction Graph 📈</span>
+      <span style="font-size: 12px; font-weight: bold; color: #22d3ee;">10x Growth</span>
     </div>
   </div>`,
       style: `【视觉主题】年轻创业团队路演，清爽、有冲劲、但仍然可信
@@ -138,20 +138,20 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/科技发布",
       accent: "#00e5ff",
       description: "高科技发布会风，深色舞台、产品能力、规格参数和路线图清晰",
-      previewHtml: `<div style="font-family: monospace; background: #050816; color: #00e5ff; padding: 12px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid rgba(0,229,255,0.2); border-radius: 6px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(0,229,255,0.2); padding-bottom: 4px;">
-      <span style="font-size: 9px; font-weight: bold;">DEVICE::PRO_X1</span>
-      <span style="font-size: 9px; color: #8b5cf6;">STATUS: READY</span>
+      previewHtml: `<div style="font-family: monospace; background: #050816; color: #00e5ff; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid rgba(0,229,255,0.25); border-radius: 6px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(0,229,255,0.25); padding-bottom: 6px;">
+      <span style="font-size: 11px; font-weight: bold;">DEVICE::PRO_X1</span>
+      <span style="font-size: 11px; color: #8b5cf6;">STATUS: READY</span>
     </div>
-    <div style="margin: auto 0; padding: 4px 0;">
-      <div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; font-family: sans-serif;">NEON SPECIFICATIONS</div>
-      <div style="font-size: 9.5px; color: #00e5ff; line-height: 1.3;">
+    <div style="margin: auto 0; padding: 6px 0;">
+      <div style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; font-family: sans-serif;">NEON SPECIFICATIONS</div>
+      <div style="font-size: 12px; color: #00e5ff; line-height: 1.5;">
         - CPU: 12-Core CyberEngine<br>
         - GPU: RayTrace Ultra v2<br>
         - Memory: 64GB Unified
       </div>
     </div>
-    <div style="font-size: 8px; color: rgba(0,229,255,0.5); border-top: 1px dashed rgba(0,229,255,0.2); padding-top: 4px; text-align: right;">v2.04-patch</div>
+    <div style="font-size: 10px; color: rgba(0,229,255,0.55); border-top: 1px dashed rgba(0,229,255,0.25); padding-top: 6px; text-align: right;">v2.04-patch</div>
   </div>`,
       style: `【视觉主题】高科技产品发布会，未来感来自结构、节奏和产品中心
   【色彩系统】
@@ -172,18 +172,18 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/增长复盘",
       accent: "#22c55e",
       description: "活跃的数据复盘演示，增长指标、实验结果、行动清单一页讲透",
-      previewHtml: `<div style="font-family: sans-serif; background: #ffffff; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 10px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #ffffff; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 10px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 11px; font-weight: bold; color: #0f172a;">Growth Review</span>
-      <span style="font-size: 9px; background: rgba(34,197,94,0.1); color: #22c55e; padding: 2px 6px; border-radius: 12px; font-weight: bold;">+182% QTD</span>
+      <span style="font-size: 13px; font-weight: bold; color: #0f172a;">Growth Review</span>
+      <span style="font-size: 11px; background: rgba(34,197,94,0.12); color: #22c55e; padding: 3px 8px; border-radius: 12px; font-weight: bold;">+182% QTD</span>
     </div>
-    <div style="margin-top: 8px; margin-bottom: auto; display: flex; flex-direction: column; gap: 4px;">
-      <div style="font-size: 10px; font-weight: bold; color: #1e293b;">Key Experiment: A/B Checkout V2</div>
-      <div style="font-size: 9px; color: #64748b; line-height: 1.3;">Conversion Rate improved from 2.1% to 3.8% with statistical significance.</div>
+    <div style="margin: 12px 0 auto 0; display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 13px; font-weight: bold; color: #1e293b;">Key Experiment: A/B Checkout V2</div>
+      <div style="font-size: 11px; color: #64748b; line-height: 1.4;">Conversion Rate improved from 2.1% to 3.8% with statistical significance.</div>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 6px;">
-      <span style="font-size: 8px; color: #94a3b8;">Owner: Growth Team</span>
-      <span style="font-size: 9px; color: #2563eb; font-weight: bold;">Next Actions ➜</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+      <span style="font-size: 10px; color: #94a3b8;">Owner: Growth Team</span>
+      <span style="font-size: 11px; color: #2563eb; font-weight: bold;">Next Actions ➜</span>
     </div>
   </div>`,
       style: `【视觉主题】增长团队复盘战报，积极、清爽、行动导向
@@ -205,18 +205,18 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/技术大会",
       accent: "#38bdf8",
       description: "开发者大会技术分享，深色代码感、架构图、API 示例和路线图并重",
-      previewHtml: `<div style="font-family: sans-serif; background: #0b1020; color: #e5e7eb; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #1c274c; border-radius: 8px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #0b1020; color: #e5e7eb; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #1c274c; border-radius: 8px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 10px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px;">DEVCONF 2026</span>
-      <span style="font-size: 8px; color: #a78bfa;">TRACK A</span>
+      <span style="font-size: 12px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px;">DEVCONF 2026</span>
+      <span style="font-size: 10px; color: #a78bfa;">TRACK A</span>
     </div>
-    <div style="margin-top: 6px; margin-bottom: auto;">
-      <div style="font-size: 16px; font-weight: 800; line-height: 1.2; color: #fff; margin-bottom: 6px;">Scalable State with Zustand</div>
-      <div style="background: #111827; border-radius: 4px; padding: 4px 6px; font-family: monospace; font-size: 8.5px; color: #a78bfa; border: 1px solid #1f2937;">
+    <div style="margin: 10px 0 auto 0;">
+      <div style="font-size: 18px; font-weight: 800; line-height: 1.2; color: #fff; margin-bottom: 8px;">Scalable State with Zustand</div>
+      <div style="background: #111827; border-radius: 4px; padding: 6px 8px; font-family: monospace; font-size: 11px; color: #a78bfa; border: 1px solid #1f2937;">
         const useStore = create((set) => ({...}))
       </div>
     </div>
-    <div style="font-size: 8.5px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">Presenter: Antigravity / Senior Architect</div>
+    <div style="font-size: 10px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">Presenter: Antigravity / Senior Architect</div>
   </div>`,
       style: `【视觉主题】开发者大会技术分享，专业、清晰、带舞台科技感
   【色彩系统】
@@ -237,19 +237,19 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/项目动员",
       accent: "#f97316",
       description: "启动会动员风，目标、角色、节奏、里程碑和团队士气都要有画面感",
-      previewHtml: `<div style="font-family: sans-serif; background: #fff7ed; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #ffedd5; border-radius: 8px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #fff7ed; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #ffedd5; border-radius: 8px;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <span style="font-size: 10px; font-weight: bold; color: #f97316; letter-spacing: 0.5px;">🚀 KICKOFF MEETING</span>
-      <span style="font-size: 9px; font-weight: bold; color: #0ea5e9;">Sprint #01</span>
+      <span style="font-size: 12px; font-weight: bold; color: #f97316; letter-spacing: 0.5px;">🚀 KICKOFF MEETING</span>
+      <span style="font-size: 11px; font-weight: bold; color: #0ea5e9;">Sprint #01</span>
     </div>
-    <div style="margin-top: 8px; margin-bottom: auto;">
-      <div style="font-size: 15px; font-weight: 800; line-height: 1.25; color: #1f2937; margin-bottom: 6px;">攻坚行动：排版引擎升级</div>
-      <div style="display: flex; flex-direction: column; gap: 3px; font-size: 9px; color: #4b5563;">
+    <div style="margin: 10px 0 auto 0;">
+      <div style="font-size: 18px; font-weight: 800; line-height: 1.25; color: #1f2937; margin-bottom: 8px;">攻坚行动：排版引擎升级</div>
+      <div style="display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: #4b5563;">
         <div>☑ 确立里程碑：2周内核心跑通</div>
         <div>☐ 团队承诺：零阻塞，高协同</div>
       </div>
     </div>
-    <div style="font-size: 8.5px; color: #f97316; font-weight: bold; text-align: right; border-top: 1px dashed #fed7aa; padding-top: 6px;">目标：完美交付 🎯</div>
+    <div style="font-size: 11px; color: #f97316; font-weight: bold; text-align: right; border-top: 1px dashed #fed7aa; padding-top: 8px;">目标：完美交付 🎯</div>
   </div>`,
       style: `【视觉主题】项目启动会与团队动员，热烈、有方向感、带行动召集感
   【色彩系统】
@@ -270,26 +270,26 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/项目规划",
       accent: "#6366f1",
       description: "规划路线图风，阶段目标、依赖关系、优先级 and 资源安排清晰",
-      previewHtml: `<div style="font-family: sans-serif; background: #f8fafc; padding: 12px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 8px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
-      <span style="font-size: 11px; font-weight: bold; color: #0f172a;">Project Roadmap</span>
-      <span style="font-size: 8.5px; color: #6366f1; font-weight: bold;">2026 OKR</span>
+      previewHtml: `<div style="font-family: sans-serif; background: #f8fafc; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+      <span style="font-size: 13px; font-weight: bold; color: #0f172a;">Project Roadmap</span>
+      <span style="font-size: 11px; color: #6366f1; font-weight: bold;">2026 OKR</span>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 6px; margin-bottom: auto;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <span style="font-size: 8.5px; color: #64748b; width: 20px;">Q1</span>
-        <div style="flex: 1; background: #eef2ff; border-radius: 4px; height: 12px; position: relative; overflow: hidden; border: 1px solid #e0e7ff;">
+    <div style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0 auto 0;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 11px; color: #64748b; width: 24px; font-weight: 600;">Q1</span>
+        <div style="flex: 1; background: #eef2ff; border-radius: 4px; height: 16px; position: relative; overflow: hidden; border: 1px solid #e0e7ff;">
           <div style="width: 70%; background: #6366f1; height: 100%;"></div>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <span style="font-size: 8.5px; color: #64748b; width: 20px;">Q2</span>
-        <div style="flex: 1; background: #ecfdf5; border-radius: 4px; height: 12px; position: relative; overflow: hidden; border: 1px solid #d1fae5;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 11px; color: #64748b; width: 24px; font-weight: 600;">Q2</span>
+        <div style="flex: 1; background: #ecfdf5; border-radius: 4px; height: 16px; position: relative; overflow: hidden; border: 1px solid #d1fae5;">
           <div style="width: 45%; background: #10b981; height: 100%;"></div>
         </div>
       </div>
     </div>
-    <div style="font-size: 8.5px; color: #94a3b8; text-align: right;">Timeline status: On Track</div>
+    <div style="font-size: 11px; color: #94a3b8; text-align: right;">Timeline status: On Track</div>
   </div>`,
       style: `【视觉主题】项目规划与路线图，清楚、有节奏、能让团队对齐预期
   【色彩系统】
@@ -310,22 +310,22 @@ export const presentationStyles: RawDesignStyle[] = [
       category: "演示汇报/项目总结",
       accent: "#14b8a6",
       description: "项目复盘风，结果、经验、问题、改进动作一屏说清，避免流水账",
-      previewHtml: `<div style="font-family: sans-serif; background: #ffffff; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 8px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #ffffff; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 8px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 10.5px; font-weight: bold; color: #0f172a;">Retro: Engine Upgrade</span>
-      <span style="font-size: 9px; background: rgba(20,184,166,0.1); color: #14b8a6; padding: 1px 6px; border-radius: 10px; font-weight: bold;">COMPLETE</span>
+      <span style="font-size: 13px; font-weight: bold; color: #0f172a;">Retro: Engine Upgrade</span>
+      <span style="font-size: 10px; background: rgba(20,184,166,0.12); color: #14b8a6; padding: 3px 8px; border-radius: 10px; font-weight: bold;">COMPLETE</span>
     </div>
-    <div style="display: flex; gap: 10px; margin: auto 0; padding: 4px 0;">
-      <div style="flex: 1; border-left: 2px solid #ef4444; padding-left: 6px;">
-        <div style="font-size: 8px; color: #ef4444;">Before (Lags)</div>
-        <div style="font-size: 12px; font-weight: bold; color: #374151;">1.2s Render</div>
+    <div style="display: flex; gap: 12px; margin: 14px 0; padding: 6px 0;">
+      <div style="flex: 1; border-left: 3px solid #ef4444; padding-left: 8px;">
+        <div style="font-size: 10px; color: #ef4444; font-weight: 600;">Before (Lags)</div>
+        <div style="font-size: 16px; font-weight: bold; color: #374151; margin-top: 2px;">1.2s Render</div>
       </div>
-      <div style="flex: 1; border-left: 2px solid #14b8a6; padding-left: 6px;">
-        <div style="font-size: 8px; color: #14b8a6;">After (Boost)</div>
-        <div style="font-size: 12px; font-weight: bold; color: #111827;">0.1s Fast</div>
+      <div style="flex: 1; border-left: 3px solid #14b8a6; padding-left: 8px;">
+        <div style="font-size: 10px; color: #14b8a6; font-weight: 600;">After (Boost)</div>
+        <div style="font-size: 16px; font-weight: bold; color: #111827; margin-top: 2px;">0.1s Fast</div>
       </div>
     </div>
-    <div style="font-size: 9px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 6px;">Key Lesson: Decouple CM Re-render extensions.</div>
+    <div style="font-size: 11px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 8px;">Key Lesson: Decouple CM Re-render extensions.</div>
   </div>`,
       style: `【视觉主题】项目总结与复盘，坦诚、清晰、重视经验沉淀
   【色彩系统】
@@ -342,26 +342,26 @@ export const presentationStyles: RawDesignStyle[] = [
     },
   {
       id: "annual-story-review",
-      previewHtml: `<div style="font-family: sans-serif; background: #171024; color: #fffaf5; padding: 14px; height: 100%; border: 1.5px solid #f59e0b; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(245,158,11,0.2); padding-bottom: 6px;">
-      <span style="font-size: 10px; color: #f59e0b; font-weight: bold; letter-spacing: 1px;">ANNUAL STORY</span>
-      <span style="font-size: 9px; color: #a855f7; font-weight: bold;">2026</span>
+      previewHtml: `<div style="font-family: sans-serif; background: #171024; color: #fffaf5; padding: 16px; height: 100%; border: 1.5px solid #f59e0b; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(245,158,11,0.25); padding-bottom: 8px;">
+      <span style="font-size: 12px; color: #f59e0b; font-weight: bold; letter-spacing: 1px;">ANNUAL STORY</span>
+      <span style="font-size: 11px; color: #a855f7; font-weight: bold;">2026</span>
     </div>
-    <div style="margin-top: 8px;">
-      <div style="font-size: 15px; font-weight: 800; color: #fff; line-height: 1.3; margin-bottom: 4px;">攀登者：向光而行，聚沙成塔</div>
-      <div style="font-size: 10px; color: #a855f7; font-weight: 600; margin-bottom: 8px;">年度关键词：突破 · 协同 · 坚韧</div>
-      <div style="display: flex; gap: 8px; margin-top: 6px;">
-        <div style="flex: 1; background: rgba(168,85,247,0.15); padding: 6px; border-radius: 4px; border: 1px solid rgba(168,85,247,0.3);">
-          <div style="font-size: 8px; color: #a855f7;">核心战役</div>
-          <div style="font-size: 11px; font-weight: 700; color: #fff; margin-top: 2px;">业务出海</div>
+    <div style="margin-top: 10px;">
+      <div style="font-size: 18px; font-weight: 800; color: #fff; line-height: 1.25; margin-bottom: 6px;">攀登者：向光而行，聚沙成塔</div>
+      <div style="font-size: 11px; color: #a855f7; font-weight: 600; margin-bottom: 10px;">年度关键词：突破 · 协同 · 坚韧</div>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <div style="flex: 1; background: rgba(168,85,247,0.15); padding: 8px; border-radius: 4px; border: 1px solid rgba(168,85,247,0.35);">
+          <div style="font-size: 10px; color: #a855f7;">核心战役</div>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 3px;">业务出海</div>
         </div>
-        <div style="flex: 1; background: rgba(245,158,11,0.15); padding: 6px; border-radius: 4px; border: 1px solid rgba(245,158,11,0.3);">
-          <div style="font-size: 8px; color: #f59e0b;">用户规模</div>
-          <div style="font-size: 11px; font-weight: 700; color: #fff; margin-top: 2px;">+145%</div>
+        <div style="flex: 1; background: rgba(245,158,11,0.15); padding: 8px; border-radius: 4px; border: 1px solid rgba(245,158,11,0.35);">
+          <div style="font-size: 10px; color: #f59e0b;">用户规模</div>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 3px;">+145%</div>
         </div>
       </div>
     </div>
-    <div style="font-size: 9px; color: rgba(255,250,245,0.6); border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 6px; text-align: right;">致敬每一位努力的伙伴</div>
+    <div style="font-size: 10px; color: rgba(255,250,245,0.65); border-top: 1px dashed rgba(255,255,255,0.12); padding-top: 8px; text-align: right;">致敬每一位努力的伙伴</div>
   </div>`,
       name: "年终故事总结",
       category: "演示汇报/年终总结",
@@ -383,18 +383,18 @@ export const presentationStyles: RawDesignStyle[] = [
     },
   {
       id: "proposal-lab",
-      previewHtml: `<div style="font-family: sans-serif; background: #f1f5f9; padding: 14px; height: 100%; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+      previewHtml: `<div style="font-family: sans-serif; background: #f1f5f9; padding: 16px; height: 100%; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
     <div>
-      <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
-        <span style="background: #0ea5e9; color: #fff; font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">PROPOSAL</span>
-        <span style="font-size: 9px; color: #64748b;">Strategy Lab v1.2</span>
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+        <span style="background: #0ea5e9; color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: bold;">PROPOSAL</span>
+        <span style="font-size: 11px; color: #64748b;">Strategy Lab v1.2</span>
       </div>
-      <div style="font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.3; margin-bottom: 6px;">全渠道用户数字化增长方案</div>
-      <div style="font-size: 10px; color: #475569; line-height: 1.4; background: #fff; padding: 6px; border-radius: 4px; border-left: 3px solid #0ea5e9; margin-bottom: 6px;">
+      <div style="font-size: 16px; font-weight: 700; color: #0f172a; line-height: 1.3; margin-bottom: 8px;">全渠道用户数字化增长方案</div>
+      <div style="font-size: 11px; color: #475569; line-height: 1.45; background: #fff; padding: 8px; border-radius: 4px; border-left: 3px solid #0ea5e9;">
         <strong>核心洞察：</strong>当前存量用户活跃度下滑 15%，急需精细化社群运营切入。
       </div>
     </div>
-    <div style="display: flex; gap: 6px; align-items: center; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 8px; color: #64748b;">
+    <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 11px; color: #64748b;">
       <span>预期 ROI: <strong>3.5x</strong></span>
       <span style="color: #0ea5e9; font-weight: bold;">查看路线图 ➜</span>
     </div>
@@ -418,24 +418,24 @@ export const presentationStyles: RawDesignStyle[] = [
     },
   {
       id: "workshop-canvas",
-      previewHtml: `<div style="font-family: sans-serif; background: #fffbeb; padding: 14px; height: 100%; border: 1px dashed #eab308; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-      <span style="font-size: 10px; font-weight: bold; color: #854d0e; background: #fef08a; padding: 2px 6px; border-radius: 10px;">⚡ 共创工作坊</span>
-      <span style="font-size: 9px; color: #fb7185; font-weight: bold; border: 1px solid #fb7185; padding: 1px 4px; border-radius: 4px;">⏱️ 15 Mins</span>
+      previewHtml: `<div style="font-family: sans-serif; background: #fffbeb; padding: 16px; height: 100%; border: 1px dashed #eab308; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <span style="font-size: 12px; font-weight: bold; color: #854d0e; background: #fef08a; padding: 3px 8px; border-radius: 10px;">⚡ 共创工作坊</span>
+      <span style="font-size: 10px; color: #fb7185; font-weight: bold; border: 1px solid #fb7185; padding: 2px 6px; border-radius: 4px;">⏱️ 15 Mins</span>
     </div>
-    <div style="font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">议题：如何优化新用户首周体验？</div>
-    <div style="display: flex; gap: 6px; margin-top: auto;">
-      <div style="flex: 1; background: #fff9db; padding: 6px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transform: rotate(-1.5deg);">
-        <div style="font-size: 9px; font-weight: bold; color: #854d0e; margin-bottom: 2px;">痛点</div>
-        <div style="font-size: 8px; color: #4b5563; scale: 0.95; transform-origin: top left;">注册流程验证码延迟高</div>
+    <div style="font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 10px;">议题：如何优化新用户首周体验？</div>
+    <div style="display: flex; gap: 8px; margin-top: auto;">
+      <div style="flex: 1; background: #fff9db; padding: 8px 7px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(0,0,0,0.06); transform: rotate(-1.5deg);">
+        <div style="font-size: 11px; font-weight: bold; color: #854d0e; margin-bottom: 3px;">痛点</div>
+        <div style="font-size: 10px; color: #4b5563; line-height: 1.3;">注册流程验证码延迟高</div>
       </div>
-      <div style="flex: 1; background: #ffe4e6; padding: 6px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transform: rotate(1deg);">
-        <div style="font-size: 9px; font-weight: bold; color: #9f1239; margin-bottom: 2px;">创意</div>
-        <div style="font-size: 8px; color: #4b5563; scale: 0.95; transform-origin: top left;">微信一键快捷登录</div>
+      <div style="flex: 1; background: #ffe4e6; padding: 8px 7px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(0,0,0,0.06); transform: rotate(1deg);">
+        <div style="font-size: 11px; font-weight: bold; color: #9f1239; margin-bottom: 3px;">创意</div>
+        <div style="font-size: 10px; color: #4b5563; line-height: 1.3;">微信一键快捷登录</div>
       </div>
-      <div style="flex: 1; background: #ecfeff; padding: 6px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transform: rotate(-0.5deg);">
-        <div style="font-size: 9px; font-weight: bold; color: #0891b2; margin-bottom: 2px;">行动</div>
-        <div style="font-size: 8px; color: #4b5563; scale: 0.95; transform-origin: top left;">开发快捷登录接口</div>
+      <div style="flex: 1; background: #ecfeff; padding: 8px 7px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(0,0,0,0.06); transform: rotate(-0.5deg);">
+        <div style="font-size: 11px; font-weight: bold; color: #0891b2; margin-bottom: 3px;">行动</div>
+        <div style="font-size: 10px; color: #4b5563; line-height: 1.3;">开发快捷登录接口</div>
       </div>
     </div>
   </div>`,
@@ -459,22 +459,22 @@ export const presentationStyles: RawDesignStyle[] = [
   {
       id: "editorial-ink-deck",
       previewHtml: `<div style="font-family: Georgia, serif; background: #f1efea; padding: 16px; height: 100%; border: 1px solid #dcdad5; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #0a1f3d; padding-bottom: 4px; margin-bottom: 10px;">
-      <span style="font-size: 8px; font-weight: bold; color: #0a1f3d; letter-spacing: 1px; font-family: monospace;">INK & PIXEL</span>
-      <span style="font-size: 8px; color: #6e6b64;">CHAPTER 02</span>
+    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #0a1f3d; padding-bottom: 6px; margin-bottom: 10px;">
+      <span style="font-size: 10px; font-weight: bold; color: #0a1f3d; letter-spacing: 1.5px; font-family: monospace;">INK & PIXEL</span>
+      <span style="font-size: 10px; color: #6e6b64;">CHAPTER 02</span>
     </div>
-    <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: auto;">
+    <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: auto;">
       <div style="flex: 1.2;">
-        <div style="font-size: 16px; font-weight: 700; color: #0a1f3d; line-height: 1.2; margin-bottom: 6px; font-family: Georgia, serif;">重塑阅读的温度与节奏</div>
-        <div style="font-size: 10px; color: #2e2d2a; line-height: 1.4; text-align: justify; font-family: sans-serif;">
+        <div style="font-size: 19px; font-weight: 700; color: #0a1f3d; line-height: 1.15; margin-bottom: 8px; font-family: Georgia, serif;">重塑阅读的温度与节奏</div>
+        <div style="font-size: 11px; color: #2e2d2a; line-height: 1.45; text-align: justify; font-family: sans-serif;">
           在这个信息爆炸的时代，我们试图通过电子杂志的墨水屏质感，为读者寻回那份克制且有呼吸感的深度阅读体验。
         </div>
       </div>
-      <div style="flex: 0.8; height: 75px; background: #0a1f3d; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-        <div style="font-size: 24px; color: #f1efea; font-style: italic; font-weight: bold; opacity: 0.35;">Ink</div>
+      <div style="flex: 0.8; min-height: 90px; background: #0a1f3d; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <div style="font-size: 28px; color: #f1efea; font-style: italic; font-weight: bold; opacity: 0.35;">Ink</div>
       </div>
     </div>
-    <div style="font-size: 8px; color: #8a867c; border-top: 1px dashed #dcdad5; padding-top: 6px; font-family: monospace; display: flex; justify-content: space-between;">
+    <div style="font-size: 10px; color: #8a867c; border-top: 1px dashed #dcdad5; padding-top: 8px; font-family: monospace; display: flex; justify-content: space-between;">
       <span>ESTABLISHED 2026</span>
       <span>P. 18</span>
     </div>
@@ -502,26 +502,26 @@ export const presentationStyles: RawDesignStyle[] = [
   {
       id: "swiss-presentation-system",
       previewHtml: `<div style="font-family: Inter, Helvetica, sans-serif; background: #fafaf8; padding: 16px; height: 100%; border: 1.5px solid #0a0a0a; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #0a0a0a; padding-bottom: 6px; margin-bottom: 8px;">
-      <span style="font-size: 12px; font-weight: 900; color: #002FA7; letter-spacing: -0.5px;">SWISS GRID SYSTEM</span>
-      <span style="font-size: 8px; font-family: monospace; color: #737373;">GRID STACK</span>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #0a0a0a; padding-bottom: 8px; margin-bottom: 10px;">
+      <span style="font-size: 14px; font-weight: 900; color: #002FA7; letter-spacing: -0.5px;">SWISS GRID SYSTEM</span>
+      <span style="font-size: 10px; font-family: monospace; color: #737373;">GRID STACK</span>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: auto;">
-      <div style="font-size: 16px; font-weight: 300; color: #0a0a0a; line-height: 1.2; letter-spacing: -0.5px;">
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: auto;">
+      <div style="font-size: 18px; font-weight: 300; color: #0a0a0a; line-height: 1.15; letter-spacing: -0.5px;">
         MAXIMUM INFORMATION.<br>MINIMUM EMBELLISHMENT.
       </div>
-      <div style="display: flex; gap: 10px; border-top: 1px solid #d4d4d2; padding-top: 6px;">
+      <div style="display: flex; gap: 12px; border-top: 1px solid #d4d4d2; padding-top: 8px;">
         <div style="flex: 1;">
-          <div style="font-size: 18px; font-weight: 200; color: #002FA7;">01</div>
-          <div style="font-size: 9px; font-weight: 700; color: #0a0a0a; margin-top: 2px;">SYSTEM ORDER</div>
+          <div style="font-size: 22px; font-weight: 200; color: #002FA7;">01</div>
+          <div style="font-size: 10px; font-weight: 700; color: #0a0a0a; margin-top: 3px;">SYSTEM ORDER</div>
         </div>
-        <div style="flex: 1; border-left: 1px solid #d4d4d2; padding-left: 10px;">
-          <div style="font-size: 18px; font-weight: 200; color: #0a0a0a;">960</div>
-          <div style="font-size: 9px; font-weight: 700; color: #737373; margin-top: 2px;">BASE WIDTH</div>
+        <div style="flex: 1; border-left: 1px solid #d4d4d2; padding-left: 12px;">
+          <div style="font-size: 22px; font-weight: 200; color: #0a0a0a;">960</div>
+          <div style="font-size: 10px; font-weight: 700; color: #737373; margin-top: 3px;">BASE WIDTH</div>
         </div>
       </div>
     </div>
-    <div style="font-size: 8px; font-weight: bold; color: #0a0a0a; letter-spacing: 0.5px; border-top: 1px solid #0a0a0a; padding-top: 4px;">
+    <div style="font-size: 10px; font-weight: bold; color: #0a0a0a; letter-spacing: 0.5px; border-top: 1px solid #0a0a0a; padding-top: 6px;">
       SEC. 04 / DATA REPORT
     </div>
   </div>`,

@@ -14,9 +14,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // react-hooks: 降为 warn，项目中存在合理的 ref-in-render 模式
-      "react-hooks/refs": "warn",
-      "react-hooks/set-state-in-effect": "warn",
+      // react-hooks: exhaustive-deps 降为 warn，项目中存在合理的 ref-in-render 模式
       "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": "warn",
       // typescript-eslint
@@ -38,6 +36,7 @@ export default tseslint.config(
     ignores: [
       "dist/",
       "node_modules/",
+      "public/",
       "html-anything/",
       "r-markdown/",
       ".agent/",

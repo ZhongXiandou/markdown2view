@@ -7,12 +7,12 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/极简工程",
       accent: "#000000",
       description: "黑白精确主义，大留白，Geist 风格无衬线，锐利分割线",
-      previewHtml: `<div style="font-family: Geist, Inter, sans-serif; background: #fff; padding: 16px; height: 100%; border: 1px solid #eaeaea; display: flex; flex-direction: column;">
-    <div style="font-size: 14px; font-weight: 700; color: #000; margin-bottom: 8px;">Vercel Deploy</div>
-    <div style="font-size: 8px; color: #666; margin-bottom: auto;">Push your code and deploy instantly.</div>
-    <div style="margin-top: 12px; display: flex; gap: 6px;">
-      <div style="background: #000; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 6px; font-weight: 500;">Deploy</div>
-      <div style="border: 1px solid #eaeaea; color: #666; padding: 4px 8px; border-radius: 6px; font-size: 6px;">Cancel</div>
+      previewHtml: `<div style="font-family: Geist, Inter, sans-serif; background: #fff; padding: 18px; height: 100%; border: 1px solid #eaeaea; display: flex; flex-direction: column; box-sizing: border-box;">
+    <div style="font-size: 17px; font-weight: 700; color: #000; margin-bottom: 6px; letter-spacing: -0.3px;">Vercel Deploy</div>
+    <div style="font-size: 12px; color: #666; margin-bottom: auto; line-height: 1.45;">Push your code and deploy instantly.</div>
+    <div style="border-top: 1px solid #eaeaea; padding-top: 12px; display: flex; gap: 8px;">
+      <div style="background: #000; color: #fff; padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 500;">Deploy</div>
+      <div style="border: 1px solid #eaeaea; color: #666; padding: 7px 14px; border-radius: 6px; font-size: 11px;">Cancel</div>
     </div>
   </div>`,
       style: `【视觉主题】黑白精确主义，极简工程师审美（参考 Vercel）
@@ -35,10 +35,10 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/金融科技",
       accent: "#635bff",
       description: "标志性紫色渐变，weight-300 轻盈优雅，斜切色块",
-      previewHtml: `<div style="font-family: sans-serif; background: #fff; padding: 16px; height: 100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(99,91,255,0.1); display: flex; flex-direction: column;">
-    <div style="font-size: 14px; font-weight: 400; color: #30313d; margin-bottom: 8px;">Payment</div>
-    <div style="font-size: 8px; color: #425466; margin-bottom: auto;">Secure processing with Stripe.</div>
-    <div style="background: linear-gradient(90deg, #635bff, #00d4ff); color: #fff; padding: 6px; border-radius: 12px; font-size: 8px; font-weight: 600; text-align: center; margin-top: 12px;">Pay $120</div>
+      previewHtml: `<div style="font-family: sans-serif; background: #fff; padding: 18px; height: 100%; border-radius: 12px; box-shadow: 0 4px 16px rgba(99,91,255,0.12); display: flex; flex-direction: column; box-sizing: border-box;">
+    <div style="font-size: 18px; font-weight: 400; color: #30313d; margin-bottom: 6px;">Payment</div>
+    <div style="font-size: 12px; color: #425466; margin-bottom: auto; line-height: 1.45;">Secure processing with Stripe.</div>
+    <div style="background: linear-gradient(90deg, #635bff, #00d4ff); color: #fff; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-align: center;">Pay $120</div>
   </div>`,
       style: `【视觉主题】科技与优雅融合，顶级金融科技质感（参考 Stripe）
   【色彩系统】
@@ -59,13 +59,17 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/精密工具",
       accent: "#5e6ad2",
       description: "超极简深色，精密网格，淡紫强调，克制动效",
-      previewHtml: `<div style="font-family: Inter, sans-serif; background: linear-gradient(180deg, #1c1c1f, #08090a); padding: 16px; height: 100%; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column;">
-    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
-      <div style="width: 8px; height: 8px; border-radius: 50%; border: 1px solid #5e6ad2;"></div>
-      <div style="font-size: 10px; font-weight: 600; color: #f7f8f8;">LIN-128</div>
+      previewHtml: `<div style="font-family: Inter, sans-serif; background: linear-gradient(180deg, #1c1c1f, #08090a); padding: 18px; height: 100%; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 14px;">
+      <div style="width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #5e6ad2;"></div>
+      <div style="font-size: 12px; font-weight: 600; color: #f7f8f8;">LIN-128</div>
     </div>
-    <div style="font-size: 12px; font-weight: 600; color: #f7f8f8; margin-bottom: 4px;">Update API</div>
-    <div style="font-size: 8px; color: #8a8f98;">Implement the new v2 endpoints.</div>
+    <div style="font-size: 17px; font-weight: 600; color: #f7f8f8; margin-bottom: 6px;">Update API</div>
+    <div style="font-size: 12px; color: #8a8f98; line-height: 1.45; margin-bottom: auto;">Implement the new v2 endpoints.</div>
+    <div style="display: flex; gap: 6px; margin-top: 14px;">
+      <div style="background: rgba(94,106,210,0.2); color: #5e6ad2; font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: 600;">In Progress</div>
+      <div style="background: rgba(255,255,255,0.05); color: #8a8f98; font-size: 10px; padding: 3px 8px; border-radius: 12px;">Backend</div>
+    </div>
   </div>`,
       style: `【视觉主题】精密深色界面，冷峻的工程师审美（参考 Linear）
   【色彩系统】
@@ -87,19 +91,19 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/开发极客",
       accent: "#00ff9c",
       description: "等宽字体、命令片段、API 示例和调试信息清晰排布",
-      previewHtml: `<div style="font-family: Consolas, Monaco, monospace; background: #0f1115; color: #a9b1d6; padding: 14px; height: 100%; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; box-sizing: border-box;">
-    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-      <div style="width: 6px; height: 6px; border-radius: 50%; background: #ff5f56;"></div>
-      <div style="width: 6px; height: 6px; border-radius: 50%; background: #ffbd2e;"></div>
-      <div style="width: 6px; height: 6px; border-radius: 50%; background: #27c93f;"></div>
+      previewHtml: `<div style="font-family: Consolas, Monaco, monospace; background: #0f1115; color: #a9b1d6; padding: 16px; height: 100%; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; box-sizing: border-box;">
+    <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+      <div style="width: 9px; height: 9px; border-radius: 50%; background: #ff5f56;"></div>
+      <div style="width: 9px; height: 9px; border-radius: 50%; background: #ffbd2e;"></div>
+      <div style="width: 9px; height: 9px; border-radius: 50%; background: #27c93f;"></div>
     </div>
-    <div style="font-size: 12px; color: #00ff9c; margin-bottom: 4px;">$ npm run dev</div>
-    <div style="font-size: 11px; color: #787c99; margin-bottom: auto; line-height: 1.4;">
+    <div style="font-size: 13px; color: #00ff9c; margin-bottom: 6px;">$ npm run dev</div>
+    <div style="font-size: 11px; color: #787c99; margin-bottom: auto; line-height: 1.5;">
       > markdown2view@1.0.0 dev<br>
       > vite --port 3000<br>
       <span style="color: #3b82f6;">➜</span> Local: http://localhost:3000
     </div>
-    <div style="font-size: 10px; color: #565f89; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px; text-align: right;">UTF-8</div>
+    <div style="font-size: 10px; color: #565f89; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px; text-align: right;">UTF-8</div>
   </div>`,
       style: `【视觉主题】开发者代码工作台，清晰、克制、可信
   【色彩系统】
@@ -120,17 +124,17 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/AI 助手",
       accent: "#d97757",
       description: "暖白底，衬线体标题搭配无衬线正文，阅读体验极佳的温和科技感",
-      previewHtml: `<div style="font-family: Georgia, serif; background: #faf9f8; padding: 14px; height: 100%; border: 1px solid #e5e5db; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-    <div style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: auto;">
-      <div style="width: 18px; height: 18px; border-radius: 4px; background: #d97757; color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; shrink: 0; font-family: sans-serif;">C</div>
+      previewHtml: `<div style="font-family: Georgia, serif; background: #faf9f8; padding: 16px; height: 100%; border: 1px solid #e5e5db; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+    <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: auto;">
+      <div style="width: 24px; height: 24px; border-radius: 5px; background: #d97757; color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; font-weight: bold; shrink: 0; font-family: sans-serif;">C</div>
       <div style="flex: 1;">
-        <div style="font-size: 11px; font-weight: bold; color: #1a1a1a; font-family: Georgia, serif; margin-bottom: 4px;">Claude's Perspective</div>
-        <div style="font-size: 10px; color: #444; line-height: 1.4; text-align: justify;">This layout prioritizes long-form readability, warm editorial spacing, and elegant serif typography. It feels thoughtful, human, and balanced.</div>
+        <div style="font-size: 14px; font-weight: bold; color: #1a1a1a; font-family: Georgia, serif; margin-bottom: 6px;">Claude's Perspective</div>
+        <div style="font-size: 11px; color: #444; line-height: 1.5; text-align: justify; font-family: sans-serif;">This layout prioritizes long-form readability, warm editorial spacing, and elegant serif typography.</div>
       </div>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e5db; padding-top: 8px; margin-top: 8px;">
-      <span style="font-size: 8px; color: #8a8a80;">Model: Sonnet 3.5</span>
-      <span style="font-size: 8px; background: #f0ede6; color: #6e6e65; padding: 1px 4px; border-radius: 4px;">1.4k tokens</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e5e5db; padding-top: 10px; margin-top: 10px;">
+      <span style="font-size: 10px; color: #8a8a80;">Model: Sonnet 3.5</span>
+      <span style="font-size: 10px; background: #f0ede6; color: #6e6e65; padding: 2px 6px; border-radius: 4px;">1.4k tokens</span>
     </div>
   </div>`,
       style: `【视觉主题】克制、温和、富有书卷气的 AI 对话窗（参考 Claude）
@@ -150,22 +154,22 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/开源数据",
       accent: "#3ecf8e",
       description: "深灰背景，亮绿强调，等宽字体点缀，暗黑开源风",
-      previewHtml: `<div style="font-family: Consolas, monospace; background: #1c1c1c; color: #ededed; padding: 14px; height: 100%; border: 1px solid #2e2e2e; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+      previewHtml: `<div style="font-family: Consolas, monospace; background: #1c1c1c; color: #ededed; padding: 16px; height: 100%; border: 1px solid #2e2e2e; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
     <div>
-      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2e2e2e; padding-bottom: 6px; margin-bottom: 8px;">
-        <span style="color: #3ecf8e; font-size: 11px; font-weight: bold;">⚡ supabase</span>
-        <span style="color: #666; font-size: 8px;">active</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2e2e2e; padding-bottom: 8px; margin-bottom: 10px;">
+        <span style="color: #3ecf8e; font-size: 13px; font-weight: bold;">⚡ supabase</span>
+        <span style="color: #666; font-size: 10px;">active</span>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 4px;">
-        <div style="font-size: 10px; color: #888;">SELECT * FROM profiles;</div>
-        <div style="background: #242424; border: 1px solid #333; border-radius: 4px; padding: 4px; font-size: 9px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 12px; color: #888;">SELECT * FROM profiles;</div>
+        <div style="background: #242424; border: 1px solid #333; border-radius: 4px; padding: 8px; font-size: 11px; line-height: 1.6;">
           <span style="color: #3ecf8e;">id:</span> 1 &nbsp;
           <span style="color: #3ecf8e;">name:</span> "Antigravity"<br>
           <span style="color: #3ecf8e;">role:</span> "Developer"
         </div>
       </div>
     </div>
-    <div style="font-size: 9px; color: #555; text-align: right;">PostgreSQL 15.1</div>
+    <div style="font-size: 10px; color: #555; text-align: right;">PostgreSQL 15.1</div>
   </div>`,
       style: `【视觉主题】暗色极客，现代开源数据库（参考 Supabase）
   【色彩系统】
@@ -184,19 +188,23 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/系统工具",
       accent: "#ff6363",
       description: "macOS 原生感，深色毛玻璃，悬浮搜索框，极致动效",
-      previewHtml: `<div style="font-family: sans-serif; background: #18181b; padding: 12px; height: 100%; border: 1px solid #27272a; border-radius: 10px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-    <div style="background: #27272a; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;">
-      <span style="color: #d4d4d8; font-size: 11px;">Search commands...</span>
-      <span style="background: #3f3f46; color: #a1a1aa; font-size: 9px; padding: 1px 4px; border-radius: 3px;">⌘ K</span>
+      previewHtml: `<div style="font-family: sans-serif; background: #18181b; padding: 14px; height: 100%; border: 1px solid #27272a; border-radius: 10px; display: flex; flex-direction: column; justify-content: flex-start; gap: 8px; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <div style="background: #27272a; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between;">
+      <span style="color: #d4d4d8; font-size: 12px;">Search commands...</span>
+      <span style="background: #3f3f46; color: #a1a1aa; font-size: 10px; padding: 2px 6px; border-radius: 3px;">⌘ K</span>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; flex: 1;">
-      <div style="background: rgba(255,99,99,0.1); border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: space-between;">
-        <span style="color: #ff6363; font-size: 10px; font-weight: bold;">Create Snippet</span>
-        <span style="color: #71717a; font-size: 8px;">Extension</span>
+    <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
+      <div style="background: rgba(255,99,99,0.12); border-radius: 4px; padding: 7px 10px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: #ff6363; font-size: 12px; font-weight: bold;">Create Snippet</span>
+        <span style="color: #71717a; font-size: 10px;">Extension</span>
       </div>
-      <div style="padding: 4px 8px; display: flex; align-items: center; justify-content: space-between;">
-        <span style="color: #a1a1aa; font-size: 10px;">Clear Clipboard History</span>
-        <span style="color: #71717a; font-size: 8px;">System</span>
+      <div style="padding: 7px 10px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: #a1a1aa; font-size: 12px;">Clear Clipboard History</span>
+        <span style="color: #71717a; font-size: 10px;">System</span>
+      </div>
+      <div style="padding: 7px 10px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: #a1a1aa; font-size: 12px;">Convert Image</span>
+        <span style="color: #71717a; font-size: 10px;">Tools</span>
       </div>
     </div>
   </div>`,
@@ -217,20 +225,20 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/企业数据",
       accent: "#00ed64",
       description: "深蓝色/乳白底，几何粗体，标志性亮绿，企业信任感",
-      previewHtml: `<div style="font-family: sans-serif; background: #001e2b; padding: 14px; height: 100%; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid rgba(0,237,100,0.15);">
+      previewHtml: `<div style="font-family: sans-serif; background: #001e2b; padding: 16px; height: 100%; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid rgba(0,237,100,0.2);">
     <div>
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
-        <div style="width: 14px; height: 14px; border-radius: 3px; background: #00ed64; display: flex; align-items: center; justify-content: center; font-size: 9px;">🍃</div>
-        <span style="color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">MongoDB Atlas</span>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+        <div style="width: 18px; height: 18px; border-radius: 4px; background: #00ed64; display: flex; align-items: center; justify-content: center; font-size: 12px;">🍃</div>
+        <span style="color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 0.5px;">MongoDB Atlas</span>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 4px; font-family: monospace; font-size: 9.5px;">
+      <div style="display: flex; flex-direction: column; gap: 6px; font-family: monospace; font-size: 12px;">
         <div style="color: #88a4bf;">db.users.find({ status: "active" })</div>
-        <div style="color: #00ed64; padding-left: 8px;">➜ [ 128 documents found ]</div>
+        <div style="color: #00ed64; padding-left: 10px;">➜ [ 128 documents found ]</div>
       </div>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
-      <span style="color: #88a4bf; font-size: 8px;">Cluster0.primary</span>
-      <div style="width: 6px; height: 6px; border-radius: 50%; background: #00ed64; box-shadow: 0 0 6px #00ed64;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+      <span style="color: #88a4bf; font-size: 10px;">Cluster0.primary</span>
+      <div style="width: 8px; height: 8px; border-radius: 50%; background: #00ed64; box-shadow: 0 0 8px #00ed64;"></div>
     </div>
   </div>`,
       style: `【视觉主题】稳重、强大的企业数据平台（参考 MongoDB）
@@ -249,22 +257,29 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/开源协作",
       accent: "#2f81f7",
       description: "经典浅色/深灰，冷色边框，蓝色链接，代码原生感",
-      previewHtml: `<div style="font-family: sans-serif; background: #fff; padding: 14px; height: 100%; border: 1px solid #d0d7de; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+      previewHtml: `<div style="font-family: sans-serif; background: #fff; padding: 16px; height: 100%; border: 1px solid #d0d7de; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
     <div>
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <span style="font-size: 11px; font-weight: bold; color: #0969da;">ZhongXiandou/markdown2view</span>
-        <span style="border: 1px solid #d0d7de; font-size: 9px; padding: 1px 5px; border-radius: 10px; color: #57606a;">Public</span>
+        <span style="font-size: 13px; font-weight: bold; color: #0969da;">ZhongXiandou/markdown2view</span>
+        <span style="border: 1px solid #d0d7de; font-size: 10px; padding: 2px 8px; border-radius: 12px; color: #57606a;">Public</span>
       </div>
-      <div style="font-size: 10px; color: #57606a; line-height: 1.3; margin-bottom: 10px;">A pure frontend, zero backend workspace to render and export Markdown files.</div>
+      <div style="font-size: 11px; color: #57606a; line-height: 1.4; margin-bottom: 12px;">A pure frontend, zero backend workspace to render and export Markdown files.</div>
     </div>
-    <div style="display: flex; gap: 3px; align-items: center; margin-bottom: 4px;">
-      <div style="width: 10px; height: 10px; background: #ebedf0; border-radius: 2px;"></div>
-      <div style="width: 10px; height: 10px; background: #9be9a8; border-radius: 2px;"></div>
-      <div style="width: 10px; height: 10px; background: #40c463; border-radius: 2px;"></div>
-      <div style="width: 10px; height: 10px; background: #30a14e; border-radius: 2px;"></div>
-      <div style="width: 10px; height: 10px; background: #216e39; border-radius: 2px;"></div>
-      <span style="font-size: 8px; color: #57606a; margin-left: 4px;">142 commits</span>
+    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+      <div style="width: 13px; height: 13px; background: #ebedf0; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #9be9a8; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #40c463; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #30a14e; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #216e39; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #9be9a8; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #40c463; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #216e39; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #30a14e; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #ebedf0; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #9be9a8; border-radius: 2px;"></div>
+      <div style="width: 13px; height: 13px; background: #40c463; border-radius: 2px;"></div>
     </div>
+    <div style="font-size: 11px; color: #57606a;">142 commits this year</div>
   </div>`,
       style: `【视觉主题】冷色、逻辑性、代码原生的开源环境（参考 GitHub）
   【色彩系统】
@@ -283,14 +298,14 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/前沿 AI",
       accent: "#10a37f",
       description: "纯黑白对比，优雅细体或宋体，微弱绿色点缀，未来极简",
-      previewHtml: `<div style="font-family: sans-serif; background: #000; color: #fff; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-    <div style="font-size: 18px; font-weight: 300; letter-spacing: -0.5px; line-height: 1.2; margin-top: 10px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #000; color: #fff; padding: 22px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+    <div style="font-size: 22px; font-weight: 300; letter-spacing: -0.6px; line-height: 1.15; margin-top: auto; margin-bottom: auto;">
       Introducing GPT-4o.<br>
       Our most advanced model.
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #222; padding-top: 10px;">
-      <span style="font-size: 10px; color: #888;">AI Frontier Research</span>
-      <span style="font-size: 10px; color: #10a37f; font-weight: bold;">Learn more ➜</span>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #222; padding-top: 12px;">
+      <span style="font-size: 11px; color: #888;">AI Frontier Research</span>
+      <span style="font-size: 12px; color: #10a37f; font-weight: bold;">Learn more ➜</span>
     </div>
   </div>`,
       style: `【视觉主题】前沿科技、充满哲学与神秘感的极致极简（参考 OpenAI 官网）
@@ -309,11 +324,11 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/开发框架",
       accent: "#38bdf8",
       description: "系统化字体，柔和阴影，蓝青主色，标准实用主义",
-      previewHtml: `<div style="font-family: ui-sans-serif, system-ui; background: #f9fafb; padding: 16px; height: 100%; display: flex; flex-direction: column;">
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-      <div style="font-size: 12px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">Beautiful UI</div>
-      <div style="font-size: 8px; color: #475569; margin-bottom: 12px;">Built with utility classes.</div>
-      <div style="background: #38bdf8; color: #fff; padding: 6px; border-radius: 6px; font-size: 7px; font-weight: 500; text-align: center;">Get Started</div>
+      previewHtml: `<div style="font-family: ui-sans-serif, system-ui; background: #f9fafb; padding: 18px; height: 100%; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box;">
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      <div style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Beautiful UI</div>
+      <div style="font-size: 11px; color: #475569; margin-bottom: 14px; line-height: 1.4;">Built with utility classes.</div>
+      <div style="background: #38bdf8; color: #fff; padding: 9px; border-radius: 6px; font-size: 11px; font-weight: 500; text-align: center;">Get Started</div>
     </div>
   </div>`,
       style: `【视觉主题】完美的实用主义现代网页标杆（参考 Tailwind UI）

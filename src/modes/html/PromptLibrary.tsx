@@ -9,7 +9,7 @@ import {
 } from '@/data/designPrompts'
 import { StyleThumbnail } from './StyleThumbnail'
 import { CustomInstructionEditor } from './CustomInstructionEditor'
-import { useStore, type RenderMode } from '@/lib/store'
+import { useStore, type RenderMode, type CustomInstruction } from '@/lib/store'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide } from '@/lib/aiGuide'
 import { copyText } from '@/lib/clipboard'
@@ -114,7 +114,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
     })
   }, [filteredStyles])
 
-  const handleCopyCustom = async (inst: any) => {
+  const handleCopyCustom = async (inst: CustomInstruction) => {
     const success = await copyText(inst.content)
     if (success && onToast) {
       onToast('复制指令成功')

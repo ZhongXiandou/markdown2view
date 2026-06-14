@@ -1,3 +1,5 @@
+import type { ImageHostConfig } from '@/lib/store'
+
 const DB_NAME = 'm2v-images-db'
 const STORE_NAME = 'images'
 
@@ -109,6 +111,18 @@ export function compressImage(file: File, maxWidth = 1600, quality = 0.7): Promi
 
 // 内存 Object URL 缓存：img://id -> blob:http://...
 export const localImageUrls: Record<string, string> = {}
+
+/**
+ * 释放指定 id 对应的 Object URL 并从缓存中移除，避免 Blob 长期驻留内存。
+ * 在删除本地图片或不再需要引用时调用。
+ */
+export function revokeImageUrl(id: string): void {
+  const url = localImageUrls[id]
+  if (url) {
+    URL.revokeObjectURL(url)
+    delete localImageUrls[id]
+  }
+}
 
 /**
  * 将 img://id 转换为内存 Object URL
@@ -281,13 +295,6 @@ export async function compileMarkdownImages(md: string): Promise<string> {
 function generateImageFilename(file: File): string {
   const ext = file.name.split('.').pop() || 'jpg'
   return `m2v-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
-}
-
-export interface ImageHostConfig {
-  activeType: 'local' | 'smms' | 'oss' | 'cos'
-  smms?: { token: string }
-  oss?: { region: string; accessKeyId: string; accessKeySecret: string; bucket: string }
-  cos?: { SecretId: string; SecretKey: string; Bucket: string; Region: string }
 }
 
 /**
