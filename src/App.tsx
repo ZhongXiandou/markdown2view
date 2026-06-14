@@ -96,6 +96,13 @@ export default function App() {
     return () => observer.disconnect();
   }, []);
 
+  // 视口拓宽至桌面端时自动关闭移动端侧边抽屉
+  useEffect(() => {
+    if (headerWidth >= 960) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [headerWidth]);
+
   // 挂载时按版本号同步示例：仅当 DEMO_VERSION 变化时，刷新用户未编辑过的字段为最新示例。
   useEffect(() => {
     syncDemoContent(DEMOS);
@@ -138,7 +145,7 @@ export default function App() {
                 <circle cx="11" cy="11" r="2"></circle>
               </svg>
             </div>
-            {headerWidth >= 1024 ? (
+            {headerWidth >= 1300 ? (
               <h1 className="text-[17px] font-bold tracking-tight text-slate-800">
                 markdown<span className="app-title-accent">2</span>view
               </h1>
@@ -148,19 +155,17 @@ export default function App() {
               </h1>
             )}
           </div>
-          {/* 多模式切换：仅在桌面端显示 */}
-          {headerWidth >= 768 && (
-            <div className="hidden md:block">
-              <ModeTabs mode={mode} onChange={setMode} />
-            </div>
+          {/* 多模式切换：仅在宽度 >= 960px 时显示 */}
+          {headerWidth >= 960 && (
+            <ModeTabs mode={mode} onChange={setMode} />
           )}
         </div>
 
-        {/* 桌面与平板端功能按钮区 (>=768px) */}
-        {headerWidth >= 768 ? (
-          <div className="hidden md:flex items-center gap-4">
-            {/* BeeEffy: 仅在 1024px 以上展示；在 1280px 以上展示文字 */}
-            {headerWidth >= 1024 && (
+        {/* 桌面与平板端功能按钮区 (>=960px) */}
+        {headerWidth >= 960 ? (
+          <div className="flex items-center gap-4">
+            {/* BeeEffy: 仅在 1300px 以上展示；在 1450px 以上展示文字 */}
+            {headerWidth >= 1300 && (
               <a
                 href="https://www.beeeffy.com/"
                 target="_blank"
@@ -175,11 +180,11 @@ export default function App() {
                   <path d="M50.74 1.97 L62.55 10.84 L50.74 19.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M64.32 1.97 L76.13 10.84 L64.32 19.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />
                 </svg>
-                {headerWidth >= 1280 && <span>BeeEffy</span>}
+                {headerWidth >= 1450 && <span>BeeEffy</span>}
               </a>
             )}
 
-            {headerWidth >= 1024 && <div className="w-px h-4 bg-slate-200" />}
+            {headerWidth >= 1300 && <div className="w-px h-4 bg-slate-200" />}
 
             {/* GitHub: 始终直观展示 */}
             <a
@@ -209,8 +214,8 @@ export default function App() {
 
             <div className="w-px h-4 bg-slate-200" />
 
-            {/* 图床设置: 仅在 1024px 以上展示；在 1280px 以上展示文字 */}
-            {headerWidth >= 1024 && (
+            {/* 图床设置: 仅在 1300px 以上展示；在 1450px 以上展示文字 */}
+            {headerWidth >= 1300 && (
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
@@ -221,14 +226,14 @@ export default function App() {
                   <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                   <line x1="12" y1="22.08" x2="12" y2="12"></line>
                 </svg>
-                {headerWidth >= 1280 && <span>图床设置</span>}
+                {headerWidth >= 1450 && <span>图床设置</span>}
               </button>
             )}
 
-            {headerWidth >= 1024 && <div className="w-px h-4 bg-slate-200" />}
+            {headerWidth >= 1300 && <div className="w-px h-4 bg-slate-200" />}
 
-            {/* 恢复示例: 仅在 1024px 以上展示；在 1280px 以上展示文字 */}
-            {headerWidth >= 1024 && (
+            {/* 恢复示例: 仅在 1300px 以上展示；在 1450px 以上展示文字 */}
+            {headerWidth >= 1300 && (
               <button
                 onClick={handleRestoreDemo}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
@@ -238,11 +243,11 @@ export default function App() {
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                   <path d="M3 3v5h5"></path>
                 </svg>
-                {headerWidth >= 1280 && <span>恢复示例</span>}
+                {headerWidth >= 1450 && <span>恢复示例</span>}
               </button>
             )}
 
-            {headerWidth >= 1024 && <div className="w-px h-4 bg-slate-200" />}
+            {headerWidth >= 1300 && <div className="w-px h-4 bg-slate-200" />}
 
             {/* 主题色 */}
             <div className="flex items-center gap-1.5">
@@ -261,10 +266,10 @@ export default function App() {
               ))}
             </div>
 
-            {headerWidth < 1024 && <div className="w-px h-4 bg-slate-200" />}
+            {headerWidth < 1300 && <div className="w-px h-4 bg-slate-200" />}
 
-            {/* 更多菜单 (•••): 仅在 768px - 1024px 下展示 */}
-            {headerWidth < 1024 && (
+            {/* 更多菜单 (•••): 仅在 960px - 1300px 下展示 */}
+            {headerWidth < 1300 && (
               <HeaderMoreMenu
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 onRestoreDemo={handleRestoreDemo}
@@ -273,11 +278,11 @@ export default function App() {
           </div>
         ) : null}
 
-        {/* 移动端汉堡菜单按钮 (宽度 < 768px) */}
-        {headerWidth < 768 && (
+        {/* 移动端汉堡菜单按钮 (宽度 < 960px) */}
+        {headerWidth < 960 && (
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors md:hidden cursor-pointer"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
             title="更多菜单"
           >
             <svg
@@ -345,7 +350,7 @@ export default function App() {
 
       {/* 移动端侧边菜单抽屉 */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs md:hidden animate-fade-in">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
           {/* 遮罩点击关闭 */}
           <div className="absolute inset-0" onClick={() => setIsMobileMenuOpen(false)} />
 
