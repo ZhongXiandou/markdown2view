@@ -28,58 +28,52 @@ interface PreviewToolbarProps {
 export function PreviewToolbar({ leftContent, actions, className = '' }: PreviewToolbarProps) {
   return (
     <div className={`preview-toolbar sticky top-0 z-10 flex flex-wrap items-center justify-end gap-x-3 gap-y-2 border-b border-slate-200 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur md:px-5 ${className}`}>
-      {leftContent && (
-        <div className="flex items-center gap-2 shrink-0 mr-auto">
-          {leftContent}
-        </div>
-      )}
+      {leftContent}
       {leftContent && actions.length > 0 && (
         <div className="w-px h-4 bg-slate-200 shrink-0 hidden sm:block" />
       )}
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
-        {actions.map((action, idx) => {
-          if (action === 'separator') {
-            return <div key={`sep-${idx}`} className="w-px h-5 bg-slate-200 mx-0.5" />
-          }
+      {actions.map((action, idx) => {
+        if (action === 'separator') {
+          return <div key={`sep-${idx}`} className="w-px h-5 bg-slate-200 mx-0.5 shrink-0" />
+        }
 
-          if (action.node) {
-            return (
-              <React.Fragment key={action.id}>
-                {action.tooltip ? (
-                  <Tooltip position="bottom" text={action.tooltip}>
-                    {action.node}
-                  </Tooltip>
-                ) : (
-                  action.node
-                )}
-              </React.Fragment>
-            )
-          }
-
-          const btn = (
-            <Button
-              key={action.id}
-              variant={action.variant || 'ghost'}
-              onClick={action.onClick}
-              disabled={action.disabled}
-              className={action.className}
-            >
-              {action.icon && <span className="mr-1">{action.icon}</span>}
-              {action.label}
-            </Button>
+        if (action.node) {
+          return (
+            <React.Fragment key={action.id}>
+              {action.tooltip ? (
+                <Tooltip position="bottom" text={action.tooltip}>
+                  {action.node}
+                </Tooltip>
+              ) : (
+                action.node
+              )}
+            </React.Fragment>
           )
+        }
 
-          if (action.tooltip) {
-            return (
-              <Tooltip key={action.id} position="bottom" text={action.tooltip}>
-                {btn}
-              </Tooltip>
-            )
-          }
+        const btn = (
+          <Button
+            key={action.id}
+            variant={action.variant || 'ghost'}
+            onClick={action.onClick}
+            disabled={action.disabled}
+            className={action.className}
+          >
+            {action.icon && <span className="mr-1">{action.icon}</span>}
+            {action.label}
+          </Button>
+        )
 
-          return btn
-        })}
-      </div>
+        if (action.tooltip) {
+          return (
+            <Tooltip key={action.id} position="bottom" text={action.tooltip}>
+              {btn}
+            </Tooltip>
+          )
+        }
+
+        return btn
+      })}
     </div>
   )
 }
