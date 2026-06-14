@@ -334,26 +334,27 @@ export const techStyles: RawDesignStyle[] = [
       accent: "#7c3aed",
       description:
         "AI 产品控制台，深浅混合界面，模型状态、任务流和提示词面板清晰分区",
-      previewHtml: `<div style="font-family: sans-serif; background: #0f172a; padding: 12px; height: 100%; display: flex; gap: 8px; box-sizing: border-box; border: 1px solid #1e293b; border-radius: 8px;">
-    <div style="width: 25%; border-right: 1px solid #1e293b; padding-right: 6px; display: flex; flex-direction: column; gap: 6px;">
-      <div style="width: 14px; height: 14px; border-radius: 4px; background: #7c3aed;"></div>
-      <div style="height: 4px; width: 100%; background: #1e293b; border-radius: 1px;"></div>
-      <div style="height: 4px; width: 70%; background: #1e293b; border-radius: 1px;"></div>
+      previewHtml: `<div style="font-family: sans-serif; background: #0f172a; padding: 14px; height: 100%; display: flex; gap: 10px; box-sizing: border-box; border: 1px solid #1e293b; border-radius: 8px;">
+    <div style="width: 26%; border-right: 1px solid #1e293b; padding-right: 8px; display: flex; flex-direction: column; gap: 9px;">
+      <div style="width: 18px; height: 18px; border-radius: 4px; background: #7c3aed;"></div>
+      <div style="height: 5px; width: 100%; background: #1e293b; border-radius: 1px;"></div>
+      <div style="height: 5px; width: 70%; background: #1e293b; border-radius: 1px;"></div>
+      <div style="height: 5px; width: 85%; background: #1e293b; border-radius: 1px;"></div>
     </div>
     <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 10px; font-weight: bold; color: #cbd5e1;">Model Panel</span>
-          <span style="font-size: 8px; color: #34d399;">● Online</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 12px; font-weight: bold; color: #cbd5e1;">Model Panel</span>
+          <span style="font-size: 10px; color: #34d399;">● Online</span>
         </div>
-        <div style="background: #1e293b; padding: 4px; border-radius: 4px; font-size: 9px; color: #38bdf8; font-family: monospace;">Claude 3.5 Sonnet</div>
+        <div style="background: #1e293b; padding: 7px 9px; border-radius: 4px; font-size: 11px; color: #38bdf8; font-family: monospace;">Claude 3.5 Sonnet</div>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 16px;">
-        <div style="width: 15%; height: 30%; background: #7c3aed; border-radius: 1px;"></div>
-        <div style="width: 15%; height: 60%; background: #7c3aed; border-radius: 1px;"></div>
-        <div style="width: 15%; height: 45%; background: #7c3aed; border-radius: 1px;"></div>
-        <div style="width: 15%; height: 80%; background: #7c3aed; border-radius: 1px;"></div>
-        <div style="width: 15%; height: 95%; background: #7c3aed; border-radius: 1px;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 28px;">
+        <div style="width: 14%; height: 30%; background: #7c3aed; border-radius: 1px;"></div>
+        <div style="width: 14%; height: 60%; background: #7c3aed; border-radius: 1px;"></div>
+        <div style="width: 14%; height: 45%; background: #7c3aed; border-radius: 1px;"></div>
+        <div style="width: 14%; height: 80%; background: #7c3aed; border-radius: 1px;"></div>
+        <div style="width: 14%; height: 95%; background: #7c3aed; border-radius: 1px;"></div>
       </div>
     </div>
   </div>`,
@@ -376,19 +377,19 @@ export const techStyles: RawDesignStyle[] = [
       category: "科技产品/蓝图架构",
       accent: "#2563eb",
       description: "工程蓝图风，细网格、结构线、系统架构 and 模块说明特别清晰",
-      previewHtml: `<div style="font-family: sans-serif; background: #08111f; color: #22d3ee; padding: 14px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #112640; border-radius: 8px; position: relative; background-image: radial-gradient(rgba(37,99,235,0.15) 1px, transparent 1px); background-size: 10px 10px;">
+      previewHtml: `<div style="font-family: sans-serif; background: #08111f; color: #22d3ee; padding: 16px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; border: 1px solid #112640; border-radius: 8px; position: relative; background-image: radial-gradient(rgba(37,99,235,0.18) 1px, transparent 1px); background-size: 12px 12px;">
     <div>
-      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(34,211,238,0.2); padding-bottom: 4px; margin-bottom: 8px;">
-        <span style="font-size: 10px; font-weight: bold; letter-spacing: 1px;">ARCHITECT-v2</span>
-        <span style="font-size: 8px; color: rgba(34,211,238,0.5);">GRID: 10px</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(34,211,238,0.25); padding-bottom: 6px; margin-bottom: 12px;">
+        <span style="font-size: 12px; font-weight: bold; letter-spacing: 1px;">ARCHITECT-v2</span>
+        <span style="font-size: 10px; color: rgba(34,211,238,0.6);">GRID: 12px</span>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px;">
-        <div style="border: 1px solid #22d3ee; border-radius: 4px; padding: 4px 6px; font-size: 9px; font-family: monospace;">Module A</div>
-        <span style="font-size: 10px; color: rgba(34,211,238,0.5);">━━━━▶</span>
-        <div style="border: 1px dashed #22d3ee; border-radius: 4px; padding: 4px 6px; font-size: 9px; font-family: monospace;">Module B</div>
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px;">
+        <div style="border: 1px solid #22d3ee; border-radius: 4px; padding: 6px 9px; font-size: 11px; font-family: monospace;">Module A</div>
+        <span style="font-size: 12px; color: rgba(34,211,238,0.6);">━━▶</span>
+        <div style="border: 1px dashed #22d3ee; border-radius: 4px; padding: 6px 9px; font-size: 11px; font-family: monospace;">Module B</div>
       </div>
     </div>
-    <div style="font-size: 9px; color: rgba(34,211,238,0.5); text-align: right;">SYSTEM TOPOLOGY SCHEMA</div>
+    <div style="font-size: 10px; color: rgba(34,211,238,0.6); text-align: right;">SYSTEM TOPOLOGY SCHEMA</div>
   </div>`,
       style: `【视觉主题】工程蓝图与系统架构说明，理性、清晰、技术可信
   【色彩系统】
