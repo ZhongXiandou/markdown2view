@@ -78,18 +78,18 @@ export function UserGuidePopover({
 
   return (
     <div className="fixed inset-0 z-[35] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="mx-4 w-full max-w-xl rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
+      <div className="mx-4 w-full max-w-md rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
         {/* 顶部装饰条 */}
         <div className="h-1 bg-gradient-to-r from-[var(--accent)] via-[var(--accent)]/70 to-[var(--accent)]/30" />
 
-        <div className="px-8 pt-7 pb-6">
+        <div className="px-4 pt-7 pb-6">
           {/* ── 大标题区 ── */}
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">{title}</h2>
           </div>
 
           {/* ── 步骤内容区（图标 + 中标题 + 描述） ── */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-5 mb-6">
+          <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-5 mb-6 min-h-[100px]">
             <div className="flex items-start gap-4">
               {/* 独立图标容器 */}
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/10 text-[var(--accent)]">
@@ -124,10 +124,10 @@ export function UserGuidePopover({
                   >
                     <div
                       className={`
-                        flex h-9 w-9 items-center justify-center rounded-full
+                        flex h-10 w-10 items-center justify-center rounded-full
                         transition-all duration-200
                         ${isActive
-                          ? 'bg-[var(--accent)] text-white ring-4 ring-[var(--accent)]/20 scale-110'
+                          ? 'bg-[var(--accent)] text-white ring-4 ring-[var(--accent)]/20'
                           : isCompleted
                             ? 'bg-emerald-500 text-white'
                             : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
@@ -144,7 +144,7 @@ export function UserGuidePopover({
 
                   {/* 连接线 */}
                   {i < steps.length - 1 && (
-                    <div className="w-12 h-0.5 mx-1">
+                    <div className="w-16 h-0.5 mx-2.5">
                       <div
                         className={`h-full transition-colors duration-300 ${
                           i < currentStep ? 'bg-emerald-400' : 'bg-slate-200'
@@ -202,14 +202,13 @@ export function UserGuidePopover({
             </button>
 
             <div className="flex items-center gap-2">
-              {!isFirst && (
-                <button
-                  onClick={() => setCurrentStep((prev) => prev - 1)}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  上一步
-                </button>
-              )}
+              <button
+                onClick={() => !isFirst && setCurrentStep((prev) => prev - 1)}
+                disabled={isFirst}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-0 disabled:cursor-default"
+              >
+                上一步
+              </button>
               {!isLast ? (
                 <button
                   onClick={() => setCurrentStep((prev) => prev + 1)}
