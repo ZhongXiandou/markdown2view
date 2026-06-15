@@ -289,7 +289,7 @@ export function DocumentMode({
           {
             icon: 'ai',
             title: '发给 AI 优化文档结构',
-            shortDesc: '将指令与报告大纲发给 AI，让其按物理分页与严谨格式输出 Markdown。',
+            shortDesc: '将指令与你的内容发给 AI，让其按物理分页与严谨格式输出 Markdown。',
           },
           {
             icon: 'export',

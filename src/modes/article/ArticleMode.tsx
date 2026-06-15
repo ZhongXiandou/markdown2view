@@ -94,7 +94,7 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
           {
             icon: 'ai',
             title: '发给 AI 优化文章内容',
-            shortDesc: '将指令与文章草稿发给 AI，让其输出符合排版规则的 Markdown。',
+            shortDesc: '将指令与文章内容发给 AI，让其输出符合排版规则的 Markdown。',
           },
           {
             icon: 'export',

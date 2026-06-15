@@ -3,6 +3,7 @@ import { leaf, esc, parseAttrs } from './helpers'
 import { inlineFormat } from './inlineFormat'
 import { extractMath, restoreMath } from './math'
 import { renderCodeBlock } from './codeBlock'
+import { localImageUrls } from '@/lib/editor/imageStorage'
 import { renderMath } from './mathRenderer'
 import {
   renderFrontMatter,
@@ -656,11 +657,16 @@ export function parseMarkdown(md: string, t: ThemeColors, formulaMap?: Map<strin
     const imgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)(?:\[([^\]]+)\])?/)
     if (imgMatch) {
       const [, alt, src, size] = imgMatch
+      let resolvedSrc = src
+      if (src.startsWith('img://')) {
+        const id = src.replace('img://', '')
+        resolvedSrc = localImageUrls[id] || src
+      }
       if (size) {
         const parts = size.split(/\s+/)
-        html += `<section style="max-height:${parts[1] || '250px'};overflow-y:auto;border-radius:8px;margin:12px 0px;display:flex;justify-content:center"><img src="${esc(src)}" alt="${esc(alt)}" style="width:${parts[0] || '100%'};display:block;margin:0 auto"></section>`
+        html += `<section style="max-height:${parts[1] || '250px'};overflow-y:auto;border-radius:8px;margin:12px 0px;display:flex;justify-content:center"><img src="${esc(resolvedSrc)}" alt="${esc(alt)}" style="width:${parts[0] || '100%'};display:block;margin:0 auto"></section>`
       } else {
-        html += `<section style="margin:12px 0px;display:flex;justify-content:center"><img src="${esc(src)}" alt="${esc(alt)}" style="max-width:100%;border-radius:6px;display:block;margin:0 auto"></section>`
+        html += `<section style="margin:12px 0px;display:flex;justify-content:center"><img src="${esc(resolvedSrc)}" alt="${esc(alt)}" style="max-width:100%;border-radius:6px;display:block;margin:0 auto"></section>`
       }
       i++
       continue

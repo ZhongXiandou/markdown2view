@@ -125,7 +125,7 @@ export function revokeImageUrl(id: string): void {
 }
 
 /**
- * 将 img://id 转换为内存 Object URL
+ * 将 img://id 转换为 base64 Data URL（兼容 srcdoc iframe 等跨域场景）
  */
 export async function resolveImageUrl(id: string): Promise<string> {
   if (localImageUrls[id]) {
@@ -133,9 +133,9 @@ export async function resolveImageUrl(id: string): Promise<string> {
   }
   const blob = await getLocalImage(id)
   if (blob) {
-    const url = URL.createObjectURL(blob)
-    localImageUrls[id] = url
-    return url
+    const dataUrl = await blobToBase64(blob)
+    localImageUrls[id] = dataUrl
+    return dataUrl
   }
   return ''
 }
