@@ -8,9 +8,10 @@ import { uploadImageFile } from '@/lib/editor/imageStorage'
 interface EditorToolbarProps {
   view: EditorView | null
   mode?: 'article' | 'document' | 'card' | 'html'
+  onToast?: (msg: string) => void
 }
 
-export function EditorToolbar({ view, mode }: EditorToolbarProps) {
+export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
   const imageHostConfig = useStore((s) => s.imageHostConfig)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -43,7 +44,12 @@ export function EditorToolbar({ view, mode }: EditorToolbarProps) {
       })
     } catch (err) {
       console.error(err)
-      alert(`图片上传失败: ${err instanceof Error ? err.message : '未知错误'}`)
+      const msg = `图片上传失败: ${err instanceof Error ? err.message : '未知错误'}`
+      if (onToast) {
+        onToast(msg)
+      } else {
+        alert(msg)
+      }
     } finally {
       e.target.value = ''
     }

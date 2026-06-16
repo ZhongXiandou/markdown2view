@@ -4,7 +4,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 
 export interface ToolbarAction {
   id: string
-  icon?: string
+  icon?: React.ReactNode
   label: string
   tooltip?: string
   onClick?: () => void
@@ -59,7 +59,7 @@ export function PreviewToolbar({ leftContent, actions, className = '' }: Preview
             disabled={action.disabled}
             className={action.className}
           >
-            {action.icon && <span className="mr-1">{action.icon}</span>}
+            {action.icon && <span className="mr-1 flex items-center">{action.icon}</span>}
             {action.label}
           </Button>
         )

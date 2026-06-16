@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { SettingsModal } from "@/components/editor/SettingsModal";
 import { PrivacyModal } from "@/components/layout/PrivacyModal";
+import { BrowserCompatDialog } from "@/components/ui/BrowserCompatDialog";
 
 import { DEMO_ARTICLE } from "@/data/demoArticle";
 import { DEMO_DOCUMENT } from "@/data/demoDocument";
@@ -196,6 +197,9 @@ export default function App() {
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onRestoreDemo={handleRestoreDemo}
       />
+
+      {/* 浏览器兼容性警告（z-55，优先级高于用户指引 z-35） */}
+      <BrowserCompatDialog />
     </div>
   );
 }

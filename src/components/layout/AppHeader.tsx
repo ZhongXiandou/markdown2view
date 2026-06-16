@@ -94,12 +94,11 @@ export function AppHeader({
               className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
               title="作者的另一个项目：BeeEffy——个人AI待办与复盘成长系统"
             >
-              <svg width="48" height="14" viewBox="0 0 77.63 21.69" fill="none" stroke="currentColor" className="shrink-0">
-                <circle cx="10.84" cy="10.84" r="10.84" fill="currentColor" stroke="none" />
-                <circle cx="35.1" cy="10.84" r="10.84" fill="currentColor" stroke="none" opacity="0.45" />
-                <circle cx="66.79" cy="10.84" r="10.84" fill="currentColor" stroke="none" opacity="0.45" />
-                <path d="M50.74 1.97 L62.55 10.84 L50.74 19.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M64.32 1.97 L76.13 10.84 L64.32 19.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />
+              <svg width="48" height="14" viewBox="0 0 77.63 21.69" fill="none" className="shrink-0">
+                <circle cx="10.84" cy="10.84" r="10.84" fill="currentColor"/>
+                <circle cx="35.1" cy="10.84" r="10.84" fill="currentColor" opacity="0.45"/>
+                <path d="M50.74 1.97 L62.55 10.84 L50.74 19.72" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M64.32 1.97 L76.13 10.84 L64.32 19.72" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.45"/>
               </svg>
               {headerWidth >= 1450 && <span>BeeEffy</span>}
             </a>
@@ -172,11 +171,12 @@ export function AppHeader({
                 key={t.accent}
                 title={t.accent}
                 onClick={() => setTheme(t.accent, t.dark)}
-                className="h-5 w-5 rounded-full border transition-transform hover:scale-110 cursor-pointer"
+                className="h-5 w-5 rounded-full transition-transform hover:scale-110 cursor-pointer"
                 style={{
                   background: t.accent,
-                  borderColor: accent === t.accent ? '#111' : 'transparent',
-                  outline: accent === t.accent ? '2px solid #1118' : 'none',
+                  boxShadow: accent === t.accent
+                    ? '0 0 0 2px #fff, 0 0 0 4px var(--accent)'
+                    : 'none',
                 }}
               />
             ))}

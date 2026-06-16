@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Rocket, Settings, RotateCcw } from '@/components/ui/Icon'
 
 interface HeaderMoreMenuProps {
   onOpenSettings: () => void
@@ -57,7 +58,7 @@ export function HeaderMoreMenu({ onOpenSettings, onRestoreDemo }: HeaderMoreMenu
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
             >
-              <span>🚀</span>
+              <Rocket size={14} />
               <span>访问 BeeEffy</span>
             </a>
             
@@ -68,7 +69,7 @@ export function HeaderMoreMenu({ onOpenSettings, onRestoreDemo }: HeaderMoreMenu
               }}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
             >
-              <span>⚙️</span>
+              <Settings size={14} />
               <span>图床设置</span>
             </button>
 
@@ -79,7 +80,7 @@ export function HeaderMoreMenu({ onOpenSettings, onRestoreDemo }: HeaderMoreMenu
               }}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
             >
-              <span>🔄</span>
+              <RotateCcw size={14} />
               <span>恢复示例</span>
             </button>
           </div>

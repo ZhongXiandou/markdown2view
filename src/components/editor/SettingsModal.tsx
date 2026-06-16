@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useStore, type ImageHostType, type ImageHostConfig } from '@/lib/store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { HardDrive, Cloud, Package, AlertTriangle } from '@/components/ui/Icon'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -121,11 +122,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <div className="min-h-[160px] rounded-lg bg-slate-50 p-4 border border-slate-100">
             {form.activeType === 'local' && (
               <div className="text-[13px] leading-relaxed text-slate-500">
-                <p className="font-semibold text-slate-700 mb-1.5">📁 本地 IndexedDB 模式</p>
+                <p className="font-semibold text-slate-700 mb-1.5"><span className="inline-flex items-center gap-1.5"><HardDrive size={15} /> 本地 IndexedDB 模式</span></p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>无需任何第三方配置，直接将图片保存在浏览器本地数据库中。</li>
                   <li>图片大小经 Canvas 压缩，性能流畅，对本地预览与 PDF 导出十分友好。</li>
-                  <li>⚠️ <strong className="text-amber-600 font-medium">注意</strong>：由于本地图片为虚拟链接，直接复制 HTML 粘贴到微信公众号会导致图片失效（裂图），在公众号发布文章建议配置免费/付费图床。</li>
+                  <li>注意：<strong className="text-amber-600 font-medium">由于本地图片为虚拟链接</strong>，直接复制 HTML 粘贴到微信公众号会导致图片失效（裂图），在公众号发布文章建议配置免费/付费图床。</li>
                 </ul>
               </div>
             )}
@@ -133,7 +134,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {form.activeType === 'smms' && (
               <div className="flex flex-col gap-3">
                 <div className="text-[13px] leading-relaxed text-slate-500 mb-1">
-                  <p className="font-semibold text-slate-700">☁️ Sm.ms 免费图床</p>
+                  <p className="font-semibold text-slate-700"><span className="inline-flex items-center gap-1.5"><Cloud size={15} /> Sm.ms 免费图床</span></p>
                   <p>请先在 <a href="https://sm.ms/" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] underline font-medium">Sm.ms 官网</a> 注册并获取 API Token 填入下方。</p>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -152,7 +153,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {form.activeType === 'oss' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 text-[13px] leading-relaxed text-slate-500 mb-1">
-                  <p className="font-semibold text-slate-700">📦 阿里云对象存储 (OSS)</p>
+                  <p className="font-semibold text-slate-700"><span className="inline-flex items-center gap-1.5"><Package size={15} /> 阿里云对象存储 (OSS)</span></p>
                   <p>使用您的阿里云 Bucket 进行客户端直接上传。</p>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -177,7 +178,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {form.activeType === 'cos' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 text-[13px] leading-relaxed text-slate-500 mb-1">
-                  <p className="font-semibold text-slate-700">📦 腾讯云对象存储 (COS)</p>
+                  <p className="font-semibold text-slate-700"><span className="inline-flex items-center gap-1.5"><Package size={15} /> 腾讯云对象存储 (COS)</span></p>
                   <p>使用您的腾讯云 Bucket 进行客户端直接上传。</p>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -202,7 +203,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           {form.activeType !== 'local' && (
             <div className="text-[11px] leading-relaxed text-amber-600 bg-amber-50 rounded-lg p-3 border border-amber-100 flex items-start gap-1.5">
-              <span className="shrink-0 mt-0.5">⚠️</span>
+              <span className="shrink-0 mt-0.5"><AlertTriangle size={14} className="text-amber-600" /></span>
               <span>
                 <strong>安全提示</strong>：由于本应用为纯前端无后端运行，所有图床 API 密钥或密钥对（AccessKey/SecretKey）均以<strong>明文形式</strong>直接保存在您本地浏览器的 LocalStorage 中。请务必保护好您的设备，切勿在不受信任的公共计算机上配置生产环境密钥。
               </span>

@@ -18,6 +18,7 @@ import { UI_LABELS } from '@/lib/uiLabels'
 import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
 import { useStore } from '@/lib/store'
 import { useExportAction } from '@/lib/useExportAction'
+import { Play, RotateCcw, Book, Image, Package, Download, Printer } from '@/components/ui/Icon'
 
 interface HtmlModeProps {
   html: string
@@ -499,14 +500,14 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   const toolbarActions: ToolbarItem[] = [
     {
       id: 'fullscreen',
-      icon: '📺',
+      icon: <Play size={14} />,
       label: UI_LABELS.toolbar.fullscreen.label,
       tooltip: UI_LABELS.toolbar.fullscreen.tooltip,
       onClick: () => previewPaneRef.current?.requestFullscreen?.(),
     },
     {
       id: 'refresh',
-      icon: '🔄',
+      icon: <RotateCcw size={14} />,
       label: UI_LABELS.toolbar.refresh.label,
       tooltip: UI_LABELS.toolbar.refresh.tooltip,
       onClick: () => setRefreshKey((n) => n + 1),
@@ -531,7 +532,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     'separator',
     {
       id: 'promptLibrary',
-      icon: '📚',
+      icon: <Book size={14} />,
       label: UI_LABELS.toolbar.promptLibrary.label,
       tooltip: UI_LABELS.toolbar.promptLibrary.tooltip,
       onClick: () => setPromptOpen(true),
@@ -541,7 +542,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     'separator',
     {
       id: 'uploadImage',
-      icon: '🖼️',
+      icon: <Image size={14} />,
       label: uploading ? '上传中…' : UI_LABELS.toolbar.uploadImage.label,
       tooltip: UI_LABELS.toolbar.uploadImage.tooltip,
       onClick: triggerUpload,
@@ -560,7 +561,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
               setAllowScripts(e.target.checked)
               setRefreshKey((n) => n + 1)
             }}
-            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
           />
           {UI_LABELS.toolbar.allowScripts.label}
         </label>
@@ -572,7 +573,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   if (pages.length > 0 || expectedPageCount > 1) {
     toolbarActions.push({
       id: 'exportCurrentPage',
-      icon: '🖼️',
+      icon: <Image size={14} />,
       label: UI_LABELS.toolbar.exportCurrentPage.label,
       tooltip: UI_LABELS.toolbar.exportCurrentPage.tooltip,
       onClick: handleExportCurrentPage,
@@ -580,7 +581,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     })
     toolbarActions.push({
       id: 'exportZip',
-      icon: '📦',
+      icon: <Package size={14} />,
       label: exporting ? '打包中…' : UI_LABELS.toolbar.exportZip.label,
       tooltip: UI_LABELS.toolbar.exportZip.tooltip,
       onClick: handleExportPagesZip,
@@ -590,7 +591,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
 
   toolbarActions.push({
     id: 'exportSource',
-    icon: '💾',
+    icon: <Download size={14} />,
     label: UI_LABELS.toolbar.exportSource.label,
     tooltip: UI_LABELS.toolbar.exportSource.tooltip,
     onClick: () => {
@@ -602,7 +603,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   if (pages.length === 0 && expectedPageCount <= 1) {
     toolbarActions.push({
       id: 'exportPng',
-      icon: '🖼️',
+      icon: <Image size={14} />,
       label: exporting ? '导出中…' : UI_LABELS.toolbar.exportPng.label,
       tooltip: UI_LABELS.toolbar.exportPng.tooltip,
       onClick: handleExport,
@@ -612,7 +613,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
 
   toolbarActions.push({
     id: 'exportPdf',
-    icon: '🖨️',
+    icon: <Printer size={14} />,
     label: UI_LABELS.toolbar.exportPdf.label,
     tooltip: UI_LABELS.toolbar.exportPdf.tooltip,
     onClick: handleExportPdf,
@@ -622,7 +623,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
   })
 
   return (
-    <main className="flex flex-col min-h-0 flex-1 bg-gray-200">
+    <main className="flex flex-col min-h-0 flex-1 bg-slate-200">
       {/* 移动端视图切换 Tab */}
       <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
         <button
@@ -650,7 +651,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" aria-label="上传图片" className="hidden" />
 
       {/* 左右分栏 */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-slate-200">
         <section className={`min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
           <CodeEditor
             value={localHtml}
@@ -661,6 +662,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
               editorScrollerRef.current = el
               setEditorReady((n) => n + 1)
             }}
+            onToast={onToast}
           />
         </section>
         <section ref={previewPaneRef} className={`min-h-0 overflow-hidden bg-white flex flex-col relative ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>

@@ -13,6 +13,7 @@ import { useStore, type RenderMode, type CustomInstruction } from '@/lib/store'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide } from '@/lib/aiGuide'
 import { copyText } from '@/lib/clipboard'
+import { Book } from '@/components/ui/Icon'
 
 interface PromptLibraryProps {
   mode: RenderMode
@@ -136,7 +137,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
       >
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
           <div>
-            <div className="text-lg font-bold text-slate-900">📚 风格指令库</div>
+            <div className="flex items-center gap-2 text-lg font-bold text-slate-900"><Book size={18} /> 风格指令库</div>
             <div className="mt-1 flex items-center gap-2 text-[13px] text-slate-500">
               <span className="rounded bg-blue-50 px-1.5 text-blue-700 font-semibold flex items-center gap-0.5"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>工作流</span>
               <span>1. 选一个喜欢的风格</span>

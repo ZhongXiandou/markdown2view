@@ -3,6 +3,7 @@ import { useStore, type RenderMode } from '@/lib/store'
 import { CustomInstructionEditor } from '@/modes/html/CustomInstructionEditor'
 import { copyText } from '@/lib/clipboard'
 import { UI_LABELS } from '@/lib/uiLabels'
+import { Wrench } from '@/components/ui/Icon'
 
 interface CustomPromptPopoverProps {
   mode: RenderMode
@@ -68,7 +69,7 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
             open ? 'bg-slate-100 text-slate-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
           }`}
         >
-          <span>🛠️ {UI_LABELS.promptLibrary.customTab}</span>
+          <span className="flex items-center gap-1.5"><Wrench size={14} /> {UI_LABELS.promptLibrary.customTab}</span>
           {filteredInstructions.length > 0 && (
             <span className="ml-1 flex h-4 items-center justify-center rounded-full bg-slate-200 px-1.5 text-[10px] font-bold text-slate-600">
               {filteredInstructions.length}

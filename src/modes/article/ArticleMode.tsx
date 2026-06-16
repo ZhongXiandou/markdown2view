@@ -34,7 +34,7 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady])
 
   return (
-    <main className="flex flex-col min-h-0 flex-1 bg-gray-200">
+    <main className="flex flex-col min-h-0 flex-1 bg-slate-200">
       {/* 移动端视图切换 Tab */}
       <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
         <button
@@ -59,7 +59,7 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
         </button>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-slate-200">
         <section className={`min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
           <CodeEditor
             value={localMarkdown}
@@ -69,9 +69,10 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
               editorScrollerRef.current = el
               setEditorReady((n) => n + 1)
             }}
+            onToast={onToast}
           />
         </section>
-        <section className={`min-h-0 overflow-hidden bg-gray-50 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
+        <section className={`min-h-0 overflow-hidden bg-slate-50 flex flex-col ${activeView === 'preview' ? 'flex' : 'hidden md:flex'}`}>
           <ArticlePreview
             rendered={rendered}
             markdown={debouncedMarkdown}

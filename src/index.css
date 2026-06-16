@@ -1,5 +1,21 @@
 @import 'tailwindcss';
 
+@theme {
+  /* 语义中性色 token（对应 DESIGN.md §2.1） */
+  --color-surface: #ffffff;          /* 表面-白：卡片、输入框 */
+  --color-surface-subtle: #f8fafc;   /* 表面-浅：工具栏底、悬停 */
+  --color-surface-muted: #f1f5f9;    /* 表面-灰：分栏背景、分段控件 */
+  --color-border-default: #e2e8f0;   /* 边框 */
+  --color-border-subtle: #f1f5f9;    /* 边框-浅 */
+  --color-ink-strong: #1f2937;       /* 文字-强 */
+  --color-ink: #475569;              /* 文字-中 */
+  --color-ink-muted: #64748b;        /* 文字-弱 */
+  --color-ink-faint: #94a3b8;        /* 文字-极弱 */
+
+  /* 等宽字体栈（DESIGN.md §3.1 现代点缀） */
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+}
+
 :root {
   /* 主题色 CSS 变量，由 store 在运行时写入实际值 */
   --accent: #27ae60;
@@ -24,7 +40,7 @@
   max-width: 700px;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 32px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 

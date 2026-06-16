@@ -61,7 +61,7 @@ export function CustomInstructionEditor({ mode, editingId, cloneFromStyle, onClo
           onChange={(e) => setName(e.target.value)}
           placeholder="如：科技蓝色商务风"
           maxLength={50}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[14px] text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[14px] text-slate-800 placeholder:text-slate-400 focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30"
         />
       </div>
 
@@ -74,7 +74,7 @@ export function CustomInstructionEditor({ mode, editingId, cloneFromStyle, onClo
           onChange={(e) => setDescription(e.target.value)}
           placeholder="一句话描述这个风格的特点"
           maxLength={100}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[14px] text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[14px] text-slate-800 placeholder:text-slate-400 focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30"
         />
       </div>
 
@@ -95,7 +95,7 @@ export function CustomInstructionEditor({ mode, editingId, cloneFromStyle, onClo
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
               aria-label="强调色十六进制值"
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[13px] font-mono text-slate-700 focus:border-blue-400 focus:outline-none"
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[13px] font-mono text-slate-700 focus:border-[var(--accent)] focus:outline-none"
             />
           </div>
         </div>
@@ -105,7 +105,7 @@ export function CustomInstructionEditor({ mode, editingId, cloneFromStyle, onClo
             value={outputType}
             onChange={(e) => setOutputType(e.target.value as OutputType)}
             aria-label="输出类型"
-            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-[13px] text-slate-700 focus:border-blue-400 focus:outline-none"
+            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-[13px] text-slate-700 focus:border-[var(--accent)] focus:outline-none"
           >
             {OUTPUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -116,7 +116,7 @@ export function CustomInstructionEditor({ mode, editingId, cloneFromStyle, onClo
             value={visualTone}
             onChange={(e) => setVisualTone(e.target.value as VisualTone)}
             aria-label="视觉气质"
-            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-[13px] text-slate-700 focus:border-blue-400 focus:outline-none"
+            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-[13px] text-slate-700 focus:border-[var(--accent)] focus:outline-none"
           >
             {VISUAL_TONES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -133,7 +133,7 @@ export function CustomInstructionEditor({ mode, editingId, cloneFromStyle, onClo
           onChange={(e) => setContent(e.target.value.slice(0, 5000))}
           rows={10}
           placeholder="在此输入你的设计系统令牌描述，如：&#10;【视觉主题】...&#10;【色彩系统】...&#10;【排版规则】..."
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-slate-800 font-mono placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-y"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-slate-800 font-mono placeholder:text-slate-400 focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30 resize-y"
         />
         <div className="mt-1 text-right text-[11px] text-slate-400">{content.length} / 5000</div>
       </div>

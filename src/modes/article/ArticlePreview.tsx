@@ -9,6 +9,7 @@ import { buildArticleAiGuide } from '@/lib/aiGuide'
 import { useStore } from '@/lib/store'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { getFontFamilyCss } from '@/lib/fonts'
+import { Sparkles, Download, Clipboard, Image, Rocket } from '@/components/ui/Icon'
 
 /** 长图文模式固定使用黑体系统字体栈，确保复制到微信公众号时字体一致 */
 const ARTICLE_FONT = getFontFamilyCss('heiti')
@@ -72,7 +73,7 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
   const toolbarActions: ToolbarItem[] = [
     {
       id: 'copyGuide',
-      icon: '✨',
+      icon: <Sparkles size={14} />,
       label: '复制排版指令',
       tooltip: '复制长图文排版 AI 指令',
       onClick: handleCopyGuide,
@@ -85,7 +86,7 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
     'separator',
     {
       id: 'exportSource',
-      icon: '💾',
+      icon: <Download size={14} />,
       label: UI_LABELS.toolbar.exportSource.label,
       tooltip: '导出为 .md 文件',
       onClick: () => {
@@ -95,21 +96,21 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
     },
     {
       id: 'copyHtml',
-      icon: '📋',
+      icon: <Clipboard size={14} />,
       label: '复制源码',
       tooltip: '复制渲染后的完整 HTML 源码（含内联样式）',
       onClick: handleCopyHtml,
     },
     {
       id: 'exportImage',
-      icon: '🖼️',
+      icon: <Image size={14} />,
       label: UI_LABELS.toolbar.exportLongImage.label,
       tooltip: UI_LABELS.toolbar.exportLongImage.tooltip,
       onClick: handleExportLongImage,
     },
     {
       id: 'copyRichText',
-      icon: '🚀',
+      icon: <Rocket size={14} />,
       label: UI_LABELS.toolbar.copyRichText.label,
       tooltip: UI_LABELS.toolbar.copyRichText.tooltip,
       onClick: handleCopyRichText,
@@ -138,31 +139,31 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
         {(meta.title || meta.summary) && (
           <section className="mx-auto mb-2 grid w-full max-w-[700px] gap-2">
             {meta.title && (
-              <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm">
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-400">标题</span>
+                  <span className="text-xs font-semibold text-slate-400">标题</span>
                   <button
                     onClick={handleCopyTitle}
-                    className="rounded px-2 py-0.5 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                    className="rounded px-2 py-0.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
                   >
                     复制
                   </button>
                 </div>
-                <div className="mt-0.5 text-sm font-semibold leading-5 text-gray-900">{meta.title}</div>
+                <div className="mt-0.5 text-sm font-semibold leading-5 text-slate-900">{meta.title}</div>
               </div>
             )}
             {meta.summary && (
-              <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm">
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-400">摘要</span>
+                  <span className="text-xs font-semibold text-slate-400">摘要</span>
                   <button
                     onClick={handleCopySummary}
-                    className="rounded px-2 py-0.5 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                    className="rounded px-2 py-0.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
                   >
                     复制
                   </button>
                 </div>
-                <div className="mt-0.5 text-xs leading-5 text-gray-600">{meta.summary}</div>
+                <div className="mt-0.5 text-xs leading-5 text-slate-600">{meta.summary}</div>
               </div>
             )}
           </section>

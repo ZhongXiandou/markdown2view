@@ -31,6 +31,7 @@ import { exportMarkdownSource } from '@/lib/exportSource'
 import { useBlockHeights } from '@/lib/useBlockHeights'
 import { useExportAction } from '@/lib/useExportAction'
 import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
+import { Sparkles, Download, Clipboard, Image, Package } from '@/components/ui/Icon'
 
 interface CardModeProps {
   markdown: string;
@@ -254,7 +255,7 @@ export function CardMode({
   const toolbarActions: ToolbarItem[] = [
     {
       id: "copyGuide",
-      icon: "✨",
+      icon: <Sparkles size={14} />,
       label: "复制排版指令",
       tooltip: "复制图文卡片排版 AI 指令",
       onClick: handleCopyGuide,
@@ -267,7 +268,7 @@ export function CardMode({
     "separator",
     {
       id: 'exportSource',
-      icon: '💾',
+      icon: <Download size={14} />,
       label: UI_LABELS.toolbar.exportSource.label,
       tooltip: '导出为 .md 文件',
       onClick: () => {
@@ -277,7 +278,7 @@ export function CardMode({
     },
     {
       id: "copyCaption",
-      icon: "📋",
+      icon: <Clipboard size={14} />,
       label: "复制文案",
       tooltip: "复制生成的小红书发布文案",
       onClick: copyCaption,
@@ -286,7 +287,7 @@ export function CardMode({
     "separator",
     {
       id: "exportAll",
-      icon: "🖼️",
+      icon: <Image size={14} />,
       label: "下载单图",
       tooltip: "逐张下载所有生成的图片",
       onClick: exportAll,
@@ -294,7 +295,7 @@ export function CardMode({
     },
     {
       id: "exportZip",
-      icon: "📦",
+      icon: <Package size={14} />,
       label: exporting ? "打包中…" : UI_LABELS.toolbar.exportZip.label,
       tooltip: UI_LABELS.toolbar.exportZip.tooltip,
       onClick: exportZip,
@@ -328,7 +329,7 @@ export function CardMode({
   );
 
   return (
-    <main className="flex flex-col min-h-0 flex-1 bg-gray-200">
+    <main className="flex flex-col min-h-0 flex-1 bg-slate-200">
       {/* 移动端视图切换 Tab */}
       <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
         <button
@@ -353,7 +354,7 @@ export function CardMode({
         </button>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-slate-200">
         <section className={`min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
           <CodeEditor
             value={localMarkdown}
@@ -364,6 +365,7 @@ export function CardMode({
               editorScrollerRef.current = el;
               setEditorReady((n) => n + 1);
             }}
+            onToast={onToast}
           />
         </section>
 

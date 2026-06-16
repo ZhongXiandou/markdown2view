@@ -22,6 +22,7 @@ import { CustomPromptPopover } from '@/components/layout/CustomPromptPopover'
 import { exportMarkdownSource } from '@/lib/exportSource'
 import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
 import { useStore } from '@/lib/store'
+import { Sparkles, Download, Printer } from '@/components/ui/Icon'
 
 
 interface DocumentModeProps {
@@ -115,7 +116,7 @@ export function DocumentMode({
   const toolbarActions: ToolbarItem[] = [
     {
       id: 'copyGuide',
-      icon: '✨',
+      icon: <Sparkles size={14} />,
       label: '复制排版指令',
       tooltip: '复制 A4 文档排版 AI 指令',
       onClick: handleCopyGuide,
@@ -128,14 +129,14 @@ export function DocumentMode({
     'separator',
     {
       id: 'exportSource',
-      icon: '💾',
+      icon: <Download size={14} />,
       label: UI_LABELS.toolbar.exportSource.label,
       tooltip: '导出为 .md 文件',
       onClick: () => exportMarkdownSource(debouncedMarkdown, filename.replace(/\.pdf$/, '.md')),
     },
     {
       id: 'exportPdf',
-      icon: '🖨️',
+      icon: <Printer size={14} />,
       label: '导出 PDF',
       tooltip: '通过浏览器打印另存为 PDF（文字可选中、体积小）',
       onClick: print,
@@ -188,7 +189,7 @@ export function DocumentMode({
           type="checkbox"
           checked={settings.centerTitle}
           onChange={(e) => updateSettings({ centerTitle: e.target.checked })}
-          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
         />
         标题居中
       </label>
@@ -197,19 +198,19 @@ export function DocumentMode({
           type="checkbox"
           checked={settings.indentParagraph}
           onChange={(e) => updateSettings({ indentParagraph: e.target.checked })}
-          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
         />
         首行缩进
       </label>
-      <span className="text-[12px] text-slate-400 ml-1 shrink-0 flex items-center gap-1">
-        {status === 'rendering' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />}
+      <span className="text-[12px] text-slate-400 ml-1 shrink-0 flex items-center gap-1 font-mono">
+        {status === 'rendering' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />}
         {status === 'rendering' ? '分页中…' : status === 'done' ? `共 ${pageCount} 页` : ''}
       </span>
     </>
   )
 
   return (
-    <main className="document-shell flex flex-col min-h-0 flex-1 bg-gray-200">
+    <main className="document-shell flex flex-col min-h-0 flex-1 bg-slate-200">
       {/* 移动端视图切换 Tab */}
       <div className="flex shrink-0 border-b border-slate-200 bg-white md:hidden">
         <button
@@ -234,7 +235,7 @@ export function DocumentMode({
         </button>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-gray-200">
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 gap-px bg-slate-200">
         <section className={`document-editor-pane min-h-0 overflow-hidden bg-white flex flex-col ${activeView === 'edit' ? 'flex' : 'hidden md:flex'}`}>
           <CodeEditor
             value={localMarkdown}
@@ -245,6 +246,7 @@ export function DocumentMode({
               editorScrollerRef.current = el
               setEditorReady((n) => n + 1)
             }}
+            onToast={onToast}
           />
         </section>
 

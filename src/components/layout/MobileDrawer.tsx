@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import type { RenderMode } from '@/lib/store'
 import { THEMES } from '@engine/composables/useTheme'
+import { FileText, Book, Image, Palette, HelpCircle, Settings, RotateCcw, Shield } from '@/components/ui/Icon'
 
 /** 抽屉内功能按钮统一样式 */
 function DrawerButton({
@@ -8,7 +9,7 @@ function DrawerButton({
   label,
   onClick,
 }: {
-  icon: string
+  icon: ReactNode
   label: string
   onClick: () => void
 }) {
@@ -17,7 +18,7 @@ function DrawerButton({
       onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 text-[13px] font-medium text-slate-700 transition-colors cursor-pointer"
     >
-      <span className="text-lg">{icon}</span>
+      <span className="text-slate-500">{icon}</span>
       <span>{label}</span>
     </button>
   )
@@ -36,11 +37,11 @@ interface MobileDrawerProps {
   onRestoreDemo: () => void
 }
 
-const MODES: { key: RenderMode; label: string; icon: string }[] = [
-  { key: 'document', label: 'A4 规范文档', icon: '📄' },
-  { key: 'article', label: '长图文排版', icon: '📚' },
-  { key: 'card', label: '分页图文卡', icon: '🖼️' },
-  { key: 'html', label: '自由画布', icon: '🎨' },
+const MODES: { key: RenderMode; label: string; icon: ReactNode }[] = [
+  { key: 'document', label: 'A4 规范文档', icon: <FileText size={20} /> },
+  { key: 'article', label: '长图文排版', icon: <Book size={20} /> },
+  { key: 'card', label: '分页图文卡', icon: <Image size={20} /> },
+  { key: 'html', label: '自由画布', icon: <Palette size={20} /> },
 ]
 
 export function MobileDrawer({
@@ -111,7 +112,7 @@ export function MobileDrawer({
                       : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  <span className="text-[20px] mb-1.5">{m.icon}</span>
+                  <span className="mb-1.5">{m.icon}</span>
                   <span className="text-[12px]">{m.label}</span>
                 </button>
               )
@@ -124,22 +125,22 @@ export function MobileDrawer({
           <div className="mb-2.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">系统功能</div>
 
           <DrawerButton
-            icon="❓"
+            icon={<HelpCircle size={18} />}
             label="查看使用帮助"
             onClick={() => { onClose(); onTriggerGuide() }}
           />
           <DrawerButton
-            icon="⚙️"
+            icon={<Settings size={18} />}
             label="图床参数配置"
             onClick={() => { onClose(); onOpenSettings() }}
           />
           <DrawerButton
-            icon="🔄"
+            icon={<RotateCcw size={18} />}
             label="恢复当前示例内容"
             onClick={() => { onClose(); onRestoreDemo() }}
           />
           <DrawerButton
-            icon="🛡️"
+            icon={<Shield size={18} />}
             label="隐私与安全说明"
             onClick={() => { onClose(); onOpenPrivacy() }}
           />
@@ -187,7 +188,7 @@ export function MobileDrawer({
             </a>
           </div>
           <div className="text-[11px] text-slate-400 leading-relaxed">
-            本项目为 100% 纯前端开源工具<br />所有编辑数据均存储在您的本地浏览器中 🛡️
+            本项目为 100% 纯前端开源工具<br />所有编辑数据均存储在您的本地浏览器中
           </div>
         </div>
       </div>
