@@ -75,7 +75,9 @@ export default defineConfig({
             '@uiw/react-codemirror',
             'codemirror'
           ],
-          'engine-vendor': ['highlight.js', 'katex']
+          'engine-vendor': ['highlight.js', 'katex'],
+          'mermaid-vendor': ['mermaid'],
+          'mathjax-vendor': ['mathjax'],
         }
       }
     }
