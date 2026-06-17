@@ -21,7 +21,7 @@ export function ensureMermaid(): Promise<Mermaid> {
       startOnLoad: false,
       theme: 'neutral', // 中性主题，适配 A4 正式文档与卡片
       securityLevel: 'strict', // 安全：禁用源码中的 html 标签
-      flowchart: { useMaxWidth: true }, // 让 mermaid 自适应容器宽度
+      flowchart: { useMaxWidth: false }, // 关闭：让 mermaid 输出自然尺寸 + viewBox，由外层 CSS 控制响应
     })
     return mermaid
   })
@@ -51,7 +51,12 @@ export async function renderMermaidDiagram(
   document.body.appendChild(host)
   try {
     const id = `m2v-mermaid-${Math.random().toString(36).slice(2, 10)}`
-    const { svg } = await mermaid.render(id, source, host)
+    const { svg: rawSvg } = await mermaid.render(id, source, host)
+    // 剥除 mermaid 输出的固定 width/height（保留 viewBox 维持宽高比），
+    // 让外层 CSS（width:100%; max-width:100%）控制响应式尺寸
+    const svg = rawSvg
+      .replace(/(<svg\b[^>]*?)\s+width="[^"]*"/gi, '$1')
+      .replace(/(<svg\b[^>]*?)\s+height="[^"]*"/gi, '$1')
     return { svg }
   } catch (e) {
     return { svg: '', error: (e as Error)?.message || '图表渲染失败' }

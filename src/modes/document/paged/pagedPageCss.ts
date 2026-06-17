@@ -149,5 +149,9 @@ export function buildPageCss(settings: DocumentSettings, docTitle: string): stri
   transform: scale(var(--m2v-mermaid-scale, 1));
   transform-origin: top center;
 }
+.document-content .document-block[data-kind='mermaid'] .m2v-mermaid-figure svg {
+  width: 100%;
+  height: auto;
+}
 `
 }
