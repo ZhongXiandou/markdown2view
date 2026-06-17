@@ -9,6 +9,7 @@ export type DocumentBlockKind =
   | 'image'
   | 'table'
   | 'code'
+  | 'mermaid'
   | 'quote'
   | 'list'
   | 'component'
