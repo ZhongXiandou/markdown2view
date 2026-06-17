@@ -31,21 +31,21 @@ function loadMathJax(): Promise<void> {
       resolve()
       return
     }
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js'
-    script.onload = () => {
-      const check = setInterval(() => {
-        if ((window as any).MathJax?.startup?.adaptor) {
-          clearInterval(check)
-          resolve()
-        }
-      }, 50)
-    }
-    script.onerror = () => {
-      mathJaxReady = null
-      reject(new Error('MathJax CDN load failed'))
-    }
-    document.head.appendChild(script)
+    // 本地打包 + dynamic import（替代原 CDN script 注入）：
+    // mathjax/es5/tex-svg.js 导入后自执行，按上面注入的配置初始化 window.MathJax
+    import('mathjax/es5/tex-svg.js')
+      .then(() => {
+        const check = setInterval(() => {
+          if ((window as any).MathJax?.startup?.adaptor) {
+            clearInterval(check)
+            resolve()
+          }
+        }, 50)
+      })
+      .catch((e) => {
+        mathJaxReady = null
+        reject(new Error('MathJax load failed: ' + (e as Error)?.message))
+      })
   })
 
   return mathJaxReady
