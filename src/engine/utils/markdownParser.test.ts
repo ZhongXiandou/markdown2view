@@ -153,3 +153,66 @@ describe('parseMarkdown - Caption parsing', () => {
   })
 })
 
+import { collectMermaidDiagrams } from './markdownParser'
+
+describe('parseMarkdown - mermaid 集成', () => {
+  const colors = makeColors('#2563eb', '#1e40af')
+
+  it('collectMermaidDiagrams 提取 mermaid 源码并按内容去重', () => {
+    const md = [
+      '```mermaid',
+      'flowchart TD',
+      '  A --> B',
+      '```',
+      '',
+      '```mermaid',
+      'flowchart TD',
+      '  A --> B',
+      '```',
+      '',
+      '```mermaid',
+      'flowchart TD',
+      '  C --> D',
+      '```',
+    ].join('\n')
+    const diagrams = collectMermaidDiagrams(md)
+    // 前两段内容相同 → 去重为 1；第三段不同 → 共 2 个
+    expect(diagrams).toHaveLength(2)
+    expect(diagrams[0].source).toContain('A --> B')
+    expect(diagrams[1].source).toContain('C --> D')
+  })
+
+  it('传入 mermaidMap 时 mermaid 块替换为 data-block="mermaid"', () => {
+    const source = 'flowchart TD\n  A --> B'
+    const key = `m:${source}`
+    const map = new Map<string, { svg: string; error?: string }>([
+      [key, { svg: '<svg>fake-diagram</svg>' }],
+    ])
+    const md = '```mermaid\n' + source + '\n```'
+    const html = parseMarkdown(md, colors, undefined, map)
+    expect(html).toContain('data-block="mermaid"')
+    expect(html).toContain('<svg>fake-diagram</svg>')
+    expect(html).toContain('m2v-mermaid-figure')
+  })
+
+  it('不传 mermaidMap 时 mermaid 块降级为代码块', () => {
+    const md = '```mermaid\nflowchart TD\n  A --> B\n```'
+    const html = parseMarkdown(md, colors)
+    expect(html).not.toContain('data-block="mermaid"')
+    expect(html).toContain('data-block="code"')
+  })
+
+  it('mermaidMap 中有 error 时降级为错误提示 + 代码块', () => {
+    const source = 'invalid syntax'
+    const key = `m:${source}`
+    const map = new Map<string, { svg: string; error?: string }>([
+      [key, { svg: '', error: '语法错误示例' }],
+    ])
+    const md = '```mermaid\n' + source + '\n```'
+    const html = parseMarkdown(md, colors, undefined, map)
+    expect(html).toContain('data-block="mermaid-error"')
+    expect(html).toContain('语法错误示例')
+    expect(html).toContain('data-block="code"')
+  })
+})
+

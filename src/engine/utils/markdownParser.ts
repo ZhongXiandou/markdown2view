@@ -5,6 +5,7 @@ import { extractMath, restoreMath } from './math'
 import { renderCodeBlock } from './codeBlock'
 import { localImageUrls } from '@/lib/editor/imageStorage'
 import { renderMath } from './mathRenderer'
+import { renderMermaidDiagram } from './mermaidRenderer'
 import {
   renderFrontMatter,
   parseCtaBlock,
@@ -172,16 +173,70 @@ export async function preRenderFormulas(
 }
 
 /**
+ * 收集 md 中所有 mermaid 代码块源码（按内容去重），用于预渲染。
+ * 与 collectFormulas 同构。key 格式：`m:${source}`。
+ */
+export function collectMermaidDiagrams(md: string): Array<{ key: string; source: string }> {
+  const seen = new Set<string>()
+  const result: Array<{ key: string; source: string }> = []
+  // 匹配 ```mermaid 围栏（支持 ```mermaid 后跟空格/换行）
+  const re = /```mermaid[ \t]*\r?\n([\s\S]*?)```/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(md)) !== null) {
+    const source = m[1].replace(/\s+$/, '')
+    const key = `m:${source}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      result.push({ key, source })
+    }
+  }
+  return result
+}
+
+/**
+ * 批量预渲染 mermaid 源码为 SVG。
+ * @returns Map<key, { svg, error? }>。失败项 svg 为空字符串、error 非空。
+ */
+export async function preRenderMermaid(
+  diagrams: Array<{ key: string; source: string }>,
+  containerWidth: number,
+): Promise<Map<string, { svg: string; error?: string }>> {
+  const map = new Map<string, { svg: string; error?: string }>()
+  const results = await Promise.all(
+    diagrams.map(async (d) => {
+      const r = await renderMermaidDiagram(d.source, containerWidth)
+      return { key: d.key, ...r }
+    }),
+  )
+  for (const { key, svg, error } of results) {
+    map.set(key, { svg, error })
+  }
+  return map
+}
+
+/**
  * 一步完成：收集公式 → 预渲染 → 解析。
  * 推荐所有 caller 使用这个入口。
  */
-export async function parseMarkdownAsync(md: string, t: ThemeColors): Promise<string> {
+export async function parseMarkdownAsync(
+  md: string,
+  t: ThemeColors,
+  containerWidth = 578,
+): Promise<string> {
   const formulas = collectFormulas(md)
   const formulaMap = formulas.length > 0 ? await preRenderFormulas(formulas) : undefined
-  return parseMarkdown(md, t, formulaMap)
+  const diagrams = collectMermaidDiagrams(md)
+  const mermaidMap =
+    diagrams.length > 0 ? await preRenderMermaid(diagrams, containerWidth) : undefined
+  return parseMarkdown(md, t, formulaMap, mermaidMap)
 }
 
-export function parseMarkdown(md: string, t: ThemeColors, formulaMap?: Map<string, string>): string {
+export function parseMarkdown(
+  md: string,
+  t: ThemeColors,
+  formulaMap?: Map<string, string>,
+  mermaidMap?: Map<string, { svg: string; error?: string }>,
+): string {
   // 双引擎逻辑：若传入了 formulaMap（MathJax 模式），则不采用 KaTeX 抽取
   const isKaTeX = !formulaMap
   const { text: processedMdText, store: mathStore } = isKaTeX 
@@ -569,7 +624,22 @@ export function parseMarkdown(md: string, t: ThemeColors, formulaMap?: Map<strin
         i++
       }
       i++
-      html += renderCodeBlock(code, lang)
+      // mermaid 代码块：从预渲染 map 取 SVG，失败或不传 map 时降级
+      if (lang === 'mermaid') {
+        const source = code.replace(/\s+$/, '')
+        const entry = mermaidMap?.get(`m:${source}`)
+        if (entry?.svg) {
+          html += `<section data-block="mermaid" style="max-width:100%;margin:16px auto;text-align:center;break-inside:avoid"><div class="m2v-mermaid-figure" style="display:inline-block;max-width:100%;max-height:var(--m2v-mermaid-max-height,none);overflow:hidden">${entry.svg}</div></section>`
+        } else if (entry?.error) {
+          html += `<section data-block="mermaid-error" style="background:rgb(254,242,242);border-left:3px solid rgb(220,80,80);padding:10px 14px;margin:14px 0;font-size:12.5px;color:rgb(120,30,30)">图表渲染失败：${esc(entry.error)}</section>`
+          html += renderCodeBlock(code, 'mermaid')
+        } else {
+          // 未传 mermaidMap（如 Article 同步路径）→ 降级为代码块
+          html += renderCodeBlock(code, 'mermaid')
+        }
+      } else {
+        html += renderCodeBlock(code, lang)
+      }
       continue
     }
 

@@ -9,11 +9,17 @@ describe('renderMermaidDiagram', () => {
 
     // jsdom 未实现 SVG 测量 API，mermaid 内部依赖这些做布局
     // 为测试 mock 最小可用版本
-    if (!SVGElement.prototype.getBBox) {
-      ;(SVGElement.prototype as any).getBBox = () => ({ x: 0, y: 0, width: 100, height: 30 })
+    if (!(SVGElement.prototype as any).getBBox) {
+      Object.defineProperty(SVGElement.prototype, 'getBBox', {
+        value: () => ({ x: 0, y: 0, width: 100, height: 30 }),
+        configurable: true,
+      })
     }
-    if (!SVGElement.prototype.getComputedTextLength) {
-      ;(SVGElement.prototype as any).getComputedTextLength = () => 80
+    if (!(SVGElement.prototype as any).getComputedTextLength) {
+      Object.defineProperty(SVGElement.prototype, 'getComputedTextLength', {
+        value: () => 80,
+        configurable: true,
+      })
     }
   })
 
