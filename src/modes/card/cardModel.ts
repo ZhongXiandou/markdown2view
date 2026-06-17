@@ -44,6 +44,8 @@ function estimateBlockUnits(block: string): number {
   switch (kind) {
     case 'heading':
       return Math.max(3.5, Math.ceil(chars / 12) * 2.4)
+    case 'mermaid':
+      return 12 // 卡片中一个流程图约占用 12 个内容单位（约半页）
     case 'code':
       return 4 + lines * 1.25
     case 'image':

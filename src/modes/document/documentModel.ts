@@ -103,6 +103,8 @@ function estimateBlockHeight(markdown: string, kind: DocumentBlockKind): number 
       const rows = markdown.split('\n').filter((line) => line.includes('|')).length
       return 48 + Math.max(1, rows) * 36
     }
+    case 'mermaid':
+      return 280 // 保守估算：一个中等流程图 + 说明文字行（实测在 Paged.js 路径不依赖此值）
     case 'code':
       return 42 + markdown.split('\n').length * 22
     case 'quote':

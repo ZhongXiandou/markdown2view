@@ -262,4 +262,19 @@ describe('documentModel', () => {
       expect(coverTable?.id).not.toContain('part')
     })
   })
+
+  describe('estimateBlockHeight - mermaid', () => {
+    it('mermaid 块估算高度为 280', () => {
+      const md = '```mermaid\nflowchart TD\n  A --> B\n```'
+      const blocks = splitMarkdownBlocks(md)
+      expect(blocks[0].kind).toBe('mermaid')
+      expect(blocks[0].estimatedHeight).toBe(280)
+    })
+
+    it('mermaid 块默认 avoidBreak（原子块）', () => {
+      const md = '```mermaid\nflowchart TD\n  A --> B\n```'
+      const blocks = splitMarkdownBlocks(md)
+      expect(blocks[0].avoidBreak).toBe(true)
+    })
+  })
 })
