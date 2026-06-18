@@ -118,13 +118,14 @@ export async function parseMarkdownAsync(
   md: string,
   t: ThemeColors,
   containerWidth = 578,
+  onWarning?: (warning: string) => void,
 ): Promise<string> {
   const formulas = collectFormulas(md)
   const formulaMap = formulas.length > 0 ? await preRenderFormulas(formulas) : undefined
   const diagrams = collectMermaidDiagrams(md)
   const mermaidMap =
     diagrams.length > 0 ? await preRenderMermaid(diagrams, containerWidth) : undefined
-  return parseMarkdown(md, t, formulaMap, mermaidMap)
+  return parseMarkdown(md, t, formulaMap, mermaidMap, onWarning)
 }
 
 export function parseMarkdown(
@@ -132,6 +133,7 @@ export function parseMarkdown(
   t: ThemeColors,
   formulaMap?: Map<string, string>,
   mermaidMap?: Map<string, { svg: string; error?: string }>,
+  onWarning?: (warning: string) => void,
 ): string {
   // 1. 先保护代码区域，避免公式/脚注替换侵入代码块/行内代码
   const { text: mdWithoutCode, store: codeStore } = protectCode(md)
@@ -212,6 +214,9 @@ export function parseMarkdown(
           html += result.html
           i = result.next
           handled = true
+          if (result.warning && onWarning) {
+            onWarning(result.warning)
+          }
           break
         }
       }

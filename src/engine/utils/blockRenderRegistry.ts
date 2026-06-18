@@ -38,6 +38,7 @@ export interface BlockRenderContext {
 export interface BlockRenderResult {
   html: string
   next: number
+  warning?: string
 }
 
 export interface BlockRenderer {
@@ -56,7 +57,7 @@ export function extractBlock(
   start: number,
   openTagRegex: RegExp,
   closeTagRegex: RegExp,
-): { attrs: Record<string, string>; body: string; next: number } | null {
+): { attrs: Record<string, string>; body: string; next: number; warning?: string } | null {
   const line = lines[start]
   const openMatch = line.match(openTagRegex)
   if (!openMatch) return null
@@ -70,9 +71,19 @@ export function extractBlock(
 
   let body = openMatch[2] !== undefined ? openMatch[2] + '\n' : ''
   let i = start + 1
+  const MAX_SCAN_LINES = 50 // 最大扫描行数限制（防止未闭合标签吞掉整篇文档）
   while (i < lines.length && !closeTagRegex.test(lines[i])) {
     body += lines[i] + '\n'
     i++
+    // 超过最大扫描行数，自动截断降级
+    if (i - start > MAX_SCAN_LINES) {
+      return {
+        attrs,
+        body: body.trim(),
+        next: i,
+        warning: `自定义标签未闭合，已扫描 ${MAX_SCAN_LINES} 行后自动截断，请检查闭合标签`
+      }
+    }
   }
   // 未找到闭合标签：不把剩余整篇文档当作 body 吃掉，回退为普通段落渲染
   if (i >= lines.length) {
@@ -163,7 +174,7 @@ const stepsRenderer: BlockRenderer = {
       .filter((l: string) => /^-\s*.+\s*\|\s*.+/.test(l.trim())).length
     const useDA02 = block.attrs.type === 'DA02' || (!block.attrs.type && stepCount > 3)
     const renderer = useDA02 ? Steps_DA02 : Steps_DA01
-    return { html: renderer.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: renderer.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -173,7 +184,7 @@ const statementRenderer: BlockRenderer = {
   render: (ctx, _line, lines, i) => {
     const block = extractBlock(lines, i, /^<statement\b([^>]*)>(.*)$/, /<\/statement>/)
     if (!block) return null
-    return { html: Statement_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Statement_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -183,7 +194,7 @@ const badgesRenderer: BlockRenderer = {
   render: (ctx, _line, lines, i) => {
     const block = extractBlock(lines, i, /^<badges\b([^>]*)>(.*)$/, /<\/badges>/)
     if (!block) return null
-    return { html: Badges_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Badges_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -199,7 +210,7 @@ const leadContainerRenderer: BlockRenderer = {
   render: (ctx, _line, lines, i) => {
     const block = extractBlock(lines, i, /^:::\s*lead\b(.*)$/, /^:::\s*$/)
     if (!block) return null
-    return { html: Lead_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Lead_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -209,7 +220,7 @@ const leadTagRenderer: BlockRenderer = {
   render: (ctx, _line, lines, i) => {
     const block = extractBlock(lines, i, /^<lead\b([^>]*)>(.*)$/, /<\/lead>/)
     if (!block) return null
-    return { html: Lead_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Lead_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -221,7 +232,7 @@ const breakingRenderer: BlockRenderer = {
       extractBlock(lines, i, /^<breaking\b([^>]*)>(.*)$/, /<\/breaking>/) ||
       extractBlock(lines, i, /^<breaking\b([^>]*)>/, /<\/breaking>/)
     if (!block) return null
-    return { html: Breaking_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Breaking_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -371,7 +382,7 @@ const caseFlowTagRenderer: BlockRenderer = {
       extractBlock(lines, i, /^<case-flow\b([^>]*)>(.*)$/, /<\/case-flow>/) ||
       extractBlock(lines, i, /^<case-flow\b([^>]*)>/, /<\/case-flow>/)
     if (!block) return null
-    return { html: CaseFlow_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: CaseFlow_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -397,7 +408,7 @@ const timelineRenderer: BlockRenderer = {
       extractBlock(lines, i, /^<timeline\b([^>]*)>(.*)$/, /<\/timeline>/) ||
       extractBlock(lines, i, /^<timeline\b([^>]*)>/, /<\/timeline>/)
     if (!block) return null
-    return { html: Timeline_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Timeline_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 
@@ -407,7 +418,7 @@ const sliderRenderer: BlockRenderer = {
   render: (ctx, _line, lines, i) => {
     const block = extractBlock(lines, i, /^<slider\b([^>]*)>(.*)$/, /<\/slider>/)
     if (!block) return null
-    return { html: Slider_DA01.render(block.attrs, block.body, ctx.t), next: block.next }
+    return { html: Slider_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
   },
 }
 

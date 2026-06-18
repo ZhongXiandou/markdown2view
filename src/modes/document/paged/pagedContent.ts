@@ -65,6 +65,7 @@ export function buildPagedContentHtml(
   colors: ThemeColors,
   settings: PagedContentSettings,
   mermaidMap?: MermaidMap,
+  onWarning?: (warning: string) => void,
 ): string {
   const firstHeadingId = blocks.find((b) => b.kind === 'heading')?.id
 
@@ -73,7 +74,7 @@ export function buildPagedContentHtml(
   const hasCover = firstPagebreak !== -1 && isCoverBlocks(coverBlocks)
 
   const renderBlock = (block: DocumentBlock): string => {
-    let inner = parseMarkdown(block.markdown, colors, undefined, mermaidMap)
+    let inner = parseMarkdown(block.markdown, colors, undefined, mermaidMap, onWarning)
     if (block.kind === 'table') inner = normalizeTableHtml(inner)
 
     const classes = ['document-block']
