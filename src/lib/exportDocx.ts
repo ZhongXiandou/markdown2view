@@ -9,6 +9,7 @@ import { parseTableMarkdown } from '@/engine/utils/markdownParser'
 import { downloadBlob } from './exportImage'
 import { ensureMathJax } from '@engine/utils/mathRenderer'
 import { ensureMermaid } from '@engine/utils/mermaidRenderer'
+import { fetchImageBuffer, FetchSecurityError, FetchTimeoutError } from './fetchSafe'
 
 // docx 库动态导入（避免影响首屏加载体积）
 let docxModule: typeof import('docx') | null = null
@@ -622,10 +623,18 @@ function convertTable(
 // 图片嵌入
 // ================================================================
 
-async function fetchImage(url: string): Promise<ArrayBuffer> {
-  const resp = await fetch(url, { mode: 'cors' })
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-  return resp.arrayBuffer()
+/** 友好的错误提示 */
+function formatImageError(url: string, err: unknown): string {
+  if (err instanceof FetchSecurityError) {
+    return `图片 URL 不安全，仅支持 http/https: ${url}`
+  }
+  if (err instanceof FetchTimeoutError) {
+    return `获取图片超时: ${url}`
+  }
+  if (err instanceof Error) {
+    return `获取图片失败: ${err.message}`
+  }
+  return `获取图片失败: ${url}`
 }
 
 /** image → docx Paragraph */
@@ -642,7 +651,7 @@ async function convertImage(
   const contentWidthPx = settings.pageWidth - settings.marginLeft - settings.marginRight
 
   try {
-    const data = await fetchImage(src)
+    const data = await fetchImageBuffer(src)
 
     // 通过 createImageBitmap 获取原始尺寸
     const blob = new Blob([data])
@@ -660,7 +669,9 @@ async function convertImage(
       spacing: { before: 120, after: 120 },
       children: [new ImageRun({ data, transformation: { width: w, height: h } } as any)],
     })
-  } catch {
+  } catch (err) {
+    // 生产环境可替换为 Sentry 等埋点
+    console.error(formatImageError(src, err))
     return new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 120, after: 120 },
