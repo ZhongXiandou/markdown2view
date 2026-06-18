@@ -97,7 +97,7 @@ export function useHtmlExports(
       return
     }
 
-    runExport(async () => {
+    runExport(async ({ signal }) => {
       await withScaleReset(doc, async () => {
         const title = htmlTitle || 'html'
         if (pages.length > 0) {
@@ -105,11 +105,12 @@ export function useHtmlExports(
           await exportIframeToPdf(
             iframe,
             pages.map(p => p.node),
-            `${title}.pdf`
+            `${title}.pdf`,
+            { signal }
           )
         } else {
           const { exportSinglePageToPdf } = await import('@/lib/exportPdf')
-          await exportSinglePageToPdf(iframe, `${title}.pdf`)
+          await exportSinglePageToPdf(iframe, `${title}.pdf`, { signal })
         }
       })
       return 'PDF 导出成功'

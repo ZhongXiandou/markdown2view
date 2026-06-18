@@ -596,14 +596,13 @@ function convertTable(
   markdown: string,
   settings: DocumentSettings,
 ): InstanceType<typeof import('docx').Table> | null {
-  const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle, TableLayoutType, VerticalAlign } = docxModule!
+  const { Table, TableRow, TableCell, Paragraph, WidthType, BorderStyle, TableLayoutType, VerticalAlign } = docxModule!
   const tableData = parseTableMarkdown(markdown)
   if (!tableData) return null
 
   const font = getFont(settings.fontFamily)
   const bodySize = getSizes(settings.fontScale).body
   const colCount = tableData.headers.length
-  const contentWidthPx = settings.pageWidth - settings.marginLeft - settings.marginRight
   const colWidthPct = Math.floor(100 / colCount)
 
   const border = { style: BorderStyle.SINGLE, size: 1, color: '9CA3AF' }
@@ -801,7 +800,7 @@ function buildHeader(
   right: string,
   contentWidthTwip: number,
 ): InstanceType<typeof import('docx').Header> {
-  const { Header, Paragraph, TextRun, TabStopType, AlignmentType } = docxModule!
+  const { Header, Paragraph, TextRun, TabStopType } = docxModule!
   const parts: InstanceType<typeof TextRun>[] = []
 
   if (left) parts.push(new TextRun({ text: left, size: 18, color: '64748B' }))

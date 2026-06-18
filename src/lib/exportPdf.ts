@@ -6,6 +6,16 @@
 
 import { resolveBackground, captureElementInIframeToBlob } from './exportImage'
 
+export interface PdfExportOptions {
+  /** 用于中断导出；取消时 finally 仍会恢复页面原始 display 样式 */
+  signal?: AbortSignal
+  onProgress?: (current: number, total: number) => void
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  signal?.throwIfAborted?.()
+}
+
 /**
  * 基于 iframe 截图的 PDF 导出。
  * 
@@ -22,9 +32,11 @@ export async function exportIframeToPdf(
   iframe: HTMLIFrameElement,
   pageNodes: HTMLElement[],
   filename: string,
-  onProgress?: (current: number, total: number) => void
+  options: PdfExportOptions = {},
 ) {
+  const { signal, onProgress } = options
   const { jsPDF } = await import('jspdf')
+  throwIfAborted(signal)
 
   const doc = iframe.contentDocument
   if (!doc) throw new Error('iframe 尚未就绪')
@@ -36,6 +48,7 @@ export async function exportIframeToPdf(
 
   try {
     for (let i = 0; i < pageNodes.length; i++) {
+      throwIfAborted(signal)
       if (onProgress) onProgress(i + 1, pageNodes.length)
 
       // 只显示当前页，隐藏其他页
@@ -44,7 +57,14 @@ export async function exportIframeToPdf(
       })
 
       // 等待一帧让布局生效
-      await new Promise(r => requestAnimationFrame(r))
+      await new Promise<void>((resolve, reject) => {
+        const id = requestAnimationFrame(() => resolve())
+        signal?.addEventListener('abort', () => {
+          cancelAnimationFrame(id)
+          reject(new Error(signal.reason?.toString?.() || '导出已取消'))
+        }, { once: true })
+      })
+      throwIfAborted(signal)
 
       // 提取背景色，因为如果背景色写在 body 上，单独截图 pageNode 会变成透明/白色
       const bgColor = resolveBackground(doc, iframe.contentWindow!)
@@ -56,11 +76,13 @@ export async function exportIframeToPdf(
         type: 'image/jpeg',
         backgroundColor: bgColor
       })
+      throwIfAborted(signal)
       const w = width
       const h = height
 
       // 将 Blob 转为 data URL
       const dataUrl = await blobToDataUrl(blob)
+      throwIfAborted(signal)
 
       if (!pdf) {
         pdf = new jsPDF({
@@ -76,12 +98,13 @@ export async function exportIframeToPdf(
       pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h)
     }
   } finally {
-    // 恢复所有页面的原始 display 状态
+    // 恢复所有页面的原始 display 状态（即使取消/报错也要恢复）
     pageNodes.forEach((n, i) => {
       n.style.display = originalStyles[i]
     })
   }
 
+  throwIfAborted(signal)
   if (pdf) {
     pdf.save(filename)
   }
@@ -90,9 +113,13 @@ export async function exportIframeToPdf(
 /** 将 iframe 中的单页内容导出为 PDF */
 export async function exportSinglePageToPdf(
   iframe: HTMLIFrameElement,
-  filename: string
+  filename: string,
+  options: PdfExportOptions = {},
 ) {
+  const { signal } = options
   const { jsPDF } = await import('jspdf')
+  throwIfAborted(signal)
+
   const doc = iframe.contentDocument!
 
   // 单页模式：尝试找到内部第一层包裹器，如果没有就用 body
@@ -108,10 +135,12 @@ export async function exportSinglePageToPdf(
     type: 'image/jpeg',
     backgroundColor: bgColor
   })
+  throwIfAborted(signal)
   const w = width
   const h = height
 
   const dataUrl = await blobToDataUrl(blob)
+  throwIfAborted(signal)
 
   const pdf = new jsPDF({
     orientation: w > h ? 'landscape' : 'portrait',
@@ -129,15 +158,17 @@ export async function exportSinglePageToPdf(
 export async function exportElementsToPdf(
   elements: HTMLElement[],
   filename: string,
-  opts?: { width: number; height: number },
-  onProgress?: (current: number, total: number) => void
+  opts?: { width: number; height: number; signal?: AbortSignal; onProgress?: (current: number, total: number) => void },
 ) {
   const { jsPDF } = await import('jspdf')
   const { domToJpeg } = await import('modern-screenshot')
+  const signal = opts?.signal
+  const onProgress = opts?.onProgress
 
   let pdf: InstanceType<typeof jsPDF> | null = null
 
   for (let i = 0; i < elements.length; i++) {
+    throwIfAborted(signal)
     if (onProgress) onProgress(i + 1, elements.length)
     
     const el = elements[i]
@@ -156,6 +187,7 @@ export async function exportElementsToPdf(
         scale: 3,
         backgroundColor: '#ffffff',
       })
+      throwIfAborted(signal)
 
       if (!pdf) {
         pdf = new jsPDF({
@@ -176,6 +208,7 @@ export async function exportElementsToPdf(
     }
   }
   
+  throwIfAborted(signal)
   if (pdf) {
     pdf.save(filename)
   }
