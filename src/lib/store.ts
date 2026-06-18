@@ -77,6 +77,24 @@ const DEFAULT_IMAGE_HOST_CONFIG: ImageHostConfig = {
   activeType: 'local',
 }
 
+/**
+ * 移除图床配置中的敏感字段（AK/SK/token），仅保留目的地与非敏感配置（region/bucket）。
+ * 用于持久化：密钥默认不落盘，仅存在于当前会话内存中；如需长期记忆，由用户主动通过
+ * 加密保险箱（secureVault）以口令加密保存。
+ */
+export function stripImageHostSecrets(config: ImageHostConfig): ImageHostConfig {
+  return {
+    activeType: config.activeType,
+    smms: config.smms ? { token: '' } : undefined,
+    oss: config.oss
+      ? { region: config.oss.region, bucket: config.oss.bucket, accessKeyId: '', accessKeySecret: '' }
+      : undefined,
+    cos: config.cos
+      ? { Bucket: config.cos.Bucket, Region: config.cos.Region, SecretId: '', SecretKey: '' }
+      : undefined,
+  }
+}
+
 interface AppState {
   articleMarkdown: string
   documentMarkdown: string
@@ -333,7 +351,9 @@ export const useStore = create<AppState>()(
         accent: state.accent,
         accentDark: state.accentDark,
         // colors 是 accent/accentDark 的派生值，不持久化，避免老用户拿到旧值
-        imageHostConfig: state.imageHostConfig,
+        // 图床密钥默认不落盘：仅持久化目的地与 region/bucket 等非敏感字段，
+        // 敏感的 AK/SK/token 仅存在于内存中，如需长期记忆由用户通过加密保险箱保存。
+        imageHostConfig: stripImageHostSecrets(state.imageHostConfig),
         demoVersion: state.demoVersion,
         articleDirty: state.articleDirty,
         documentDirty: state.documentDirty,

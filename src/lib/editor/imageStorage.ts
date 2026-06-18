@@ -1,4 +1,5 @@
 import type { ImageHostConfig } from '@/lib/store'
+import { hasVault } from '@/lib/secureVault'
 
 const DB_NAME = 'm2v-images-db'
 const STORE_NAME = 'images'
@@ -298,6 +299,16 @@ function generateImageFilename(file: File): string {
 }
 
 /**
+ * 生成「密钥缺失」错误信息：若本地存在加密保险箱，提示用户去设置中解锁；否则提示去配置。
+ * 密钥默认不落盘后，刷新页面会清空内存中的 AK/SK/token，需要重新解锁或填写。
+ */
+function missingSecretMessage(name: string): string {
+  return hasVault()
+    ? `${name}已加密保存，请先在「设置」中输入口令解锁后再上传`
+    : `请先在「设置」中配置${name}`
+}
+
+/**
  * 压缩图片并按图床配置上传，返回可用于 Markdown 的 URL 字符串。
  * 供 CodeEditor（粘贴/拖拽）和 EditorToolbar（手动选择）共用。
  */
@@ -306,15 +317,23 @@ export async function uploadImageFile(
   config: ImageHostConfig,
 ): Promise<string> {
   const compressed = await compressImage(file)
+  const asUploadFile = (blob: Blob) => new File([blob], file.name, { type: blob.type })
 
-  if (config.activeType === 'smms' && config.smms?.token) {
-    return uploadToSmMs(new File([compressed], file.name, { type: compressed.type }), config.smms.token)
+  if (config.activeType === 'smms') {
+    if (!config.smms?.token) throw new Error(missingSecretMessage('Sm.ms Token'))
+    return uploadToSmMs(asUploadFile(compressed), config.smms.token)
   }
-  if (config.activeType === 'oss' && config.oss) {
-    return uploadToOss(new File([compressed], file.name, { type: compressed.type }), config.oss)
+  if (config.activeType === 'oss') {
+    if (!config.oss?.accessKeyId || !config.oss?.accessKeySecret) {
+      throw new Error(missingSecretMessage('OSS 密钥'))
+    }
+    return uploadToOss(asUploadFile(compressed), config.oss)
   }
-  if (config.activeType === 'cos' && config.cos) {
-    return uploadToCos(new File([compressed], file.name, { type: compressed.type }), config.cos)
+  if (config.activeType === 'cos') {
+    if (!config.cos?.SecretId || !config.cos?.SecretKey) {
+      throw new Error(missingSecretMessage('COS 密钥'))
+    }
+    return uploadToCos(asUploadFile(compressed), config.cos)
   }
 
   // 默认本地 IndexedDB

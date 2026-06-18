@@ -2,56 +2,130 @@ import { useState, useEffect } from 'react'
 import { useStore, type ImageHostType, type ImageHostConfig } from '@/lib/store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { HardDrive, Cloud, Package, AlertTriangle } from '@/components/ui/Icon'
+import { HardDrive, Cloud, Package, AlertTriangle, Shield } from '@/components/ui/Icon'
+import {
+  hasVault,
+  isCryptoAvailable,
+  encryptToVault,
+  decryptFromVault,
+  clearVault,
+} from '@/lib/secureVault'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
+type HostForm = {
+  activeType: ImageHostType
+  smmsToken: string
+  ossRegion: string
+  ossKeyId: string
+  ossKeySecret: string
+  ossBucket: string
+  cosSecretId: string
+  cosSecretKey: string
+  cosBucket: string
+  cosRegion: string
+}
+
+/** 从图床配置构造表单初始值 */
+function buildForm(c: ImageHostConfig): HostForm {
+  return {
+    activeType: c.activeType,
+    smmsToken: c.smms?.token || '',
+    ossRegion: c.oss?.region || '',
+    ossKeyId: c.oss?.accessKeyId || '',
+    ossKeySecret: c.oss?.accessKeySecret || '',
+    ossBucket: c.oss?.bucket || '',
+    cosSecretId: c.cos?.SecretId || '',
+    cosSecretKey: c.cos?.SecretKey || '',
+    cosBucket: c.cos?.Bucket || '',
+    cosRegion: c.cos?.Region || '',
+  }
+}
+
+/** 当前内存配置中是否已含任意敏感密钥（用于判断是否需要解锁） */
+function configHasSecret(c: ImageHostConfig): boolean {
+  return Boolean(
+    c.smms?.token || c.oss?.accessKeyId || c.oss?.accessKeySecret || c.cos?.SecretId || c.cos?.SecretKey,
+  )
+}
+
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const imageHostConfig = useStore((s) => s.imageHostConfig)
   const setImageHostConfig = useStore((s) => s.setImageHostConfig)
 
+  const cryptoOk = isCryptoAvailable()
+
   // 临时状态，用户点击保存时才写入 store
-  const [form, setForm] = useState({
-    activeType: imageHostConfig.activeType,
-    smmsToken: imageHostConfig.smms?.token || '',
-    ossRegion: imageHostConfig.oss?.region || '',
-    ossKeyId: imageHostConfig.oss?.accessKeyId || '',
-    ossKeySecret: imageHostConfig.oss?.accessKeySecret || '',
-    ossBucket: imageHostConfig.oss?.bucket || '',
-    cosSecretId: imageHostConfig.cos?.SecretId || '',
-    cosSecretKey: imageHostConfig.cos?.SecretKey || '',
-    cosBucket: imageHostConfig.cos?.Bucket || '',
-    cosRegion: imageHostConfig.cos?.Region || '',
-  })
+  const [form, setForm] = useState<HostForm>(() => buildForm(imageHostConfig))
+  // 加密保险箱相关状态
+  const [vaultExists, setVaultExists] = useState(false)
+  const [remember, setRemember] = useState(false)
+  const [passphrase, setPassphrase] = useState('')
+  const [saveError, setSaveError] = useState('')
+  // 解锁相关状态
+  const [unlockPass, setUnlockPass] = useState('')
+  const [unlocking, setUnlocking] = useState(false)
+  const [unlockError, setUnlockError] = useState('')
 
   // 每次打开弹窗时，从 store 重新初始化表单，避免「取消后重开看到上次未保存的脏值」。
   // 组件常驻挂载（hooks 之后才 return null），故必须在 isOpen 切换时重置。
+  // 解锁成功后 imageHostConfig 变化也会触发此处，从而把解密出的密钥自动回填表单。
   useEffect(() => {
     if (!isOpen) return
-    setForm({
-      activeType: imageHostConfig.activeType,
-      smmsToken: imageHostConfig.smms?.token || '',
-      ossRegion: imageHostConfig.oss?.region || '',
-      ossKeyId: imageHostConfig.oss?.accessKeyId || '',
-      ossKeySecret: imageHostConfig.oss?.accessKeySecret || '',
-      ossBucket: imageHostConfig.oss?.bucket || '',
-      cosSecretId: imageHostConfig.cos?.SecretId || '',
-      cosSecretKey: imageHostConfig.cos?.SecretKey || '',
-      cosBucket: imageHostConfig.cos?.Bucket || '',
-      cosRegion: imageHostConfig.cos?.Region || '',
-    })
+    setForm(buildForm(imageHostConfig))
+    const exists = hasVault()
+    setVaultExists(exists)
+    setRemember(exists) // 已有保险箱时默认保持「记住密钥」勾选
+    setPassphrase('')
+    setUnlockPass('')
+    setUnlockError('')
+    setSaveError('')
   }, [isOpen, imageHostConfig])
 
   if (!isOpen) return null
 
-  const updateFormField = <K extends keyof typeof form>(key: K, value: typeof form[K]) => {
+  // 本地存在加密保险箱，但当前内存中尚无密钥 → 需要解锁
+  const needsUnlock = vaultExists && !configHasSecret(imageHostConfig)
+
+  const updateFormField = <K extends keyof HostForm>(key: K, value: HostForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleSave = () => {
+  // 用口令解锁保险箱，将密钥合并回内存配置（保留现有 region/bucket）
+  const handleUnlock = async () => {
+    setUnlockError('')
+    setUnlocking(true)
+    try {
+      const secrets = await decryptFromVault(unlockPass)
+      setImageHostConfig({
+        smms: { token: secrets.smms?.token || '' },
+        oss: {
+          region: imageHostConfig.oss?.region || '',
+          bucket: imageHostConfig.oss?.bucket || '',
+          accessKeyId: secrets.oss?.accessKeyId || '',
+          accessKeySecret: secrets.oss?.accessKeySecret || '',
+        },
+        cos: {
+          Bucket: imageHostConfig.cos?.Bucket || '',
+          Region: imageHostConfig.cos?.Region || '',
+          SecretId: secrets.cos?.SecretId || '',
+          SecretKey: secrets.cos?.SecretKey || '',
+        },
+      })
+      setUnlockPass('')
+      // 表单会因 imageHostConfig 变化经由上面的 useEffect 自动重填
+    } catch {
+      setUnlockError('口令错误或数据已损坏，请重试')
+    } finally {
+      setUnlocking(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaveError('')
     const patch: Partial<ImageHostConfig> = {
       activeType: form.activeType,
       smms: { token: form.smmsToken },
@@ -69,6 +143,33 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       },
     }
     setImageHostConfig(patch)
+
+    if (remember && cryptoOk) {
+      if (passphrase) {
+        // 用新口令加密保存（覆盖旧保险箱）
+        try {
+          await encryptToVault(
+            {
+              smms: { token: form.smmsToken },
+              oss: { accessKeyId: form.ossKeyId, accessKeySecret: form.ossKeySecret },
+              cos: { SecretId: form.cosSecretId, SecretKey: form.cosSecretKey },
+            },
+            passphrase,
+          )
+        } catch (e) {
+          setSaveError(`加密保存失败：${e instanceof Error ? e.message : '未知错误'}`)
+          return // 不关闭，让用户重试
+        }
+      } else if (!vaultExists) {
+        // 想记住但既没填口令、也没有现成保险箱
+        setSaveError('请输入用于加密的口令，或取消勾选「记住密钥」')
+        return
+      }
+      // remember && 口令留空 && 已有保险箱：沿用现有保险箱，不重新加密
+    } else {
+      // 未勾选「记住密钥」（或环境不支持加密）：清除任何已存在的保险箱
+      clearVault()
+    }
     onClose()
   }
 
@@ -118,6 +219,33 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               ))}
             </div>
           </div>
+
+          {/* 解锁横幅：本地已加密保存密钥但当前会话尚未解锁时显示 */}
+          {needsUnlock && form.activeType !== 'local' && (
+            <div className="rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-3 flex flex-col gap-2">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-700">
+                <Shield size={15} className="text-[var(--accent)]" />
+                已加密保存图床密钥，请输入口令解锁
+              </div>
+              <p className="text-[12px] text-slate-500">输入口令解锁后即可使用，无需重新填写密钥。</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="password"
+                  placeholder="输入解锁口令"
+                  value={unlockPass}
+                  onChange={(e) => setUnlockPass(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && unlockPass && !unlocking) handleUnlock()
+                  }}
+                  className="flex-1"
+                />
+                <Button variant="primary" onClick={handleUnlock} disabled={unlocking || !unlockPass}>
+                  {unlocking ? '解锁中…' : '解锁'}
+                </Button>
+              </div>
+              {unlockError && <p className="text-[12px] text-red-500">{unlockError}</p>}
+            </div>
+          )}
 
           <div className="min-h-[160px] rounded-lg bg-slate-50 p-4 border border-slate-100">
             {form.activeType === 'local' && (
@@ -201,11 +329,42 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
           </div>
 
+          {/* 记住密钥（加密保存）：仅在云图床且环境支持 Web Crypto 时可用 */}
+          {form.activeType !== 'local' && cryptoOk && (
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex flex-col gap-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-[var(--accent)]"
+                />
+                <span className="text-[13px] font-medium text-slate-700 inline-flex items-center gap-1.5">
+                  <Shield size={14} className="text-[var(--accent)]" /> 记住密钥（用口令加密保存到本地）
+                </span>
+              </label>
+              {remember && (
+                <div className="flex flex-col gap-1">
+                  <Input
+                    type="password"
+                    placeholder={vaultExists ? '留空沿用旧口令，填写则重新加密' : '设置加密口令'}
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className="w-full"
+                  />
+                  <p className="text-[11px] text-slate-400">口令仅用于本地加密，不上传；遗忘需重新填写密钥。</p>
+                </div>
+              )}
+              {saveError && <p className="text-[12px] text-red-500">{saveError}</p>}
+            </div>
+          )}
+
           {form.activeType !== 'local' && (
             <div className="text-[11px] leading-relaxed text-amber-600 bg-amber-50 rounded-lg p-3 border border-amber-100 flex items-start gap-1.5">
               <span className="shrink-0 mt-0.5"><AlertTriangle size={14} className="text-amber-600" /></span>
               <span>
-                <strong>安全提示</strong>：由于本应用为纯前端无后端运行，所有图床 API 密钥或密钥对（AccessKey/SecretKey）均以<strong>明文形式</strong>直接保存在您本地浏览器的 LocalStorage 中。请务必保护好您的设备，切勿在不受信任的公共计算机上配置生产环境密钥。
+                <strong>安全提示</strong>：本应用纯前端无后端。<strong>默认密钥仅存当前会话内存</strong>，刷新即清除。勾选「记住密钥」后会用口令加密保存在本地。请勿在公共计算机上配置生产环境密钥。
+                {!cryptoOk && <><br />当前为非安全上下文（非 HTTPS），无法加密保存。</>}
               </span>
             </div>
           )}
