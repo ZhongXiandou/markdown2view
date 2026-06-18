@@ -41,6 +41,11 @@ function loadMathJax(): Promise<void> {
             resolve()
           }
         }, 50)
+        // 超时保护：10秒后如果 adaptor 仍未就绪，清除轮询并 reject
+        setTimeout(() => {
+          clearInterval(check)
+          reject(new Error('MathJax initialization timeout'))
+        }, 10000)
       })
       .catch((e) => {
         mathJaxReady = null
