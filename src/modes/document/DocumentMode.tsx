@@ -104,7 +104,7 @@ export function DocumentMode({
     }
   }, [contentMarkdown, settings.pageWidth, settings.marginLeft, settings.marginRight])
 
-  // Paged.js 内容 HTML（段落/表格跨页由引擎完成；随内容与排版设置变化）
+  // Paged.js 内容 HTML（段落/表格跨页由引擎完成；随内容与字体排版设置变化）
   const contentHtml = useMemo(
     () =>
       buildPagedContentHtml(blocks, colors, {
@@ -113,14 +113,30 @@ export function DocumentMode({
         centerTitle: settings.centerTitle,
         indentParagraph: settings.indentParagraph,
       }, mermaidMap, onToast),
-    [blocks, colors, settings.fontFamily, settings.fontScale, settings.centerTitle, settings.indentParagraph, mermaidMap, onToast],
+    [blocks, colors, settings.fontFamily, settings.fontScale, settings.centerTitle, settings.indentParagraph, mermaidMap],
   )
 
   // @page 分页样式（随页面/页边距/页眉页脚/页码设置变化）
-  const pageCss = useMemo(() => buildPageCss(settings, rendered.meta.title), [settings, rendered.meta.title])
+  // 注意：只依赖页面相关设置，避免字体微调触发整篇重排
+  const pageCss = useMemo(
+    () => buildPageCss(settings, rendered.meta.title),
+    [settings.pageWidth, settings.pageHeight, settings.marginTop, settings.marginRight, settings.marginBottom, settings.marginLeft, settings.headerLeft, settings.headerRight, settings.footerText, rendered.meta.title],
+  )
 
   // 屏幕预览缩放：把 A4 页宽适配到预览面板
   const fitScale = containerWidth > 0 ? Math.min(1, (containerWidth - 48) / settings.pageWidth) : 1
+
+  // 自适应防抖：根据文档长度调整延迟（长文档延迟更大，减少重排频率）
+  const adaptiveDebounceMs = useMemo(() => {
+    const blockCount = blocks.length
+    const markdownLength = contentMarkdown.length
+    // 短文档（<10 blocks 或 <2000 字符）：350ms
+    // 中等文档（10-50 blocks 或 2000-10000 字符）：600ms
+    // 长文档（>50 blocks 或 >10000 字符）：1000ms
+    if (blockCount < 10 && markdownLength < 2000) return 350
+    if (blockCount < 50 && markdownLength < 10000) return 600
+    return 1000
+  }, [blocks.length, contentMarkdown.length])
 
   const { status, pageCount, print } = usePagedPreview({
     iframeRef,
@@ -128,6 +144,7 @@ export function DocumentMode({
     pageCss,
     title: filename.replace(/\.pdf$/, ''),
     fitScale,
+    debounceMs: adaptiveDebounceMs,
     availableHeight: settings.pageHeight - settings.marginTop - settings.marginBottom,
   })
 

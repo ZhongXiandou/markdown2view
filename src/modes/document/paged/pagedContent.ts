@@ -85,21 +85,21 @@ export function buildPagedContentHtml(
     return `<section class="${classes.join(' ')}" data-kind="${block.kind}">${inner}</section>`
   }
 
-  let body = ''
+  const bodyParts: string[] = []
   let startIndex = 0
 
   if (hasCover) {
-    body += `<section class="document-cover">${coverBlocks.map(renderBlock).join('')}</section>`
+    bodyParts.push(`<section class="document-cover">${coverBlocks.map(renderBlock).join('')}</section>`)
     startIndex = firstPagebreak + 1 // 跳过封面块与其后的第一个 pagebreak（由封面 break-after 承担）
   }
 
   for (let i = startIndex; i < blocks.length; i++) {
     const block = blocks[i]
     if (block.kind === 'pagebreak') {
-      body += '<div class="document-pagebreak"></div>'
+      bodyParts.push('<div class="document-pagebreak"></div>')
       continue
     }
-    body += renderBlock(block)
+    bodyParts.push(renderBlock(block))
   }
 
   const rootClasses = [
@@ -115,5 +115,5 @@ export function buildPagedContentHtml(
     `--document-title-margin:${DOCUMENT_TITLE_MARGIN}`,
   ].join(';')
 
-  return `<div class="${rootClasses.join(' ')}" style="${rootStyle}">${body}</div>`
+  return `<div class="${rootClasses.join(' ')}" style="${rootStyle}">${bodyParts.join('')}</div>`
 }
