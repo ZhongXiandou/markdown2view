@@ -64,10 +64,7 @@
 
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild",
-      "core-js",
-      "cos-js-sdk-v5",
-      "es5-ext"
+      "esbuild"
     ]
   }
 }
