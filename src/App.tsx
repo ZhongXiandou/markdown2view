@@ -83,6 +83,7 @@ export default function App() {
   const syncDemoContent = useStore((s) => s.syncDemoContent);
   const restoreDemo = useStore((s) => s.restoreDemo);
   const triggerGuide = useStore((s) => s.triggerGuide);
+  const hasHydrated = useStore((s) => s.hasHydrated);
 
   // 图床设置弹窗状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -108,10 +109,11 @@ export default function App() {
     }
   }, [headerWidth]);
 
-  // 挂载时按版本号同步示例：仅当 DEMO_VERSION 变化时，刷新用户未编辑过的字段为最新示例。
+  // 持久化恢复完成后，按版本号同步示例：仅当 DEMO_VERSION 变化时，刷新用户未编辑过的字段为最新示例。
   useEffect(() => {
+    if (!hasHydrated) return;
     syncDemoContent(DEMOS);
-  }, [syncDemoContent]);
+  }, [hasHydrated, syncDemoContent]);
 
   const handleRestoreDemo = useCallback(() => {
     if (
@@ -146,7 +148,8 @@ export default function App() {
       />
 
       {/* 主体：按模式渲染 */}
-      <ErrorBoundary fallback={<ModeErrorFallback />}>
+      {/* key={mode} 保证切换模式时错误状态自动重置 */}
+      <ErrorBoundary key={mode} fallback={<ModeErrorFallback />}>
         <Suspense fallback={<ModeLoading />}>
           {mode === "article" && (
             <ArticleMode
