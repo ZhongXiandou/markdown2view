@@ -6,10 +6,14 @@ export interface MarkdownRenderResult {
   meta: ContentMeta
 }
 
-export function renderMarkdown(markdown: string, colors: ThemeColors): MarkdownRenderResult {
+export function renderMarkdown(
+  markdown: string,
+  colors: ThemeColors,
+  mermaidMap?: Map<string, { svg: string; error?: string }>
+): MarkdownRenderResult {
   const meta = extractContentMeta(markdown)
   return {
     meta,
-    html: parseMarkdown(meta.contentMarkdown, colors),
+    html: parseMarkdown(meta.contentMarkdown, colors, undefined, mermaidMap),
   }
 }

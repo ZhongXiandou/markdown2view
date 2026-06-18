@@ -124,6 +124,13 @@ export default function App() {
     }
   }, [mode, restoreDemo, showToast]);
 
+  // 监听子组件打开设置弹窗的请求（如 Mermaid 图床提醒弹窗的「配置图床」按钮）
+  useEffect(() => {
+    const handler = () => setIsSettingsOpen(true)
+    window.addEventListener('m2v-open-settings', handler)
+    return () => window.removeEventListener('m2v-open-settings', handler)
+  }, []);
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <AppHeader

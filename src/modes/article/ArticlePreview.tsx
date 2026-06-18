@@ -10,6 +10,8 @@ import { useStore } from '@/lib/store'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { getFontFamilyCss } from '@/lib/fonts'
 import { Sparkles, Download, Clipboard, ImageIcon, Rocket } from '@/components/ui/Icon'
+import { MermaidImageHostDialog } from '@/components/ui/MermaidImageHostDialog'
+import { collectMermaidDiagrams } from '@engine'
 
 /** 长图文模式固定使用黑体系统字体栈，确保复制到微信公众号时字体一致 */
 const ARTICLE_FONT = getFontFamilyCss('heiti')
@@ -29,6 +31,62 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
   const { html, meta } = rendered
   const imageHostConfig = useStore((s) => s.imageHostConfig)
 
+  const [showMermaidDialog, setShowMermaidDialog] = useState(false)
+  const [pendingCopyType, setPendingCopyType] = useState<'richText' | 'htmlSource' | null>(null)
+
+  const hasMermaid = html.includes('m2v-mermaid-figure')
+
+  const checkAndCopy = (copyType: 'richText' | 'htmlSource') => {
+    if (hasMermaid && imageHostConfig.activeType === 'local') {
+      setPendingCopyType(copyType)
+      setShowMermaidDialog(true)
+      return
+    }
+    executeCopy(copyType)
+  }
+
+  const executeCopy = async (copyType: 'richText' | 'htmlSource') => {
+    if (!contentRef.current) return
+    if (copyType === 'richText') {
+      const ok = await copyRichText(contentRef.current, ARTICLE_FONT, imageHostConfig)
+      onToast(ok ? '已复制富文本，可粘贴到长图文编辑器' : '复制失败，请重试')
+    } else {
+      const ok = await copyHtmlSource(contentRef.current, imageHostConfig)
+      onToast(ok ? '已复制 HTML 源码（全内联样式）' : '复制失败，请重试')
+    }
+  }
+
+  const handleDowngradeMermaid = async () => {
+    if (!contentRef.current) return
+    const clone = contentRef.current.cloneNode(true) as HTMLElement
+    const diagrams = collectMermaidDiagrams(markdown)
+    const figures = clone.querySelectorAll<HTMLElement>('.m2v-mermaid-figure')
+    figures.forEach((fig, index) => {
+      if (index >= diagrams.length) return
+      const pre = document.createElement('pre')
+      const codeEl = document.createElement('code')
+      codeEl.className = 'language-mermaid'
+      codeEl.textContent = diagrams[index].source
+      pre.appendChild(codeEl)
+      fig.parentNode?.replaceChild(pre, fig)
+    })
+    if (pendingCopyType === 'richText') {
+      const ok = await copyRichText(clone, ARTICLE_FONT)
+      onToast(ok ? '已复制富文本（mermaid 已降级为代码块）' : '复制失败，请重试')
+    } else if (pendingCopyType === 'htmlSource') {
+      const ok = await copyHtmlSource(clone)
+      onToast(ok ? '已复制 HTML 源码（mermaid 已降级为代码块）' : '复制失败，请重试')
+    }
+    setShowMermaidDialog(false)
+    setPendingCopyType(null)
+  }
+
+  const handleConfigureImageHost = () => {
+    setShowMermaidDialog(false)
+    setPendingCopyType(null)
+    window.dispatchEvent(new CustomEvent('m2v-open-settings'))
+  }
+
   const hasLocalImages = html.includes('blob:') || html.includes('img://') || meta.contentMarkdown.includes('img://')
 
   const handleCopyTitle = async () => {
@@ -46,16 +104,12 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
     onToast(ok ? '已复制长图文 AI 排版指令，可发给 AI 使用' : '复制失败，请重试')
   }
 
-  const handleCopyHtml = async () => {
-    if (!contentRef.current) return
-    const ok = await copyHtmlSource(contentRef.current)
-    onToast(ok ? '已复制 HTML 源码（全内联样式）' : '复制失败，请重试')
+  const handleCopyHtml = () => {
+    checkAndCopy('htmlSource')
   }
 
-  const handleCopyRichText = async () => {
-    if (!contentRef.current) return
-    const ok = await copyRichText(contentRef.current, ARTICLE_FONT)
-    onToast(ok ? '已复制富文本，可粘贴到长图文编辑器' : '复制失败，请重试')
+  const handleCopyRichText = () => {
+    checkAndCopy('richText')
   }
 
   const handleExportLongImage = async () => {
@@ -186,6 +240,17 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
           />
         </div>
       </div>
+
+      {/* Mermaid 图床提醒弹窗 */}
+      <MermaidImageHostDialog
+        isOpen={showMermaidDialog}
+        onClose={() => {
+          setShowMermaidDialog(false)
+          setPendingCopyType(null)
+        }}
+        onDowngrade={handleDowngradeMermaid}
+        onConfigure={handleConfigureImageHost}
+      />
     </section>
   )
 }

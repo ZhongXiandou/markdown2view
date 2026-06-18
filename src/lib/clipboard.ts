@@ -1,4 +1,6 @@
-import { getLocalImage, blobToBase64, localImageUrls } from '@/lib/editor/imageStorage'
+import { getLocalImage, blobToBase64, localImageUrls, uploadImageFile } from '@/lib/editor/imageStorage'
+import type { ImageHostConfig } from '@/lib/store'
+import { domToBlob } from 'modern-screenshot'
 
 function createHiddenTextarea(text: string): HTMLTextAreaElement {
   const ta = document.createElement('textarea')
@@ -79,9 +81,43 @@ async function compileElementImages(contentEl: HTMLElement): Promise<HTMLElement
   return clone
 }
 
+/**
+ * 将 DOM 元素中所有 mermaid SVG 图表转换为 <img> 标签。
+ * - 已配置图床：截图 → 上传图床 → 使用公网 URL（公众号兼容）
+ * - 未配置图床：保持 SVG 不动（由调用方在复制前弹窗提示用户）
+ */
+async function convertSvgsToPng(el: HTMLElement, imageHostConfig?: ImageHostConfig): Promise<HTMLElement> {
+  const figures = el.querySelectorAll<HTMLElement>('.m2v-mermaid-figure')
+  for (const fig of Array.from(figures)) {
+    const section = fig.closest('section[data-block="mermaid"]')
+    if (!section) continue
+
+    // 已配置图床：截图 → 上传 → 替换为 <img src="公网URL">
+    if (imageHostConfig && imageHostConfig.activeType !== 'local') {
+      try {
+        const blob = await domToBlob(fig, {
+          scale: 2,
+          type: 'image/png',
+          backgroundColor: '#ffffff',
+        })
+        if (!blob) continue
+        const file = new File([blob], 'mermaid.png', { type: 'image/png' })
+        const url = await uploadImageFile(file, imageHostConfig)
+        section.innerHTML = `<img src="${url}" style="max-width:100%;height:auto;display:block;margin:0 auto;">`
+      } catch (e) {
+        console.error('[m2v] 上传 mermaid 图表到图床失败:', e)
+        // 上传失败则保持 SVG 不动
+      }
+    }
+    // 未配置图床：保持 SVG 不动
+  }
+  return el
+}
+
 /** 复制富文本：保留内联样式，并在后台自动编译本地图片为 base64 */
-export async function copyRichText(contentEl: HTMLElement, fontFamily?: string): Promise<boolean> {
+export async function copyRichText(contentEl: HTMLElement, fontFamily?: string, imageHostConfig?: ImageHostConfig): Promise<boolean> {
   const compiledEl = await compileElementImages(contentEl)
+  await convertSvgsToPng(compiledEl, imageHostConfig)
   const fontCss = fontFamily ? `;font-family:${fontFamily}` : ''
   const html = `<section style="background-color:#fff;color:#333;padding:0${fontCss}">${compiledEl.innerHTML}</section>`
   const text = compiledEl.innerText
@@ -115,8 +151,9 @@ export async function copyRichText(contentEl: HTMLElement, fontFamily?: string):
 }
 
 /** 复制 HTML 源码（将图片动态替换为 base64） */
-export async function copyHtmlSource(contentEl: HTMLElement): Promise<boolean> {
+export async function copyHtmlSource(contentEl: HTMLElement, imageHostConfig?: ImageHostConfig): Promise<boolean> {
   const compiledEl = await compileElementImages(contentEl)
+  await convertSvgsToPng(compiledEl, imageHostConfig)
   const html = compiledEl.innerHTML
   try {
     await navigator.clipboard.writeText(html)

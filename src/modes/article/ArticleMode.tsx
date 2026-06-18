@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import type { ThemeColors } from '@engine'
+import { collectMermaidDiagrams, preRenderMermaid } from '@engine'
 import { CodeEditor } from '@/components/editor/CodeEditor'
 import { useScrollSync } from '@/lib/useScrollSync'
 import { renderMarkdown } from '@/lib/render/markdown'
@@ -25,11 +26,36 @@ export function ArticleMode({ markdown, setMarkdown, colors, onToast }: ArticleM
     externalVersion,
   } = useEditorDocSync(markdown, setMarkdown)
 
-  const rendered = useMemo(() => renderMarkdown(debouncedMarkdown, colors), [debouncedMarkdown, colors])
+  // mermaid 预渲染 state（需在 rendered useMemo 之前声明）
+  const [mermaidMap, setMermaidMap] = useState<Map<string, { svg: string; error?: string }> | undefined>(undefined)
+
+  const rendered = useMemo(
+    () => renderMarkdown(debouncedMarkdown, colors, mermaidMap),
+    [debouncedMarkdown, colors, mermaidMap],
+  )
   const editorScrollerRef = useRef<HTMLElement | null>(null)
   const previewScrollRef = useRef<HTMLDivElement>(null)
   const [editorReady, setEditorReady] = useState(0)
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit')
+
+  // mermaid 预渲染：collectMermaidDiagrams → preRenderMermaid → 存入 state
+  // rendered.html 依赖此 map，map 就绪后 mermaid 块才正确渲染（就绪前降级为代码块）
+  useEffect(() => {
+    const diagrams = collectMermaidDiagrams(debouncedMarkdown)
+    if (diagrams.length === 0) {
+      setMermaidMap(undefined)
+      return
+    }
+    // 长图文模式使用固定内容宽度 678px（公众号排版标准宽度）
+    const ARTICLE_CONTENT_W = 678
+    let cancelled = false
+    preRenderMermaid(diagrams, ARTICLE_CONTENT_W).then((map) => {
+      if (!cancelled) setMermaidMap(map)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedMarkdown])
 
   useScrollSync(editorScrollerRef, previewScrollRef, [editorReady])
 
