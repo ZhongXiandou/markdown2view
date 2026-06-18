@@ -148,6 +148,7 @@ feat(article): 增加长图文模式的一键去重功能
 - **手术刀修改**：只触碰必须改动的部分，不顺手重构未坏掉的代码
 - **构建体积保护**：大型 SDK 必须 `await import()` 按需加载，禁止顶部静态导入
 - **命名规范**：组件文件用 PascalCase（如 `PreviewToolbar.tsx`），工具函数用 camelCase（如 `useDebounce.ts`）
+- **指令与渲染规则同步**：本项目是「渲染规则 → AI 指令 → 用户操作 → 外部 AI」闭环。修改渲染规则（如安全黑名单、标签约束、分页容器、标志符号、外链限制、样式语义等）时，必须同步更新对应 AI 指令（`src/lib/aiGuide.ts`、`src/data/designPrompts/utils.ts` 及风格令牌），并在修改后做指令对照检查，避免外部 AI 误用标志符号、标签或样式效果。
 
 ---
 
