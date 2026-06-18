@@ -8,6 +8,7 @@ import { useStore } from '@/lib/store'
 import {
   uploadImageFile,
   preloadImagesFromMarkdown,
+  clearLocalImageUrlCache,
 } from '@/lib/editor/imageStorage'
 import { editorShortcuts } from '@/lib/editor/shortcuts'
 
@@ -74,10 +75,18 @@ export function CodeEditor({
 
   // 预加载当前文档中的本地图片
   useEffect(() => {
-    if (language === 'markdown') {
-      preloadImagesFromMarkdown(valueRef.current)
-    }
-  }, [language])
+    if (language !== 'markdown') return
+    const timer = window.setTimeout(() => {
+      preloadImagesFromMarkdown(value).catch((err) => {
+        console.error('[m2v] 预加载本地图片失败:', err)
+      })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [language, value])
+
+  useEffect(() => {
+    return () => clearLocalImageUrlCache()
+  }, [])
 
   // 将最新 value 覆盖写入编辑器文档（仅外部变更时调用）
   const applyExternalValue = (view: EditorView) => {
