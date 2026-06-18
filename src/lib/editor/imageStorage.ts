@@ -3,6 +3,12 @@ import { hasVault } from '@/lib/secureVault'
 
 const DB_NAME = 'm2v-images-db'
 const STORE_NAME = 'images'
+const MAX_LOCAL_IMAGE_URLS = 64
+const MAX_UPLOAD_IMAGE_BYTES = 10 * 1024 * 1024
+
+const SUPPORTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
+type SupportedImageMime = 'image/jpeg' | 'image/png' | 'image/webp'
 
 // 缓存数据库连接，避免每次操作都新建连接
 let dbPromise: Promise<IDBDatabase> | null = null
@@ -62,10 +68,74 @@ export async function getLocalImage(id: string): Promise<Blob | null> {
   }
 }
 
+function normalizeImageMime(type: string): SupportedImageMime | null {
+  const normalized = type.toLowerCase() === 'image/jpg' ? 'image/jpeg' : type.toLowerCase()
+  return SUPPORTED_IMAGE_MIME_TYPES.has(normalized) ? normalized as SupportedImageMime : null
+}
+
+function imageExtensionFromMime(type: string): 'jpg' | 'png' | 'webp' | null {
+  const mime = normalizeImageMime(type)
+  if (mime === 'image/jpeg') return 'jpg'
+  if (mime === 'image/png') return 'png'
+  if (mime === 'image/webp') return 'webp'
+  return null
+}
+
+async function detectImageMime(file: Blob): Promise<SupportedImageMime | null> {
+  const header = new Uint8Array(await file.slice(0, 16).arrayBuffer())
+  if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) return 'image/jpeg'
+  if (
+    header[0] === 0x89 &&
+    header[1] === 0x50 &&
+    header[2] === 0x4e &&
+    header[3] === 0x47 &&
+    header[4] === 0x0d &&
+    header[5] === 0x0a &&
+    header[6] === 0x1a &&
+    header[7] === 0x0a
+  ) return 'image/png'
+  if (
+    header[0] === 0x52 &&
+    header[1] === 0x49 &&
+    header[2] === 0x46 &&
+    header[3] === 0x46 &&
+    header[8] === 0x57 &&
+    header[9] === 0x45 &&
+    header[10] === 0x42 &&
+    header[11] === 0x50
+  ) return 'image/webp'
+  return null
+}
+
+export async function validateImageFile(file: File, maxSize = MAX_UPLOAD_IMAGE_BYTES): Promise<SupportedImageMime> {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('请选择图片文件')
+  }
+  if (file.size > maxSize) {
+    throw new Error(`图片不能超过 ${Math.round(maxSize / 1024 / 1024)}MB`)
+  }
+  const declaredMime = normalizeImageMime(file.type)
+  const detectedMime = await detectImageMime(file)
+  if (!detectedMime) {
+    throw new Error('不支持的图片格式，仅支持 JPG、PNG、WebP')
+  }
+  if (declaredMime && declaredMime !== detectedMime) {
+    throw new Error('图片文件类型与文件头不一致')
+  }
+  return detectedMime
+}
+
+export function createImageUploadFile(original: File, blob: Blob): File {
+  const ext = imageExtensionFromMime(blob.type) || imageExtensionFromMime(original.type) || 'jpg'
+  const base = original.name.replace(/\.[^.]+$/, '') || 'image'
+  return new File([blob], `${base}.${ext}`, { type: blob.type })
+}
+
 /**
- * Canvas 图片压缩，JPEG 格式，quality 默认 0.7，最大宽度 1600
+ * Canvas 图片压缩，quality 默认 0.7，最大宽度 1600
  */
-export function compressImage(file: File, maxWidth = 1600, quality = 0.7): Promise<Blob> {
+export function compressImage(file: File, maxWidth = 1600, quality = 0.7, outputType?: SupportedImageMime): Promise<Blob> {
+  const mime = outputType || normalizeImageMime(file.type) || 'image/jpeg'
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -98,8 +168,8 @@ export function compressImage(file: File, maxWidth = 1600, quality = 0.7): Promi
               reject(new Error('Canvas compression failed'))
             }
           },
-          'image/jpeg',
-          quality
+          mime,
+          mime === 'image/png' ? undefined : quality
         )
       }
       img.onerror = () => reject(new Error('Failed to load image'))
@@ -112,6 +182,42 @@ export function compressImage(file: File, maxWidth = 1600, quality = 0.7): Promi
 
 // 内存 Object URL 缓存：img://id -> blob:http://...
 export const localImageUrls: Record<string, string> = {}
+const localImageUrlOrder = new Map<string, string>()
+
+function revokeObjectUrl(url: string): void {
+  if (url.startsWith('blob:')) {
+    URL.revokeObjectURL(url)
+  }
+}
+
+function touchImageUrl(id: string): string | undefined {
+  const url = localImageUrls[id]
+  if (!url) return undefined
+  localImageUrlOrder.delete(id)
+  localImageUrlOrder.set(id, url)
+  return url
+}
+
+function rememberImageUrl(id: string, url: string): string {
+  const existing = localImageUrls[id]
+  if (existing && existing !== url) {
+    revokeObjectUrl(existing)
+  }
+  localImageUrls[id] = url
+  localImageUrlOrder.delete(id)
+  localImageUrlOrder.set(id, url)
+  while (localImageUrlOrder.size > MAX_LOCAL_IMAGE_URLS) {
+    const oldest = localImageUrlOrder.entries().next().value as [string, string] | undefined
+    if (!oldest) break
+    const [oldestId, oldestUrl] = oldest
+    localImageUrlOrder.delete(oldestId)
+    if (localImageUrls[oldestId] === oldestUrl) {
+      delete localImageUrls[oldestId]
+    }
+    revokeObjectUrl(oldestUrl)
+  }
+  return url
+}
 
 /**
  * 释放指定 id 对应的 Object URL 并从缓存中移除，避免 Blob 长期驻留内存。
@@ -120,23 +226,44 @@ export const localImageUrls: Record<string, string> = {}
 export function revokeImageUrl(id: string): void {
   const url = localImageUrls[id]
   if (url) {
-    URL.revokeObjectURL(url)
+    revokeObjectUrl(url)
     delete localImageUrls[id]
+  }
+  localImageUrlOrder.delete(id)
+}
+
+export function clearLocalImageUrlCache(): void {
+  for (const url of Object.values(localImageUrls)) {
+    revokeObjectUrl(url)
+  }
+  for (const id of Object.keys(localImageUrls)) {
+    delete localImageUrls[id]
+  }
+  localImageUrlOrder.clear()
+}
+
+export function pruneLocalImageUrlCache(usedIds: Iterable<string>): void {
+  const used = new Set(usedIds)
+  for (const id of Object.keys(localImageUrls)) {
+    if (!used.has(id)) {
+      revokeImageUrl(id)
+    }
   }
 }
 
+function extractLocalImageIds(md: string): string[] {
+  return Array.from(md.matchAll(/!\[[^\]]*\]\((img:\/\/img_[a-zA-Z0-9_-]+)\)/g), (match) => match[1].replace('img://', ''))
+}
+
 /**
- * 将 img://id 转换为 base64 Data URL（兼容 srcdoc iframe 等跨域场景）
+ * 将 img://id 转换为 Object URL，避免把 Blob 长期缓存为 base64 Data URL
  */
 export async function resolveImageUrl(id: string): Promise<string> {
-  if (localImageUrls[id]) {
-    return localImageUrls[id]
-  }
+  const cached = touchImageUrl(id)
+  if (cached) return cached
   const blob = await getLocalImage(id)
   if (blob) {
-    const dataUrl = await blobToBase64(blob)
-    localImageUrls[id] = dataUrl
-    return dataUrl
+    return rememberImageUrl(id, URL.createObjectURL(blob))
   }
   return ''
 }
@@ -145,12 +272,13 @@ export async function resolveImageUrl(id: string): Promise<string> {
  * 在解析 Markdown 前，预先并行加载文档中所有 img:// 图片到内存中
  */
 export async function preloadImagesFromMarkdown(md: string): Promise<void> {
-  const matches = Array.from(md.matchAll(/!\[[^\]]*\]\((img:\/\/img_[a-zA-Z0-9_-]+)\)/g))
-  const promises = matches.map(async (match) => {
-    const url = match[1]
-    const id = url.replace('img://', '')
+  const ids = Array.from(new Set(extractLocalImageIds(md)))
+  pruneLocalImageUrlCache(ids)
+  const promises = ids.map(async (id) => {
     if (!localImageUrls[id]) {
       await resolveImageUrl(id)
+    } else {
+      touchImageUrl(id)
     }
   })
   if (promises.length > 0) {
@@ -174,13 +302,18 @@ export async function uploadToSmMs(file: File, token: string): Promise<string> {
   })
 
   const resData = await response.json()
+  let url: unknown = null
   if (resData.success) {
-    return resData.data.url
+    url = resData.data?.url
   } else if (resData.code === 'image_repeated') {
-    return resData.images || resData.data // 针对重复图片返回已有链接
+    url = typeof resData.images === 'string' ? resData.images : resData.data?.url || resData.data
   } else {
     throw new Error(resData.message || 'Sm.ms upload failed')
   }
+  if (typeof url !== 'string' || !url) {
+    throw new Error('Sm.ms 返回的图片地址无效')
+  }
+  return url
 }
 
 /**
@@ -294,7 +427,7 @@ export async function compileMarkdownImages(md: string): Promise<string> {
 
 // 生成唯一的图片文件名
 function generateImageFilename(file: File): string {
-  const ext = file.name.split('.').pop() || 'jpg'
+  const ext = imageExtensionFromMime(file.type) || file.name.split('.').pop() || 'jpg'
   return `m2v-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
 }
 
@@ -316,24 +449,25 @@ export async function uploadImageFile(
   file: File,
   config: ImageHostConfig,
 ): Promise<string> {
-  const compressed = await compressImage(file)
-  const asUploadFile = (blob: Blob) => new File([blob], file.name, { type: blob.type })
+  const detectedMime = await validateImageFile(file)
+  const compressed = await compressImage(file, 1600, 0.7, detectedMime)
+  const uploadFile = createImageUploadFile(file, compressed)
 
   if (config.activeType === 'smms') {
     if (!config.smms?.token) throw new Error(missingSecretMessage('Sm.ms Token'))
-    return uploadToSmMs(asUploadFile(compressed), config.smms.token)
+    return uploadToSmMs(uploadFile, config.smms.token)
   }
   if (config.activeType === 'oss') {
     if (!config.oss?.accessKeyId || !config.oss?.accessKeySecret) {
       throw new Error(missingSecretMessage('OSS 密钥'))
     }
-    return uploadToOss(asUploadFile(compressed), config.oss)
+    return uploadToOss(uploadFile, config.oss)
   }
   if (config.activeType === 'cos') {
     if (!config.cos?.SecretId || !config.cos?.SecretKey) {
       throw new Error(missingSecretMessage('COS 密钥'))
     }
-    return uploadToCos(asUploadFile(compressed), config.cos)
+    return uploadToCos(uploadFile, config.cos)
   }
 
   // 默认本地 IndexedDB
