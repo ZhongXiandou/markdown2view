@@ -34,7 +34,7 @@ ${style}
 系统会对生成的 HTML 进行安全净化，以下能力会被移除或失效，请不要使用：
 1. **禁止 \`<script>\` 标签**：包括内联脚本、外部脚本、事件脚本。所有内容必须在无脚本时完整可读。
 2. **禁止事件处理器属性**：如 \`onclick\`、\`onload\`、\`onerror\`、\`onmouseover\` 等以 \`on\` 开头的属性都会被移除。
-3. **禁止危险 URL 协议**：\`href\` / \`src\` 等链接禁止使用 \`javascript:\`、\`data:\` 等可执行协议（包括 \`data:text/html\`、\`data:image/*\`）；请使用 \`https:\`、相对路径或锚点。
+3. **禁止危险 URL 协议**：\`href\` / \`src\` 等链接禁止使用 \`javascript:\`、\`data:text/html\`、\`data:application/javascript\` 等可执行协议；允许 \`data:image/*\`、\`data:font/*\`、\`data:application/json\`、\`data:text/plain\` 等安全内联资源；外链请使用 \`https:\`、相对路径或锚点。
 4. **禁止危险 CSS**：\`style\` 属性与 \`<style>\` 标签中禁止使用 \`expression()\`、\`behavior\`、\`@import\` 等 IE 遗留攻击向量。
 5. **嵌入标签受限**：\`<iframe>\`、\`<object>\`、\`<embed>\` 在预览时会被强制加 sandbox，导出/严格模式下会被直接丢弃；请勿将它们作为关键内容载体。
 

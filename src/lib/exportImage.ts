@@ -190,11 +190,17 @@ export function downloadBlob(blob: Blob, filename: string) {
  *    截出来的图像尺寸将精确契合目标元素本身，不包含任何外边距或右侧渲染区的冗余空白。
  * 4. 截图完成后，恢复所有受影响元素的原始样式。
  */
+export interface CapturedBlob {
+  blob: Blob
+  width: number
+  height: number
+}
+
 export async function captureElementInIframeToBlob(
   iframe: HTMLIFrameElement,
   element: HTMLElement,
   opts: ImageOpts = {}
-): Promise<Blob> {
+): Promise<CapturedBlob> {
   const doc = iframe.contentDocument
   const win = iframe.contentWindow
   if (!doc || !win) throw new Error('iframe 尚未就绪')
@@ -298,7 +304,7 @@ export async function captureElementInIframeToBlob(
     })
 
     if (!blob) throw new Error('截图失败')
-    return blob
+    return { blob, width: w, height: h }
   } finally {
     // 6. 恢复所有样式
     for (let i = overrides.length - 1; i >= 0; i--) {
