@@ -22,8 +22,7 @@ pnpm-debug.log*
 *.tsbuildinfo
 
 # Excluded folders
-r-markdown/
-html-anything/
 .agent/skills/
 .mimocode/
+vendor/
 
