@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState, useCallback } from "react";
-import { useStore, type DemoContents } from "@/lib/store";
+import { useStore, useContentStore, type DemoContents } from "@/lib/store";
 import type { RenderMode } from "@/lib/store";
 import { Toast, type ToastState } from "@/components/ui/Toast";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -63,14 +63,18 @@ const DEMOS: DemoContents = {
 
 // 多场景渲染工作台：长图文 / A4 文档 / 小红书卡片 / HTML 可视化。
 export default function App() {
-  const articleMarkdown = useStore((s) => s.articleMarkdown);
-  const setArticleMarkdown = useStore((s) => s.setArticleMarkdown);
-  const documentMarkdown = useStore((s) => s.documentMarkdown);
-  const setDocumentMarkdown = useStore((s) => s.setDocumentMarkdown);
-  const cardMarkdown = useStore((s) => s.cardMarkdown);
-  const setCardMarkdown = useStore((s) => s.setCardMarkdown);
-  const html = useStore((s) => s.html);
-  const setHtml = useStore((s) => s.setHtml);
+  const articleMarkdown = useContentStore((s) => s.articleMarkdown);
+  const setArticleMarkdown = useContentStore((s) => s.setArticleMarkdown);
+  const documentMarkdown = useContentStore((s) => s.documentMarkdown);
+  const setDocumentMarkdown = useContentStore((s) => s.setDocumentMarkdown);
+  const cardMarkdown = useContentStore((s) => s.cardMarkdown);
+  const setCardMarkdown = useContentStore((s) => s.setCardMarkdown);
+  const html = useContentStore((s) => s.html);
+  const setHtml = useContentStore((s) => s.setHtml);
+  const syncDemoContent = useContentStore((s) => s.syncDemoContent);
+  const restoreDemo = useContentStore((s) => s.restoreDemo);
+  const contentHydrated = useContentStore((s) => s.hasHydrated);
+
   const colors = useStore((s) => s.colors);
   const accent = useStore((s) => s.accent);
   const setTheme = useStore((s) => s.setTheme);
@@ -80,10 +84,9 @@ export default function App() {
   const setPlatform = useStore((s) => s.setPlatform);
   const documentSettings = useStore((s) => s.documentSettings);
   const updateDocumentSettings = useStore((s) => s.updateDocumentSettings);
-  const syncDemoContent = useStore((s) => s.syncDemoContent);
-  const restoreDemo = useStore((s) => s.restoreDemo);
   const triggerGuide = useStore((s) => s.triggerGuide);
-  const hasHydrated = useStore((s) => s.hasHydrated);
+  const appHydrated = useStore((s) => s.hasHydrated);
+  const hasHydrated = contentHydrated && appHydrated;
 
   // 图床设置弹窗状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -115,16 +118,21 @@ export default function App() {
     syncDemoContent(DEMOS);
   }, [hasHydrated, syncDemoContent]);
 
+  const restoreDocumentSettingsDemo = useStore((s) => s.restoreDocumentSettingsDemo);
+
   const handleRestoreDemo = useCallback(() => {
     if (
       window.confirm(
         "确定要恢复当前模块的示例内容吗？这将会覆盖当前编辑区内容。",
       )
     ) {
+      if (mode === 'document') {
+        restoreDocumentSettingsDemo();
+      }
       restoreDemo(mode, DEMOS);
       showToast("已恢复当前模块示例");
     }
-  }, [mode, restoreDemo, showToast]);
+  }, [mode, restoreDemo, restoreDocumentSettingsDemo, showToast]);
 
   // 监听子组件打开设置弹窗的请求（如 Mermaid 图床提醒弹窗的「配置图床」按钮）
   useEffect(() => {
