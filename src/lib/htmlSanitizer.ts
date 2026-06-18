@@ -1,57 +1,42 @@
 // AI 生成 HTML 的轻量级净化器。
 // 设计原则：
 // 1. 不引入外部依赖，利用浏览器 DOMParser 实现。
-// 2. 作为 iframe sandbox 的第二道防线，默认禁用脚本与事件处理器。
-// 3. 保留排版所需的常见标签、class、style 与外部样式表。
-// 4. 对 URL 类属性做协议白名单校验，防止 javascript: / data: 等攻击向量。
+// 2. 默认放行所有标签、class、style，只拦截真正危险的攻击向量：
+//    - script 标签
+//    - 事件处理器属性（onclick/onload 等）
+//    - javascript: / data: 等危险伪协议
+//    - CSS expression / behavior / @import 等 IE 遗留攻击向量
+// 3. 对 iframe / object / embed 做 sandbox 限制
+// 4. 提供 sanitizeHtml 与 sanitizeHtmlStrict 两档强度，满足不同场景需求
 
-const ALLOWED_TAGS = new Set([
-  // 文档骨架
-  'html', 'head', 'body', 'title', 'meta', 'link', 'style',
-  // 布局与内容
-  'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'section', 'article', 'main', 'header', 'footer', 'nav', 'aside',
-  'figure', 'figcaption', 'details', 'summary',
-  // 交互元素（保留标签，但移除事件属性）
-  'button', 'a', 'input', 'textarea', 'select', 'option', 'label', 'form', 'fieldset', 'legend',
-  // 媒体与交互
-  'img', 'a', 'picture', 'source', 'video', 'audio', 'track',
-  // 表格
-  'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'caption', 'colgroup', 'col',
-  // 列表
-  'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-  // 格式化
-  'br', 'hr', 'pre', 'code', 'blockquote', 'q', 'cite',
-  'strong', 'b', 'em', 'i', 'u', 's', 'del', 'ins', 'sub', 'sup', 'mark', 'small',
-  'abbr', 'dfn', 'time', 'address', 'kbd', 'samp', 'var',
-  // SVG（保留基础图形，移除 script/事件）
-  'svg', 'g', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon',
-  'text', 'tspan', 'defs', 'use', 'symbol', 'lineargradient', 'radialgradient', 'stop',
-])
+const DANGEROUS_TAGS = new Set(['script'])
 
-const ALLOWED_ATTRS = new Set([
-  'class', 'id', 'name', 'title', 'alt', 'role', 'aria-label', 'aria-hidden',
-  'dir', 'lang', 'tabindex', 'hidden',
-  'href', 'src', 'srcset', 'sizes', 'poster', 'preload', 'controls', 'loop', 'muted', 'autoplay',
-  'width', 'height', 'viewbox', 'xmlns', 'fill', 'stroke', 'stroke-width', 'd',
-  'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points',
-  'colspan', 'rowspan', 'scope', 'start', 'reversed', 'type', 'value',
-  'target', 'rel', 'download',
-  // style 需要额外校验，见 processStyleAttr
-  'style',
-])
+const IFRAME_SANDBOX_TAGS = new Set(['iframe', 'object', 'embed'])
 
-const URL_ATTRS = new Set(['href', 'src', 'srcset', 'poster', 'data'])
+const URL_ATTRS = new Set(['href', 'src', 'srcset', 'poster', 'data', 'action', 'formaction'])
 
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:'])
 
+function isEventHandlerAttr(name: string): boolean {
+  return name.startsWith('on') && name.length > 2
+}
+
+function isDangerousUrl(value: string): boolean {
+  const trimmed = value.trim().toLowerCase()
+  if (!trimmed) return false
+  // 拒绝 javascript: 和 data:（可执行脚本）
+  if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:text/html')) {
+    return true
+  }
+  return false
+}
+
 function isSafeUrl(value: string): boolean {
+  if (isDangerousUrl(value)) return false
   const trimmed = value.trim()
   if (!trimmed) return true
-  // 允许相对路径、锚点、空值；拒绝 javascript: 伪协议
-  if (/^(\/|#|\.\.?\/)/.test(trimmed)) {
-    return !/^javascript:/i.test(trimmed)
-  }
+  // 允许相对路径、锚点、空值
+  if (/^(\/|#|\.\.?\/)/.test(trimmed)) return true
   try {
     const url = new URL(trimmed, 'http://localhost')
     return SAFE_URL_PROTOCOLS.has(url.protocol)
@@ -68,27 +53,27 @@ function isSafeSrcset(value: string): boolean {
   })
 }
 
-function isEventHandlerAttr(name: string): boolean {
-  return name.startsWith('on') && name.length > 2
-}
-
 function processStyleAttr(value: string): string | null {
-  // 拒绝 expression、javascript、behavior 等 IE 遗留攻击向量
-  if (/expression|javascript|behavior|@import|url\s*\(/i.test(value)) {
+  // 只拒绝 expression、behavior 等 IE 遗留攻击向量
+  if (/expression|behavior/i.test(value)) {
     return null
   }
   return value
 }
 
 function processStyleElement(css: string): string | null {
-  // 拒绝 @import、expression、javascript URL
-  if (/@import|expression|javascript\s*:|behavior\s*:/i.test(css)) {
+  // 只拒绝 @import（可引入外部样式）和 expression/behavior
+  if (/@import|expression|behavior/i.test(css)) {
     return null
   }
   return css
 }
 
-function sanitizeNode(node: Node, ownerDoc: Document): Node | null {
+function sanitizeNode(
+  node: Node,
+  ownerDoc: Document,
+  options: { strict: boolean },
+): Node | null {
   if (node.nodeType === Node.TEXT_NODE) {
     return ownerDoc.createTextNode(node.textContent || '')
   }
@@ -104,22 +89,46 @@ function sanitizeNode(node: Node, ownerDoc: Document): Node | null {
   const el = node as Element
   const tagName = el.tagName.toLowerCase()
 
-  // script 标签：完全丢弃，不保留内容
+  // 严格模式下：丢弃 script 内容；宽松模式下：同样丢弃（script 无合法用途）
   if (tagName === 'script') {
     return null
   }
 
-  if (!ALLOWED_TAGS.has(tagName)) {
-    // 未知标签：保留其文本内容，丢弃标签本身
-    const fragment = ownerDoc.createDocumentFragment()
+  // 严格模式下丢弃 iframe/object/embed
+  if (IFRAME_SANDBOX_TAGS.has(tagName)) {
+    if (options.strict) return null
+    const newEl = ownerDoc.createElement(tagName)
+    // 复制安全属性
+    for (let i = 0; i < el.attributes.length; i++) {
+      const attr = el.attributes[i]
+      if (!attr) continue
+      const name = attr.name.toLowerCase()
+      if (isEventHandlerAttr(name)) continue
+      if (name === 'sandbox') {
+        // 保留用户指定的 sandbox，但确保包含 allow-scripts 时不允许同域
+        newEl.setAttribute('sandbox', attr.value)
+        continue
+      }
+      if (URL_ATTRS.has(name)) {
+        if (!isSafeUrl(attr.value)) continue
+      }
+      try {
+        newEl.setAttribute(name, attr.value)
+      } catch { /* ignore */ }
+    }
+    // 如果没有 sandbox，强制添加最严格的 sandbox
+    if (!newEl.hasAttribute('sandbox')) {
+      newEl.setAttribute('sandbox', 'allow-scripts')
+    }
+    // 递归处理子节点
     el.childNodes.forEach((child) => {
-      const sanitized = sanitizeNode(child, ownerDoc)
-      if (sanitized) fragment.appendChild(sanitized)
+      const sanitized = sanitizeNode(child, ownerDoc, options)
+      if (sanitized) newEl.appendChild(sanitized)
     })
-    return fragment
+    return newEl
   }
 
-  // 处理 style 标签内容
+  // style 标签：过滤危险 CSS
   if (tagName === 'style') {
     const cleanCss = processStyleElement(el.textContent || '')
     if (!cleanCss) return null
@@ -138,12 +147,9 @@ function sanitizeNode(node: Node, ownerDoc: Document): Node | null {
     // 禁止事件处理器
     if (isEventHandlerAttr(name)) continue
 
-    // 禁止非白名单属性
-    if (!ALLOWED_ATTRS.has(name)) continue
-
     let value = attr.value
 
-    // URL 属性校验
+    // URL 属性校验：拒绝 javascript: / data:text/html
     if (URL_ATTRS.has(name)) {
       if (name === 'srcset') {
         if (!isSafeSrcset(value)) continue
@@ -152,7 +158,7 @@ function sanitizeNode(node: Node, ownerDoc: Document): Node | null {
       }
     }
 
-    // style 属性校验
+    // style 属性校验：只过滤 expression/behavior
     if (name === 'style') {
       const cleanStyle = processStyleAttr(value)
       if (cleanStyle === null) continue
@@ -168,19 +174,14 @@ function sanitizeNode(node: Node, ownerDoc: Document): Node | null {
 
   // 递归处理子节点
   el.childNodes.forEach((child) => {
-    const sanitized = sanitizeNode(child, ownerDoc)
+    const sanitized = sanitizeNode(child, ownerDoc, options)
     if (sanitized) newEl.appendChild(sanitized)
   })
 
   return newEl
 }
 
-/**
- * 净化 HTML 字符串，移除危险标签、事件处理器与非法 URL。
- * @param html 原始 HTML
- * @returns 净化后的 HTML
- */
-export function sanitizeHtml(html: string): string {
+function sanitizeHtmlInternal(html: string, options: { strict: boolean }): string {
   if (!html) return ''
 
   const trimmed = html.trim()
@@ -195,15 +196,15 @@ export function sanitizeHtml(html: string): string {
     const newBody = doc.createElement('body')
 
     doc.head.childNodes.forEach((child) => {
-      const sanitized = sanitizeNode(child, doc)
+      const sanitized = sanitizeNode(child, doc, options)
       if (sanitized) newHead.appendChild(sanitized)
     })
     doc.body.childNodes.forEach((child) => {
-      const sanitized = sanitizeNode(child, doc)
+      const sanitized = sanitizeNode(child, doc, options)
       if (sanitized) newBody.appendChild(sanitized)
     })
 
-    // 保留 html/body 上的安全属性
+    // 保留 html/body 上的属性（不过滤 class/id/style/lang 等）
     for (const el of [doc.documentElement, doc.body]) {
       const target = el === doc.documentElement ? newHtml : newBody
       const tag = el.tagName.toLowerCase()
@@ -211,13 +212,12 @@ export function sanitizeHtml(html: string): string {
         const attr = el.attributes[i]
         if (!attr) continue
         const name = attr.name.toLowerCase()
-        if (!ALLOWED_ATTRS.has(name) || isEventHandlerAttr(name)) continue
+        if (isEventHandlerAttr(name)) continue
         if (name === 'style' && processStyleAttr(attr.value) === null) continue
         try {
           target.setAttribute(name, attr.value)
         } catch { /* ignore */ }
       }
-      // 始终保留 html 标签上的 xmlns / lang
       if (tag === 'html') {
         if (el.getAttribute('lang')) newHtml.setAttribute('lang', el.getAttribute('lang')!)
       }
@@ -230,11 +230,27 @@ export function sanitizeHtml(html: string): string {
 
   const fragment = doc.createDocumentFragment()
   doc.body.childNodes.forEach((child) => {
-    const sanitized = sanitizeNode(child, doc)
+    const sanitized = sanitizeNode(child, doc, options)
     if (sanitized) fragment.appendChild(sanitized)
   })
 
   const wrapper = doc.createElement('div')
   wrapper.appendChild(fragment)
   return wrapper.innerHTML
+}
+
+/**
+ * 宽松净化：保留所有标签、class、style、data-* 属性，只拦截真正危险的攻击向量。
+ * 适用于 AI 生成 HTML 的预览场景，确保样式和功能完整。
+ */
+export function sanitizeHtml(html: string): string {
+  return sanitizeHtmlInternal(html, { strict: false })
+}
+
+/**
+ * 严格净化：额外丢弃 iframe/object/embed 等可嵌入外部内容的标签。
+ * 适用于对安全性要求更高的导出/分享场景。
+ */
+export function sanitizeHtmlStrict(html: string): string {
+  return sanitizeHtmlInternal(html, { strict: true })
 }
