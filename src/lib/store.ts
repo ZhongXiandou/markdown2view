@@ -8,6 +8,14 @@ import {
 import type { FontFamilyOption } from '@/lib/fonts'
 import type { OutputType, VisualTone } from '@/data/designPrompts'
 
+/** 生成可用 ID 的兼容实现，支持非安全上下文 */
+export function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`
+}
+
 /** 用户自定义指令数据结构 */
 export interface CustomInstruction {
   id: string
@@ -19,7 +27,7 @@ export interface CustomInstruction {
   visualTone: VisualTone
   createdAt: number
   updatedAt: number
-  mode?: import('./store').RenderMode // 兼容历史数据，未定义的视为 'html'
+  mode?: RenderMode // 兼容历史数据，未定义的视为 'html'
 }
 
 const MAX_CUSTOM_INSTRUCTIONS = 50
@@ -115,21 +123,26 @@ interface AppState {
   // 引导弹窗强行打开触发器，每种模式独立计数
   guideTrigger: { [key in RenderMode]?: number }
   triggerGuide: (mode: RenderMode) => void
+  // 持久化 rehydrate 完成标记
+  hasHydrated: boolean
+  _markHydrated: () => void
 }
 
-function applyCssVars(accent: string, dark: string) {
+/** 将主题色应用到 CSS 变量 */
+export function applyCssVars(accent: string, dark: string) {
   if (typeof document === 'undefined') return
   const root = document.documentElement
   root.style.setProperty('--accent', accent)
   root.style.setProperty('--accent-dark', dark)
 }
 
-function getInitialStateFromLegacyKeys(): Partial<AppState> {
+/** 从旧版分散的 localStorage key 迁移数据，仅在未找到新版 store 时执行。 */
+export function getInitialStateFromLegacyKeys(): Partial<AppState> {
   if (typeof localStorage === 'undefined') return {}
   if (localStorage.getItem('m2v-store')) return {}
 
   const state: Partial<AppState> = {}
-  
+
   const articleMd = localStorage.getItem(ARTICLE_MD_STORAGE_KEY)
   if (articleMd) state.articleMarkdown = articleMd
 
@@ -181,37 +194,35 @@ function getInitialStateFromLegacyKeys(): Partial<AppState> {
   return state
 }
 
-const legacyState = getInitialStateFromLegacyKeys()
-const initAccent = legacyState.accent ?? THEMES[3].accent
-const initDark = legacyState.accentDark ?? THEMES[3].dark
-applyCssVars(initAccent, initDark)
+const DEFAULT_ACCENT = THEMES[3].accent
+const DEFAULT_DARK = THEMES[3].dark
 
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      articleMarkdown: legacyState.articleMarkdown ?? FALLBACK_MARKDOWN,
-      documentMarkdown: legacyState.documentMarkdown ?? FALLBACK_MARKDOWN,
-      cardMarkdown: legacyState.cardMarkdown ?? FALLBACK_MARKDOWN,
-      html: legacyState.html ?? FALLBACK_HTML,
-      mode: legacyState.mode ?? 'document',
-      inputType: legacyState.inputType ?? 'markdown',
-      platform: legacyState.platform ?? 'longform',
-      documentSettings: legacyState.documentSettings ?? DEFAULT_DOCUMENT_SETTINGS,
-      articleFont: legacyState.articleFont ?? 'songti',
-      cardFont: legacyState.cardFont ?? 'heiti',
-      accent: initAccent,
-      accentDark: initDark,
-      colors: legacyState.colors ?? makeColors(initAccent, initDark),
+      articleMarkdown: FALLBACK_MARKDOWN,
+      documentMarkdown: FALLBACK_MARKDOWN,
+      cardMarkdown: FALLBACK_MARKDOWN,
+      html: FALLBACK_HTML,
+      mode: 'document',
+      inputType: 'markdown',
+      platform: 'longform',
+      documentSettings: DEFAULT_DOCUMENT_SETTINGS,
+      articleFont: 'songti',
+      cardFont: 'heiti',
+      accent: DEFAULT_ACCENT,
+      accentDark: DEFAULT_DARK,
+      colors: makeColors(DEFAULT_ACCENT, DEFAULT_DARK),
       imageHostConfig: DEFAULT_IMAGE_HOST_CONFIG,
       setImageHostConfig: (config) =>
         set((state) => ({ imageHostConfig: { ...state.imageHostConfig, ...config } })),
       // 默认版本号 0，确保首次加载（无持久化版本）时会注入最新示例。
       demoVersion: 0,
-      // 旧版分散 key 迁移而来的内容视为「用户内容」，标记为 dirty 以免被示例覆盖。
-      articleDirty: legacyState.articleMarkdown != null,
-      documentDirty: legacyState.documentMarkdown != null,
-      cardDirty: legacyState.cardMarkdown != null,
-      htmlDirty: legacyState.html != null,
+      // 旧版分散 key 迁移而来的内容会在 onRehydrateStorage 中补回，并标记为 dirty。
+      articleDirty: false,
+      documentDirty: false,
+      cardDirty: false,
+      htmlDirty: false,
 
       setArticleMarkdown: (md) => set({ articleMarkdown: md, articleDirty: true }),
       setDocumentMarkdown: (md) => set({ documentMarkdown: md, documentDirty: true }),
@@ -276,7 +287,7 @@ export const useStore = create<AppState>()(
           return {
             customInstructions: [
               ...state.customInstructions,
-              { ...inst, content: inst.content.slice(0, MAX_CONTENT_LENGTH), id: crypto.randomUUID(), createdAt: now, updatedAt: now },
+              { ...inst, content: inst.content.slice(0, MAX_CONTENT_LENGTH), id: generateId(), createdAt: now, updatedAt: now },
             ],
           }
         })
@@ -303,6 +314,8 @@ export const useStore = create<AppState>()(
             [mode]: (state.guideTrigger[mode] || 0) + 1,
           },
         })),
+      hasHydrated: false,
+      _markHydrated: () => set({ hasHydrated: true }),
     }),
     {
       name: 'm2v-store',
@@ -319,7 +332,7 @@ export const useStore = create<AppState>()(
         cardFont: state.cardFont,
         accent: state.accent,
         accentDark: state.accentDark,
-        colors: state.colors,
+        // colors 是 accent/accentDark 的派生值，不持久化，避免老用户拿到旧值
         imageHostConfig: state.imageHostConfig,
         demoVersion: state.demoVersion,
         articleDirty: state.articleDirty,
@@ -329,10 +342,48 @@ export const useStore = create<AppState>()(
         customInstructions: state.customInstructions,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state) {
-          applyCssVars(state.accent, state.accentDark)
-          state.customInstructions ??= []
+        if (!state) return
+
+        // 1. 迁移旧版分散 key 数据（仅当新版 store 不存在时）
+        const legacy = getInitialStateFromLegacyKeys()
+        if (Object.keys(legacy).length > 0) {
+          if (legacy.articleMarkdown != null) {
+            state.articleMarkdown = legacy.articleMarkdown
+            state.articleDirty = true
+          }
+          if (legacy.documentMarkdown != null) {
+            state.documentMarkdown = legacy.documentMarkdown
+            state.documentDirty = true
+          }
+          if (legacy.cardMarkdown != null) {
+            state.cardMarkdown = legacy.cardMarkdown
+            state.cardDirty = true
+          }
+          if (legacy.html != null) {
+            state.html = legacy.html
+            state.htmlDirty = true
+          }
+          Object.assign(state, {
+            mode: legacy.mode ?? state.mode,
+            inputType: legacy.inputType ?? state.inputType,
+            platform: legacy.platform ?? state.platform,
+            documentSettings: legacy.documentSettings ?? state.documentSettings,
+            articleFont: legacy.articleFont ?? state.articleFont,
+            cardFont: legacy.cardFont ?? state.cardFont,
+          })
         }
+
+        // 2. 重新计算 colors，保证 makeColors 逻辑更新后老用户也能拿到新值
+        state.colors = makeColors(state.accent, state.accentDark)
+
+        // 3. 应用 CSS 变量
+        applyCssVars(state.accent, state.accentDark)
+
+        // 4. 兼容旧数据
+        state.customInstructions ??= []
+
+        // 5. 标记 rehydrate 完成，供 App 等依赖本地缓存的初始化逻辑使用
+        state._markHydrated()
       },
     }
   )
