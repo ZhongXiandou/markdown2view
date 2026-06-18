@@ -25,6 +25,10 @@ export default defineConfig({
           { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
+      // 开发模式下禁用 Service Worker，避免缓存导致的调试问题
+      devOptions: {
+        enabled: false,
+      },
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
@@ -42,7 +46,6 @@ export default defineConfig({
               expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
-
         ],
       },
     }),
