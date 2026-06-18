@@ -26,6 +26,24 @@ type NavigatorWithSaveBlob = Navigator & {
 
 const OBJECT_URL_REVOKE_DELAY = 10000
 
+/**
+ * 净化文件名：移除路径穿越字符（/ \）、控制字符（NUL 等）、
+ * Windows 保留字符（: * ? " < > |），保留字母数字、中文、_-. 与空格。
+ */
+export function sanitizeFilename(name: string): string {
+  // 移除路径分隔符、控制字符、Windows 保留字符
+  let cleaned = name.replace(/[/\\]|[\x00-\x1f]|[:*?"<>|]/g, '')
+  // 移除前导/尾随点和空格（Windows 不允许）
+  cleaned = cleaned.replace(/^[\s.]+|[\s.]+$/g, '')
+  // 折叠连续空格
+  cleaned = cleaned.replace(/\s+/g, ' ')
+  // 空名兜底
+  if (!cleaned) cleaned = 'export'
+  // 限制长度（防止文件系统路径过长）
+  if (cleaned.length > 200) cleaned = cleaned.slice(0, 200)
+  return cleaned
+}
+
 const NEXT_FRAME = (win: Window = window) =>
   new Promise<void>((r) => win.requestAnimationFrame(() => win.requestAnimationFrame(() => r())))
 
@@ -182,6 +200,7 @@ function scheduleObjectUrlRevoke(url: string) {
     revoked = true
     if (timer) clearTimeout(timer)
     document.removeEventListener('visibilitychange', onVisibilityChange)
+    window.removeEventListener('pagehide', revoke)
     URL.revokeObjectURL(url)
   }
 
@@ -190,20 +209,23 @@ function scheduleObjectUrlRevoke(url: string) {
   }
 
   document.addEventListener('visibilitychange', onVisibilityChange)
+  // M16: pagehide 在移动端和页面直接关闭时比 visibilitychange 更可靠
+  window.addEventListener('pagehide', revoke)
   timer = setTimeout(revoke, OBJECT_URL_REVOKE_DELAY)
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
+  const safeFilename = sanitizeFilename(filename)
   const navigatorWithSaveBlob = window.navigator as NavigatorWithSaveBlob
   if (navigatorWithSaveBlob.msSaveOrOpenBlob) {
-    navigatorWithSaveBlob.msSaveOrOpenBlob(blob, filename)
+    navigatorWithSaveBlob.msSaveOrOpenBlob(blob, safeFilename)
     return
   }
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename
+  a.download = safeFilename
   document.body.appendChild(a)
   a.click()
   a.remove()
@@ -261,6 +283,12 @@ export async function captureElementInIframeToBlob(
   // 3. 计算元素的真实内容尺寸
   const w = element.offsetWidth || element.scrollWidth || doc.documentElement.clientWidth
   const h = element.offsetHeight || element.scrollHeight || doc.documentElement.scrollHeight
+
+  // 6.14: 截图尺寸上限保护，防止极高/极宽 DOM 耗尽内存导致浏览器崩溃
+  const MAX_CAPTURE_DIM = 16000
+  if (w > MAX_CAPTURE_DIM || h > MAX_CAPTURE_DIM) {
+    throw new Error(`截图尺寸超限（${w}×${h}），最大支持 ${MAX_CAPTURE_DIM}px`)
+  }
 
   const overrides: {
     element: HTMLElement | HTMLHtmlElement | HTMLBodyElement | HTMLIFrameElement

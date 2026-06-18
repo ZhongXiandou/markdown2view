@@ -164,7 +164,7 @@ export function parseMarkdown(
   })
 
   const lines = processedMd.split('\n')
-  let html = ''
+  const parts: string[] = []
   let i = 0
 
   // front-matter
@@ -180,7 +180,7 @@ export function parseMarkdown(
         i++
       }
       i++
-      html += renderFrontMatter(meta, md, t)
+      parts.push(renderFrontMatter(meta, md, t))
     }
   }
 
@@ -212,7 +212,7 @@ export function parseMarkdown(
       if (renderer.match(line, lines, i)) {
         const result = renderer.render(ctx, line, lines, i)
         if (result) {
-          html += result.html
+          parts.push(result.html)
           i = result.next
           handled = true
           if (result.warning && onWarning) {
@@ -228,14 +228,18 @@ export function parseMarkdown(
     }
   }
 
+  let html = parts.join('')
+
   if (footnotes.length > 0) {
-    html += `<section style="margin:${spacing[13]} 0px 0px;padding-top:${spacing[8]};border-top:1px solid ${t.border}">`
-    html += `<h2 style="margin:0px 0px ${spacing[7]};font-size:${fontSize['3xl']};font-weight:${fontWeight.bold};color:${color.textPrimary};line-height:${lineHeight.normal}">参考资料</h2>`
-    html += `<section style="font-size:${fontSize.md};color:${color.inkMuted};line-height:${lineHeight.loosest}">`
+    const fnParts: string[] = []
+    fnParts.push(`<section style="margin:${spacing[13]} 0px 0px;padding-top:${spacing[8]};border-top:1px solid ${t.border}">`)
+    fnParts.push(`<h2 style="margin:0px 0px ${spacing[7]};font-size:${fontSize['3xl']};font-weight:${fontWeight.bold};color:${color.textPrimary};line-height:${lineHeight.normal}">参考资料</h2>`)
+    fnParts.push(`<section style="font-size:${fontSize.md};color:${color.inkMuted};line-height:${lineHeight.loosest}">`)
     footnotes.forEach((fn, idx) => {
-      html += `<p style="margin:${spacing[2]} 0px"><span style="color:${t.accent};font-weight:${fontWeight.semibold}">[${idx + 1}]</span> ${leaf(fn.desc)}：<a href="${esc(fn.url)}" style="color:${t.accent};word-break:break-all">${esc(fn.url)}</a></p>`
+      fnParts.push(`<p style="margin:${spacing[2]} 0px"><span style="color:${t.accent};font-weight:${fontWeight.semibold}">[${idx + 1}]</span> ${leaf(fn.desc)}：<a href="${esc(fn.url)}" style="color:${t.accent};word-break:break-all">${esc(fn.url)}</a></p>`)
     })
-    html += `</section></section>`
+    fnParts.push(`</section></section>`)
+    html += fnParts.join('')
   }
 
   // 回填数学公式的 KaTeX HTML（仅在 KaTeX 模式下生效）

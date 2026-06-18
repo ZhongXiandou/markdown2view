@@ -61,7 +61,7 @@ export function CardMode({
   onToast,
 }: CardModeProps) {
   const [aspect, setAspect] = useState<XhsAspect>("3:4");
-  const [exporting, runExport] = useExportAction(onToast);
+  const [exporting, , runExport] = useExportAction(onToast);
   const cardFont = useStore((s) => s.cardFont);
   const setCardFont = useStore((s) => s.setCardFont);
   const guideTrigger = useStore((s) => s.guideTrigger.card);

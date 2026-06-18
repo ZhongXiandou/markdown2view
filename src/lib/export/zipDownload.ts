@@ -1,4 +1,4 @@
-import { downloadBlob } from '../exportImage'
+import { downloadBlob, sanitizeFilename } from '../exportImage'
 
 export interface ZipEntry {
   filename: string
@@ -9,27 +9,33 @@ export interface ZipEntry {
  * 将多个文件打包为 ZIP 并触发下载（利用 fflate 异步 Web-Worker API 实现非阻塞压缩）。
  */
 export async function downloadAsZip(entries: ZipEntry[], zipName = 'export.zip'): Promise<void> {
+  const safeZipName = sanitizeFilename(zipName)
   try {
     const { zip } = await import('fflate')
 
-    // 检测重名文件并自动追加序号
-    const filenameMap = new Map<string, number>()
+    // 6.7: 以"最终生成名"为 key 校验重名，避免 a.png → a-1.png 与已有 a-1.png 冲突
+    const usedNames = new Set<string>()
     const getUniqueFilename = (original: string): string => {
-      if (!filenameMap.has(original)) {
-        filenameMap.set(original, 0)
-        return original
+      // M5: 先净化路径穿越/特殊字符
+      const safe = sanitizeFilename(original)
+      if (!usedNames.has(safe)) {
+        usedNames.add(safe)
+        return safe
       }
-      const count = filenameMap.get(original)! + 1
-      filenameMap.set(original, count)
 
-      // 在扩展名前插入序号：card-01.png → card-01-1.png
-      const lastDotIndex = original.lastIndexOf('.')
-      if (lastDotIndex === -1) {
-        return `${original}-${count}`
+      const lastDotIndex = safe.lastIndexOf('.')
+      const name = lastDotIndex === -1 ? safe : safe.slice(0, lastDotIndex)
+      const ext = lastDotIndex === -1 ? '' : safe.slice(lastDotIndex)
+
+      // 循环递增直到找到未占用的名字
+      let count = 1
+      let candidate = `${name}-${count}${ext}`
+      while (usedNames.has(candidate)) {
+        count++
+        candidate = `${name}-${count}${ext}`
       }
-      const name = original.slice(0, lastDotIndex)
-      const ext = original.slice(lastDotIndex)
-      return `${name}-${count}${ext}`
+      usedNames.add(candidate)
+      return candidate
     }
 
     const zipData: Record<string, Uint8Array> = {}
@@ -50,7 +56,7 @@ export async function downloadAsZip(entries: ZipEntry[], zipName = 'export.zip')
           reject(err)
         } else {
           const zipBlob = new Blob([zipped], { type: 'application/zip' })
-          downloadBlob(zipBlob, zipName)
+          downloadBlob(zipBlob, safeZipName)
           resolve()
         }
       })
@@ -60,7 +66,7 @@ export async function downloadAsZip(entries: ZipEntry[], zipName = 'export.zip')
     console.error('Failed to create ZIP in worker, falling back to sequential download', err)
     for (let i = 0; i < entries.length; i++) {
       try {
-        downloadBlob(entries[i].blob, entries[i].filename)
+        downloadBlob(entries[i].blob, sanitizeFilename(entries[i].filename))
       } catch (e) {
         console.error(`Failed to download ${entries[i].filename}`, e)
       }

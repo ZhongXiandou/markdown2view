@@ -38,11 +38,17 @@ export function protectCode(md: string): { text: string; store: CodeStore } {
   const store: CodeStore = { entries: [] }
 
   // 1. 块级代码围栏（支持 3 个及以上连续反引号，语言信息取 info 字符串第一个单词）
-  let text = md.replace(/^(`{3,})([^\n]*)\n([\s\S]*?)\n\1\s*$/gm, (_m, _ticks: string, info: string, code: string) => {
+  //    换行设为可选以兼容单行围栏（如 ```code```）：无换行时 info 实为内容，按无 lang 处理
+  let text = md.replace(/^(`{3,})([^\n]*)\n?([\s\S]*?)\n?\1\s*$/gm, (m, _ticks: string, info: string, code: string) => {
+    // 单行围栏（整段匹配不含换行）：info 实际是内容，按无 lang 处理
+    if (!m.includes('\n')) {
+      code = info
+      info = ''
+    }
     const lang = info.trim().split(/\s+/)[0]
     if (lang === 'mermaid') {
       // mermaid 需要后续管线识别并渲染为 SVG，因此不保护
-      return _m
+      return m
     }
     const idx = store.entries.length
     store.entries.push({ type: 'block', code, lang: lang || 'text' })

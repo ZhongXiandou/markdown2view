@@ -44,6 +44,8 @@ export interface BlockRenderResult {
 
 export interface BlockRenderer {
   name: string
+  /** 调度优先级，数字越小越优先匹配；未指定时默认 100。兜底 renderer 应设较大值（如 1000） */
+  priority?: number
   match: (line: string, lines: string[], index: number) => boolean
   render: (
     ctx: BlockRenderContext,
@@ -271,7 +273,7 @@ const readingPathRenderer: BlockRenderer = {
         html += `<section style="display:inline-flex;vertical-align:middle;align-items:center">`
         html += `<section style="display:inline-block;vertical-align:top;width:126px;white-space:normal;text-align:center">`
         html += `<section style="display:flex;justify-content:center;margin-bottom:${spacing[4]}">`
-        html += `<span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:${radius.full};background:${isActive ? t.accent : color.surface};color:${isActive ? color.surface : color.textPrimary};border:1px solid ${isActive ? t.accent : '#dbe3ee'};font-size:${fontSize.xs};font-weight:${fontWeight.black};letter-spacing:${letterSpacing.xl};white-space:nowrap">${leaf(num)}</span>`
+        html += `<span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:${radius.full};background:${isActive ? t.accent : color.surface};color:${isActive ? color.surface : t.accent};border:1px solid ${isActive ? t.accent : '#dbe3ee'};font-size:${fontSize.xs};font-weight:${fontWeight.black};letter-spacing:${letterSpacing.xl};white-space:nowrap">${leaf(num)}</span>`
         html += `</section>`
         html += `<p style="margin:0px;font-size:${fontSize.base};line-height:1.55;color:${isActive ? color.textPrimary : color.inkStrong};font-weight:${fontWeight.extrabold};letter-spacing:${letterSpacing.normal};white-space:normal;word-break:break-all">${leaf(label)}</p>`
         html += `</section>`
@@ -662,6 +664,8 @@ const imgTagRenderer: BlockRenderer = {
 
 const paragraphRenderer: BlockRenderer = {
   name: 'paragraph',
+  // 兜底 renderer：仅当所有专用 renderer 都未命中时才处理，显式标记最低优先级
+  priority: 1000,
   match: () => true,
   render: (ctx, line, lines, i) => {
     const { t, formulaMap } = ctx
@@ -705,6 +709,8 @@ const paragraphRenderer: BlockRenderer = {
 }
 
 export function createDefaultBlockRenderers(): BlockRenderer[] {
+  // 按 priority 升序排列（数字越小越优先匹配），未指定 priority 的默认 100。
+  // 显式排序避免新增 renderer 时因数组顺序错误引入静默 bug。
   return [
     emptyLineRenderer,
     separatorRenderer,
@@ -737,5 +743,5 @@ export function createDefaultBlockRenderers(): BlockRenderer[] {
     imageRenderer,
     imgTagRenderer,
     paragraphRenderer,
-  ]
+  ].sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100))
 }

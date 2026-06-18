@@ -4,7 +4,7 @@
  * Modified by ZhongXiandou/markdown2view contributors.
  */
 
-import { resolveBackground, captureElementInIframeToBlob } from './exportImage'
+import { resolveBackground, captureElementInIframeToBlob, sanitizeFilename } from './exportImage'
 
 export interface PdfExportOptions {
   /** 用于中断导出；取消时 finally 仍会恢复页面原始 display 样式 */
@@ -35,6 +35,7 @@ export async function exportIframeToPdf(
   options: PdfExportOptions = {},
 ) {
   const { signal, onProgress } = options
+  const safeFilename = sanitizeFilename(filename)
   const { jsPDF } = await import('jspdf')
   throwIfAborted(signal)
 
@@ -49,7 +50,6 @@ export async function exportIframeToPdf(
   try {
     for (let i = 0; i < pageNodes.length; i++) {
       throwIfAborted(signal)
-      if (onProgress) onProgress(i + 1, pageNodes.length)
 
       // 只显示当前页，隐藏其他页
       pageNodes.forEach((n, j) => {
@@ -71,8 +71,8 @@ export async function exportIframeToPdf(
 
       // 仅对当前可见的页面节点进行截图，避免截取外层的 margin 和空白区域
       // captureElementInIframeToBlob 在截图时已完成尺寸对齐，返回的 width/height 与截图 1:1
-      const { blob, width, height } = await captureElementInIframeToBlob(iframe, pageNodes[i], { 
-        scale: 3, 
+      const { blob, width, height } = await captureElementInIframeToBlob(iframe, pageNodes[i], {
+        scale: 3,
         type: 'image/jpeg',
         backgroundColor: bgColor
       })
@@ -96,6 +96,9 @@ export async function exportIframeToPdf(
       }
 
       pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h)
+
+      // 6.15: 在当前页成功写入 PDF 后才报告进度，避免失败时仍显示 100%
+      if (onProgress) onProgress(i + 1, pageNodes.length)
     }
   } finally {
     // 恢复所有页面的原始 display 状态（即使取消/报错也要恢复）
@@ -106,7 +109,7 @@ export async function exportIframeToPdf(
 
   throwIfAborted(signal)
   if (pdf) {
-    pdf.save(filename)
+    pdf.save(safeFilename)
   }
 }
 
@@ -117,6 +120,7 @@ export async function exportSinglePageToPdf(
   options: PdfExportOptions = {},
 ) {
   const { signal } = options
+  const safeFilename = sanitizeFilename(filename)
   const { jsPDF } = await import('jspdf')
   throwIfAborted(signal)
 
@@ -130,8 +134,8 @@ export async function exportSinglePageToPdf(
 
   // 仅截取实际内容区域，避免截取外层的留白
   // captureElementInIframeToBlob 返回与截图 1:1 对齐的尺寸
-  const { blob, width, height } = await captureElementInIframeToBlob(iframe, wrapper as HTMLElement, { 
-    scale: 3, 
+  const { blob, width, height } = await captureElementInIframeToBlob(iframe, wrapper as HTMLElement, {
+    scale: 3,
     type: 'image/jpeg',
     backgroundColor: bgColor
   })
@@ -150,7 +154,7 @@ export async function exportSinglePageToPdf(
   })
 
   pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h)
-  pdf.save(filename)
+  pdf.save(safeFilename)
 }
 
 
@@ -160,6 +164,7 @@ export async function exportElementsToPdf(
   filename: string,
   opts?: { width: number; height: number; signal?: AbortSignal; onProgress?: (current: number, total: number) => void },
 ) {
+  const safeFilename = sanitizeFilename(filename)
   const { jsPDF } = await import('jspdf')
   const { domToJpeg } = await import('modern-screenshot')
   const signal = opts?.signal
@@ -169,10 +174,9 @@ export async function exportElementsToPdf(
 
   for (let i = 0; i < elements.length; i++) {
     throwIfAborted(signal)
-    if (onProgress) onProgress(i + 1, elements.length)
-    
+
     const el = elements[i]
-    
+
     const originalDisplay = el.style.display
     if (originalDisplay === 'none') {
       el.style.display = ''
@@ -201,16 +205,19 @@ export async function exportElementsToPdf(
       }
 
       pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h)
+
+      // 6.15: 在当前页成功写入 PDF 后才报告进度
+      if (onProgress) onProgress(i + 1, elements.length)
     } finally {
       if (originalDisplay === 'none') {
         el.style.display = 'none'
       }
     }
   }
-  
+
   throwIfAborted(signal)
   if (pdf) {
-    pdf.save(filename)
+    pdf.save(safeFilename)
   }
 }
 

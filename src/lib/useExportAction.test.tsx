@@ -8,7 +8,7 @@ describe('useExportAction', () => {
     const { result } = renderHook(() => useExportAction(onToast))
 
     await act(async () => {
-      const [, runExport] = result.current
+      const [, , runExport] = result.current
       await runExport(async () => '导出成功')
     })
 
@@ -22,7 +22,7 @@ describe('useExportAction', () => {
     const { result } = renderHook(() => useExportAction(onToast))
 
     await act(async () => {
-      const [, runExport] = result.current
+      const [, , runExport] = result.current
       await runExport(async () => {
         throw new Error('boom')
       })
@@ -39,7 +39,7 @@ describe('useExportAction', () => {
 
     let capturedSignal: AbortSignal | undefined
     const promise = act(async () => {
-      const [, runExport, cancel] = result.current
+      const [, , runExport, cancel] = result.current
       const p = runExport(async ({ signal }) => {
         capturedSignal = signal
         await new Promise((resolve) => setTimeout(resolve, 100))
@@ -63,7 +63,7 @@ describe('useExportAction', () => {
     const { result, unmount } = renderHook(() => useExportAction(onToast))
 
     await act(async () => {
-      const [, runExport] = result.current
+      const [, , runExport] = result.current
       runExport(async () => {
         await new Promise((resolve) => setTimeout(resolve, 100))
         return 'done'

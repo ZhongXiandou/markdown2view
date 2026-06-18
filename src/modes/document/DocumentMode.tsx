@@ -47,6 +47,8 @@ export function DocumentMode({
   onToast,
 }: DocumentModeProps) {
   const guideTrigger = useStore((s) => s.guideTrigger.document)
+  const allowIntranetResources = useStore((s) => s.allowIntranetResources)
+  const sendCredentials = useStore((s) => s.imageHostConfig.sendCredentials ?? false)
   const editorScrollerRef = useRef<HTMLElement | null>(null)
   const previewScrollRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -153,7 +155,7 @@ export function DocumentMode({
     onToast(ok ? '已复制 A4 文档排版指令，可发给 AI 使用' : '复制失败，请重试')
   }
 
-  const [exporting, runExport] = useExportAction(onToast)
+  const [exporting, , runExport] = useExportAction(onToast)
 
   const toolbarActions: ToolbarItem[] = [
     {
@@ -183,7 +185,10 @@ export function DocumentMode({
       tooltip: '实验性功能：文本样式可能与预览存在差异。建议使用 Markdown 编辑内容，用 PDF 导出进行分享和打印',
       onClick: () => runExport(async () => {
         const docxFilename = buildDocumentFilename(rendered.meta.title, contentMarkdown, '.docx')
-        return exportToDocx(blocks, settings, docxFilename)
+        return exportToDocx(blocks, settings, docxFilename, {
+          allowIntranet: allowIntranetResources,
+          sendCredentials,
+        })
       }),
       disabled: exporting,
     },

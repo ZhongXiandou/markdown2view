@@ -11,12 +11,33 @@ import { ensureMathJax } from '@engine/utils/mathRenderer'
 import { ensureMermaid } from '@engine/utils/mermaidRenderer'
 import { fetchImageBuffer, FetchSecurityError, FetchTimeoutError } from './fetchSafe'
 
+/** 导出时图片获取的安全选项（H2/H3/M3） */
+export interface ExportImageSecurityOptions {
+  /** 是否允许加载内网资源（默认 false） */
+  allowIntranet: boolean
+  /** 是否向图床域名发送凭证（默认 false） */
+  sendCredentials: boolean
+}
+
 // docx 库动态导入（避免影响首屏加载体积）
 let docxModule: typeof import('docx') | null = null
 async function getDocx() {
   if (!docxModule) docxModule = await import('docx')
   return docxModule
 }
+
+// docx 类型别名：收敛 any，让 TypeScript 捕获字段名/类型变更
+type DocxModule = typeof import('docx')
+type DocxParagraph = InstanceType<DocxModule['Paragraph']>
+type DocxTextRun = InstanceType<DocxModule['TextRun']>
+type DocxTable = InstanceType<DocxModule['Table']>
+type DocxImageRun = InstanceType<DocxModule['ImageRun']>
+/** 段落子元素：TextRun 或 ImageRun（公式/图片以 ImageRun 嵌入） */
+type DocxRun = DocxTextRun | DocxImageRun
+/** section children：段落或表格 */
+type DocxSectionChild = DocxParagraph | DocxTable
+/** docx ImageRun 的 SVG 嵌入选项（库类型对 type:'svg' 支持不完整，用窄类型替代 any） */
+type SvgImageRunOptions = ConstructorParameters<DocxModule['ImageRun']>[0]
 
 // ================================================================
 // 常量映射
@@ -110,9 +131,9 @@ function parseInlineToRuns(
   sizeHp: number,
   color?: string,
   formulaMap?: FormulaMap,
-): InstanceType<typeof import('docx').TextRun>[] {
+): DocxRun[] {
   const { TextRun, ImageRun } = docxModule!
-  const runs: any[] = []
+  const runs: DocxRun[] = []
   if (!md) return runs
 
   // 先按行内代码拆分（保护代码内容不被进一步解析）
@@ -129,7 +150,7 @@ function parseInlineToRuns(
           transformation: { width: f.width, height: f.height },
           type: 'svg',
           fallback: { type: 'png', data: f.pngData, transformation: { width: f.width, height: f.height } },
-        } as any))
+        } as SvgImageRunOptions))
       } else {
         runs.push(new TextRun({
           text: codeContent,
@@ -212,7 +233,7 @@ function convertHeading(
   return new Paragraph({
     heading: levelMap[level] ?? HeadingLevel.HEADING_3,
     alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
-    spacing: { before: 240, after: 120, line: getLineValue(settings.fontScale), lineRule: 'auto' as any },
+    spacing: { before: 240, after: 120, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
     children: [
       new TextRun({
         text: cleanText,
@@ -404,10 +425,9 @@ async function renderFormula(latex: string, displayMode: boolean): Promise<Formu
 
 /** 把 SVG 字符串光栅化为 PNG ArrayBuffer（2x 超采样保证清晰度） */
 async function svgToPng(svgStr: string, w: number, h: number): Promise<ArrayBuffer | null> {
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
   try {
-    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const i = new Image()
       i.onload = () => resolve(i)
@@ -423,7 +443,6 @@ async function svgToPng(svgStr: string, w: number, h: number): Promise<ArrayBuff
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(img, 0, 0, w, h)
-    URL.revokeObjectURL(url)
 
     const pngBlob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -434,6 +453,9 @@ async function svgToPng(svgStr: string, w: number, h: number): Promise<ArrayBuff
     return await pngBlob.arrayBuffer()
   } catch {
     return null
+  } finally {
+    // 6.1: 无论成功或失败都释放 ObjectURL，防止泄漏
+    URL.revokeObjectURL(url)
   }
 }
 
@@ -460,12 +482,12 @@ async function convertParagraph(
           transformation: { width: info.width, height: info.height },
           type: 'svg',
           fallback: { type: 'png', data: info.pngData, transformation: { width: info.width, height: info.height } },
-        } as any)],
+        } as SvgImageRunOptions)],
       })
     }
   }
 
-  const indent: any = {}
+  const indent: { firstLine?: number } = {}
   if (settings.indentParagraph) {
     // 2em 首行缩进：按字号换算（half-point ÷ 2 = pt，pt × 20 = twip，再 ×2 = 2em）
     indent.firstLine = sizes.body * 20
@@ -473,7 +495,7 @@ async function convertParagraph(
 
   return new Paragraph({
     alignment: AlignmentType.BOTH,
-    spacing: { after: 120, line: getLineValue(settings.fontScale), lineRule: 'auto' as any },
+    spacing: { after: 120, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
     indent,
     children: parseInlineToRuns(block.markdown, font, sizes.body, '333333', formulaMap),
   })
@@ -491,7 +513,7 @@ function convertQuote(
 
   return new Paragraph({
     alignment: AlignmentType.BOTH,
-    spacing: { before: 120, after: 120, line: getLineValue(settings.fontScale), lineRule: 'auto' as any },
+    spacing: { before: 120, after: 120, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
     indent: { left: pxToTwip(24) },
     border: { left: { style: docxModule!.BorderStyle.SINGLE, size: 6, color: '9CA3AF', space: 8 } },
     shading: { fill: 'F9FAFB' },
@@ -543,7 +565,7 @@ async function convertList(
   if (checked) {
     const isChecked = checked[1].toLowerCase() === 'x'
     return new Paragraph({
-      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: 'auto' as any },
+      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
       indent: { left: pxToTwip(24) },
       children: [
         new TextRun({ text: isChecked ? '☑ ' : '☐ ', font, size: sizes.body, bold: true, color: isChecked ? '16A34A' : '9CA3AF' }),
@@ -558,7 +580,7 @@ async function convertList(
   if (ul) {
     return new Paragraph({
       numbering: { reference: 'unordered-list', level },
-      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: 'auto' as any },
+      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
       children: parseInlineToRuns(ul[1], font, sizes.body, '333333', formulaMap),
     })
   }
@@ -566,7 +588,7 @@ async function convertList(
   if (ol) {
     return new Paragraph({
       numbering: { reference: 'ordered-list', level },
-      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: 'auto' as any },
+      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
       children: parseInlineToRuns(ol[2], font, sizes.body, '333333', formulaMap),
     })
   }
@@ -650,24 +672,38 @@ function convertTable(
 // 图片嵌入
 // ================================================================
 
-/** 友好的错误提示 */
+/** 对图片 URL 做脱敏：仅保留 origin + pathname，移除可能含 Token/AK/SK 的查询串 */
+function desensitizeUrl(url: string): string {
+  try {
+    const u = new URL(url)
+    return `${u.origin}${u.pathname}`
+  } catch {
+    // 非 URL 或解析失败：截断到 40 字符，避免泄露完整参数
+    return url.length > 40 ? url.slice(0, 40) + '...' : url
+  }
+}
+
+/** 友好的错误提示（URL 已脱敏，避免泄露预签名 Token / AK/SK） */
 function formatImageError(url: string, err: unknown): string {
+  const safeUrl = desensitizeUrl(url)
   if (err instanceof FetchSecurityError) {
-    return `图片 URL 不安全，仅支持 http/https: ${url}`
+    return `图片 URL 不安全，仅支持 http/https: ${safeUrl}`
   }
   if (err instanceof FetchTimeoutError) {
-    return `获取图片超时: ${url}`
+    return `获取图片超时: ${safeUrl}`
   }
   if (err instanceof Error) {
     return `获取图片失败: ${err.message}`
   }
-  return `获取图片失败: ${url}`
+  return `获取图片失败: ${safeUrl}`
 }
 
 /** image → docx Paragraph */
 async function convertImage(
   markdown: string,
   settings: DocumentSettings,
+  security: ExportImageSecurityOptions,
+  imageCache: Map<string, ArrayBuffer>,
 ): Promise<InstanceType<typeof import('docx').Paragraph>> {
   const { Paragraph, TextRun, ImageRun, AlignmentType } = docxModule!
 
@@ -678,7 +714,15 @@ async function convertImage(
   const contentWidthPx = settings.pageWidth - settings.marginLeft - settings.marginRight
 
   try {
-    const data = await fetchImageBuffer(src)
+    // 6.10: 单次导出内对同一图片 URL 去重，避免重复请求
+    let data = imageCache.get(src)
+    if (!data) {
+      data = await fetchImageBuffer(src, {
+        allowIntranet: security.allowIntranet,
+        credentials: security.sendCredentials ? 'include' : 'omit',
+      })
+      imageCache.set(src, data)
+    }
 
     // 通过 createImageBitmap 获取原始尺寸
     const blob = new Blob([data])
@@ -694,7 +738,7 @@ async function convertImage(
     return new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 120, after: 120 },
-      children: [new ImageRun({ data, transformation: { width: w, height: h } } as any)],
+      children: [new ImageRun({ data, transformation: { width: w, height: h } } as SvgImageRunOptions)],
     })
   } catch (err) {
     // 生产环境可替换为 Sentry 等埋点
@@ -711,8 +755,17 @@ async function convertImage(
 async function convertMermaid(
   markdown: string,
   settings: DocumentSettings,
+  mermaidReady: boolean,
 ): Promise<InstanceType<typeof import('docx').Paragraph>> {
   const { Paragraph, TextRun, ImageRun, AlignmentType } = docxModule!
+
+  // 初始预加载已超时：跳过后续 ensureMermaid() 调用，避免再次挂起 5 秒
+  if (!mermaidReady) {
+    return new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: '[mermaid 图表渲染需联网，本次已跳过]', color: '9CA3AF', italics: true })],
+    })
+  }
 
   // 提取 mermaid 源码（去掉 ```mermaid 和 ``` 围栏）
   const sourceMatch = markdown.match(/```mermaid[ \t]*\r?\n([\s\S]*?)```/)
@@ -777,7 +830,7 @@ async function convertMermaid(
       return new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { before: 120, after: 120 },
-        children: [new ImageRun({ data: pngData, transformation: { width: w, height: h } } as any)],
+        children: [new ImageRun({ data: pngData, transformation: { width: w, height: h } } as SvgImageRunOptions)],
       })
     } finally {
       host.remove()
@@ -829,7 +882,7 @@ function buildFooter(
   font: ReturnType<typeof getFont>,
 ): InstanceType<typeof import('docx').Footer> {
   const { Footer, Paragraph, TextRun, AlignmentType, PageNumber } = docxModule!
-  const children: any[] = []
+  const children: (DocxTextRun | string)[] = []
   let remaining = footerText
 
   while (remaining.length > 0) {
@@ -856,7 +909,7 @@ function buildFooter(
   }
 
   return new Footer({
-    children: [new Paragraph({ children, alignment: AlignmentType.CENTER })],
+    children: [new Paragraph({ children: children as readonly import('docx').ParagraphChild[], alignment: AlignmentType.CENTER })],
   })
 }
 
@@ -867,6 +920,9 @@ function buildFooter(
 async function buildDocument(
   blocks: DocumentBlock[],
   settings: DocumentSettings,
+  mermaidReady: boolean,
+  security: ExportImageSecurityOptions,
+  imageCache: Map<string, ArrayBuffer>,
 ): Promise<InstanceType<typeof import('docx').Document>> {
   const {
     Document, Paragraph, TextRun, PageBreak,
@@ -922,8 +978,8 @@ async function buildDocument(
       case 'code':      return [convertCode(block, settings)]
       case 'list':      return [await convertList(block, settings, formulaMap)]
       case 'rule':      return [convertRule()]
-      case 'image':     return [await convertImage(block.markdown, settings)]
-      case 'mermaid':   return [await convertMermaid(block.markdown, settings)]
+      case 'image':     return [await convertImage(block.markdown, settings, security, imageCache)]
+      case 'mermaid':   return [await convertMermaid(block.markdown, settings, mermaidReady)]
       case 'table': {
         const t = convertTable(block.markdown, settings)
         if (t) {
@@ -940,14 +996,14 @@ async function buildDocument(
   }
 
   // --- 构建 sections ---
-  const sections: any[] = []
+  const sections: import('docx').ISectionOptions[] = []
   const emptyHeader = new (docxModule!.Header)({ children: [new Paragraph('')] })
   const emptyFooter = new (docxModule!.Footer)({ children: [new Paragraph('')] })
 
   if (hasCover && firstPbIdx >= 0) {
     // 封面页 section（无页眉页脚）
     const coverBlocks = preprocessedBlocks.slice(0, firstPbIdx)
-    const coverChildren: any[] = []
+    const coverChildren: DocxSectionChild[] = []
     let isFirstCoverHeading = true
     for (let ci = 0; ci < coverBlocks.length; ci++) {
       const b = coverBlocks[ci]
@@ -976,7 +1032,7 @@ async function buildDocument(
 
     // 正文 section
     const mainBlocks = preprocessedBlocks.slice(firstPbIdx + 1)
-    const mainChildren: any[] = []
+    const mainChildren: DocxSectionChild[] = []
     let firstMainHeadingSeen = false
     for (const b of mainBlocks) {
       if (b.kind === 'pagebreak') {
@@ -995,7 +1051,7 @@ async function buildDocument(
     })
   } else {
     // 单一 section（含页眉页脚）
-    const children: any[] = []
+    const children: DocxSectionChild[] = []
     let firstHeadingSeen = false
     for (const b of preprocessedBlocks) {
       if (b.kind === 'pagebreak') {
@@ -1052,6 +1108,7 @@ export async function exportToDocx(
   blocks: DocumentBlock[],
   settings: DocumentSettings,
   filename: string,
+  security: ExportImageSecurityOptions = { allowIntranet: false, sendCredentials: false },
 ): Promise<string> {
   await getDocx()
 
@@ -1079,7 +1136,9 @@ export async function exportToDocx(
     mermaidReady = false
   }
 
-  const doc = await buildDocument(blocks, settings)
+  // 6.10: 单次导出内图片 URL 去重缓存，避免同一图片重复请求
+  const imageCache = new Map<string, ArrayBuffer>()
+  const doc = await buildDocument(blocks, settings, mermaidReady, security, imageCache)
   const blob = await docxModule!.Packer.toBlob(doc)
   downloadBlob(blob, filename)
 

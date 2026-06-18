@@ -25,7 +25,7 @@ export function useHtmlExports(
   localHtml: string,
   onToast: (message: string) => void,
 ) {
-  const [exporting, runExport] = useExportAction(onToast)
+  const [exporting, , runExport] = useExportAction(onToast)
 
   const handleExport = useCallback(() => {
     const iframe = iframeRef.current

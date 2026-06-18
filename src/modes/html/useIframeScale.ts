@@ -90,6 +90,11 @@ export function useIframeScale(
 
     stabilizeScale()
 
+    // M15: iframe 首次挂载时 contentDocument 可能为 null，
+    // 监听 load 事件确保内容就绪后重新计算缩放
+    const onIframeLoad = () => scheduleResize(0)
+    iframe.addEventListener('load', onIframeLoad)
+
     const ro = new ResizeObserver(() => scheduleResize())
     ro.observe(iframe)
 
@@ -98,6 +103,7 @@ export function useIframeScale(
       timers.forEach(clearTimeout)
       ro.disconnect()
       contentObserver?.disconnect()
+      iframe.removeEventListener('load', onIframeLoad)
     }
   }, [iframeRef, pages, currentPage, refreshKey])
 }
