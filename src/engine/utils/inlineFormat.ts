@@ -1,6 +1,6 @@
 import type { ThemeColors } from '../composables/useTheme'
 import { esc, leaf, lightenHex, pangu } from './helpers'
-import { localImageUrls } from '@/lib/editor/imageStorage'
+import { getCachedImageUrl } from '@/lib/editor/imageStorage'
 import { color, fontSize, fontWeight, neutral, radius, spacing } from '../tokens'
 
 export function inlineFormat(text: string, t: ThemeColors, formulaMap?: Map<string, string>): string {
@@ -104,7 +104,7 @@ export function inlineFormat(text: string, t: ThemeColors, formulaMap?: Map<stri
       let resolvedSrc = src
       if (src.startsWith('img://')) {
         const id = src.replace('img://', '')
-        resolvedSrc = localImageUrls[id] || src
+        resolvedSrc = getCachedImageUrl(id) || src
       }
       if (size) {
         const parts = size.split(/\s+/)

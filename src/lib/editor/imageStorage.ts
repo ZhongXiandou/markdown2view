@@ -191,6 +191,33 @@ export const localImageUrls: Record<string, string> = {}
 // LRU 顺序表：与 localImageUrls 一一对应，记录访问顺序（Map 迭代顺序 = 插入顺序）。
 const localImageUrlOrder = new Map<string, string>()
 
+/**
+ * 安全地读取缓存的图片 URL（只读访问，不更新 LRU 顺序）。
+ * 外部模块应使用此函数替代直接访问 localImageUrls，确保封装性。
+ */
+export function getCachedImageUrl(id: string): string | undefined {
+  return localImageUrls[id]
+}
+
+/**
+ * 构建反向索引：url -> id，用于 O(1) 查找。
+ * 每次调用都基于当前缓存状态实时构建，保证数据一致性。
+ */
+export function getUrlToIdMap(): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const [id, url] of Object.entries(localImageUrls)) {
+    map.set(url, id)
+  }
+  return map
+}
+
+/**
+ * 获取当前缓存中所有图片 ID 列表（主要用于测试与诊断）。
+ */
+export function getAllCachedImageIds(): string[] {
+  return Object.keys(localImageUrls)
+}
+
 function revokeObjectUrl(url: string): void {
   if (url.startsWith('blob:')) {
     URL.revokeObjectURL(url)
