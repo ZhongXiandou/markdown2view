@@ -19,12 +19,16 @@ export function useIframeScale(
 
     let cancelled = false
     let contentObserver: ResizeObserver | null = null
-    const timers: ReturnType<typeof setTimeout>[] = []
+    let iframeObserver: ResizeObserver | null = null
+    // 统一用一个 debounce timer + 一个 RAF handle，避免多次调用时堆积
+    let debounceTimer: number | null = null
+    let rafHandle: number | null = null
 
     const handleResize = () => {
       if (cancelled) return
+      rafHandle = null
       const doc = iframe.contentDocument
-      if (!doc) return
+      if (!doc || !doc.body) return
 
       const viewW = iframe.clientWidth
       const viewH = iframe.clientHeight
@@ -61,51 +65,64 @@ export function useIframeScale(
       }
     }
 
+    // 防抖调度：每次新调用会取消上一次尚未执行的 timer/RAF，
+    // 防止加载期间尺寸抖动造成的队列堆积，避免阻塞点击事件。
     const scheduleResize = (delay = 0) => {
-      const timer = setTimeout(() => requestAnimationFrame(handleResize), delay)
-      timers.push(timer)
+      if (debounceTimer !== null) {
+        clearTimeout(debounceTimer)
+        debounceTimer = null
+      }
+      if (rafHandle !== null) {
+        cancelAnimationFrame(rafHandle)
+        rafHandle = null
+      }
+      debounceTimer = window.setTimeout(() => {
+        if (cancelled) return
+        if (rafHandle !== null) return
+        rafHandle = requestAnimationFrame(handleResize)
+      }, delay)
     }
 
     const observeContent = () => {
       contentObserver?.disconnect()
       const doc = iframe.contentDocument
-      if (!doc) return
+      if (!doc || !doc.body) return
 
-      contentObserver = new ResizeObserver(() => scheduleResize())
+      contentObserver = new ResizeObserver(() => scheduleResize(50))
       contentObserver.observe(doc.documentElement)
       contentObserver.observe(doc.body)
       const page = firstPreviewPage(doc)
       if (page) contentObserver.observe(page)
 
-      doc.fonts?.ready.then(() => scheduleResize()).catch(() => {})
+      doc.fonts?.ready.then(() => scheduleResize(100)).catch(() => {})
       doc.querySelectorAll('img').forEach((img) => {
-        if (!img.complete) img.addEventListener('load', () => scheduleResize(), { once: true })
+        if (!img.complete) img.addEventListener('load', () => scheduleResize(100), { once: true })
       })
     }
 
-    const stabilizeScale = () => {
-      observeContent()
-      ;[0, 100, 400].forEach(scheduleResize)
-    }
-
-    stabilizeScale()
+    observeContent()
+    ;[0, 100, 400].forEach(scheduleResize)
 
     // M15: iframe 首次挂载时 contentDocument 可能为 null，
     // 监听 load 事件确保内容就绪后重新计算缩放。
     // 若 iframe 在 effect 运行前已加载完成（如 StrictMode），立即补一次重算。
-    const onIframeLoad = () => scheduleResize(0)
+    const onIframeLoad = () => {
+      observeContent()
+      scheduleResize(0)
+    }
     iframe.addEventListener('load', onIframeLoad)
     if (iframe.contentDocument?.readyState === 'complete') {
       scheduleResize(0)
     }
 
-    const ro = new ResizeObserver(() => scheduleResize())
-    ro.observe(iframe)
+    iframeObserver = new ResizeObserver(() => scheduleResize(20))
+    iframeObserver.observe(iframe)
 
     return () => {
       cancelled = true
-      timers.forEach(clearTimeout)
-      ro.disconnect()
+      if (debounceTimer !== null) clearTimeout(debounceTimer)
+      if (rafHandle !== null) cancelAnimationFrame(rafHandle)
+      iframeObserver?.disconnect()
       contentObserver?.disconnect()
       iframe.removeEventListener('load', onIframeLoad)
     }
