@@ -9,7 +9,7 @@ export interface DemoContents {
   html: string
 }
 
-export const DEMO_VERSION = 1
+export const DEMO_VERSION = 2
 
 const FALLBACK_MARKDOWN = '# markdown2view\n\n正在加载示例内容，或直接在左侧输入 Markdown。'
 const FALLBACK_HTML = '<main style="padding:32px;font-family:sans-serif">正在加载示例 HTML，或直接粘贴 AI 生成的 HTML。</main>'
