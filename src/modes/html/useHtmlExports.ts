@@ -117,6 +117,62 @@ export function useHtmlExports(
     })
   }, [iframeRef, pages, htmlTitle, onToast, runExport])
 
+  const handleExportPptx = useCallback(() => {
+    const iframe = iframeRef.current
+    const doc = iframe?.contentDocument
+    if (!doc) {
+      onToast('预览尚未就绪')
+      return
+    }
+
+    runExport(async ({ signal }) => {
+      await withScaleReset(doc, async () => {
+        const title = htmlTitle || 'html'
+        if (pages.length > 0) {
+          const { exportIframeToPptx } = await import('@/lib/exportPpt')
+          await exportIframeToPptx(
+            iframe,
+            pages.map(p => p.node),
+            title,
+            { signal }
+          )
+        } else {
+          const { exportSinglePageToPptx } = await import('@/lib/exportPpt')
+          await exportSinglePageToPptx(iframe, title, { signal })
+        }
+      })
+      return 'PPT 导出成功'
+    })
+  }, [iframeRef, pages, htmlTitle, onToast, runExport])
+
+  const handleExportPptxEditable = useCallback(() => {
+    const iframe = iframeRef.current
+    const doc = iframe?.contentDocument
+    if (!doc) {
+      onToast('预览尚未就绪')
+      return
+    }
+
+    runExport(async ({ signal }) => {
+      await withScaleReset(doc, async () => {
+        const title = htmlTitle || 'html'
+        if (pages.length > 0) {
+          const { exportIframeToEditablePptx } = await import('@/lib/exportPptEditable')
+          await exportIframeToEditablePptx(
+            iframe,
+            pages.map(p => p.node),
+            title,
+            { signal }
+          )
+        } else {
+          const { exportSinglePageToEditablePptx } = await import('@/lib/exportPptEditable')
+          await exportSinglePageToEditablePptx(iframe, title, { signal })
+        }
+      })
+      return '可编辑 PPT 导出成功'
+    })
+  }, [iframeRef, pages, htmlTitle, onToast, runExport])
+
   const handleExportSource = useCallback(() => {
     const title = htmlTitle || 'html'
     exportHtmlSource(localHtml, `${title}.html`)
@@ -128,6 +184,8 @@ export function useHtmlExports(
     handleExportCurrentPage,
     handleExportPagesZip,
     handleExportPdf,
+    handleExportPptx,
+    handleExportPptxEditable,
     handleExportSource,
   }
 }

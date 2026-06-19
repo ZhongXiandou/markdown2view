@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { ToolbarItem } from '@/components/layout/PreviewToolbar'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { Button } from '@/components/ui/Button'
-import { Play, RotateCcw, Book, ImageIcon, Package, Download, Printer } from '@/components/ui/Icon'
+import { Play, RotateCcw, Book, ImageIcon, Package, Download, Printer, Presentation } from '@/components/ui/Icon'
 import type { PageInfo } from '@/lib/multipage'
 
 interface UseHtmlToolbarOptions {
@@ -23,6 +23,8 @@ interface UseHtmlToolbarOptions {
   onExportSource: () => void
   onExportPng: () => void
   onExportPdf: () => void
+  onExportPptx: () => void
+  onExportPptxEditable: () => void
 }
 
 /**
@@ -47,6 +49,8 @@ export function useHtmlToolbar(opts: UseHtmlToolbarOptions): ToolbarItem[] {
     onExportSource,
     onExportPng,
     onExportPdf,
+    onExportPptx,
+    onExportPptxEditable,
   } = opts
 
   const hasPagination = pages.length > 1 || expectedPageCount > 1
@@ -173,6 +177,26 @@ export function useHtmlToolbar(opts: UseHtmlToolbarOptions): ToolbarItem[] {
       className: 'shadow-sm',
     })
 
+    items.push({
+      id: 'exportPptx',
+      icon: <Presentation size={14} />,
+      label: exporting ? '导出中…' : UI_LABELS.toolbar.exportPptx.label,
+      tooltip: UI_LABELS.toolbar.exportPptx.tooltip,
+      onClick: onExportPptx,
+      disabled: exporting,
+      variant: 'primary',
+      className: 'shadow-sm',
+    })
+
+    items.push({
+      id: 'exportPptxEditable',
+      icon: <Presentation size={14} />,
+      label: exporting ? '导出中…' : UI_LABELS.toolbar.exportPptxEditable.label,
+      tooltip: UI_LABELS.toolbar.exportPptxEditable.tooltip,
+      onClick: onExportPptxEditable,
+      disabled: exporting,
+    })
+
     return items
   }, [
     hasPagination,
@@ -193,6 +217,8 @@ export function useHtmlToolbar(opts: UseHtmlToolbarOptions): ToolbarItem[] {
     onExportSource,
     onExportPng,
     onExportPdf,
+    onExportPptx,
+    onExportPptxEditable,
     onChangePage,
   ])
 }

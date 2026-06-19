@@ -92,6 +92,8 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     handleExportCurrentPage,
     handleExportPagesZip,
     handleExportPdf,
+    handleExportPptx,
+    handleExportPptxEditable,
     handleExportSource,
   } = useHtmlExports(iframeRef, pages, currentPage, htmlTitle, localHtml, onToast)
 
@@ -157,6 +159,8 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     onExportSource: handleExportSource,
     onExportPng: handleExport,
     onExportPdf: handleExportPdf,
+    onExportPptx: handleExportPptx,
+    onExportPptxEditable: handleExportPptxEditable,
   })
 
   return (
