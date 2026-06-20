@@ -918,6 +918,101 @@ function buildFooter(
   })
 }
 
+/** 解析 <gov-header> 标签属性 */
+function parseGovHeader(markdown: string): Record<string, string> | null {
+  const match = markdown.match(/<gov-header\b([^>]*)>(?:[\s\S]*?)<\/gov-header>/)
+  if (!match) return null
+  const attrsStr = match[1]
+  const attrs: Record<string, string> = {}
+  const attrRegex = /(\w[\w-]*)\s*=\s*"([^"]*)"/g
+  let m: RegExpExecArray | null
+  while ((m = attrRegex.exec(attrsStr)) !== null) {
+    attrs[m[1]] = m[2]
+  }
+  return attrs
+}
+
+/** 将公文头部转换为 docx 段落数组 */
+function convertGovHeader(
+  attrs: Record<string, string>,
+  _settings: DocumentSettings,
+): DocxParagraph[] {
+  const font = getFont('fangsong')
+  const red = 'C0202C'
+  const paragraphs: DocxParagraph[] = []
+  const issuer = attrs.issuer || ''
+  const docNo = attrs['doc-no'] || attrs.docNo || ''
+  const classification = attrs.classification || ''
+  const signer = attrs.signer || ''
+
+  // 发文机关名称（红色大字居中）
+  if (issuer) {
+    paragraphs.push(new (docxModule!.Paragraph)({
+      alignment: docxModule!.AlignmentType.CENTER,
+      spacing: { before: 480, after: 120 },
+      children: [new (docxModule!.TextRun)({
+        text: issuer,
+        font: { eastAsia: 'SimSun', ascii: 'SimSun', hAnsi: 'SimSun' },
+        size: 54,
+        bold: true,
+        color: red,
+      })],
+    }))
+  }
+
+  // 发文字号（居中）
+  if (docNo) {
+    paragraphs.push(new (docxModule!.Paragraph)({
+      alignment: docxModule!.AlignmentType.CENTER,
+      spacing: { before: 0, after: 120 },
+      children: [new (docxModule!.TextRun)({
+        text: docNo,
+        font,
+        size: 24,
+        color: '000000',
+      })],
+    }))
+  }
+
+  // 红色分隔线（用段落底边框模拟）
+  paragraphs.push(new (docxModule!.Paragraph)({
+    spacing: { before: 0, after: 240 },
+    border: { bottom: { style: 'single', size: 24, color: red, space: 1 } },
+    children: [],
+  }))
+
+  // 密级（左对齐，红色）
+  if (classification) {
+    paragraphs.push(new (docxModule!.Paragraph)({
+      alignment: docxModule!.AlignmentType.LEFT,
+      spacing: { before: 0, after: 0 },
+      children: [new (docxModule!.TextRun)({
+        text: `${classification}★保密期限`,
+        font: { eastAsia: 'SimSun', ascii: 'SimSun', hAnsi: 'SimSun' },
+        size: 24,
+        bold: true,
+        color: red,
+      })],
+    }))
+  }
+
+  // 签发人（右对齐）
+  if (signer) {
+    paragraphs.push(new (docxModule!.Paragraph)({
+      alignment: docxModule!.AlignmentType.RIGHT,
+      spacing: { before: 0, after: 0 },
+      children: [new (docxModule!.TextRun)({
+        text: `签发人：${signer}`,
+        font,
+        size: 24,
+        color: '000000',
+      })],
+    }))
+  }
+
+  return paragraphs
+}
+
 // ================================================================
 // 主构建器
 // ================================================================
@@ -992,6 +1087,13 @@ async function buildDocument(
           const spacerBefore = new Paragraph({ spacing: { before: 160, after: 0 }, children: [] })
           const spacerAfter = new Paragraph({ spacing: { before: 0, after: 160 }, children: [] })
           return [spacerBefore, t, spacerAfter]
+        }
+        return [new Paragraph({ children: [new TextRun({ text: block.markdown, font, size: sizes.body })] })]
+      }
+      case 'component': {
+        const govAttrs = parseGovHeader(block.markdown)
+        if (govAttrs) {
+          return convertGovHeader(govAttrs, settings)
         }
         return [new Paragraph({ children: [new TextRun({ text: block.markdown, font, size: sizes.body })] })]
       }
