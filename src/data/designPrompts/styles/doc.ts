@@ -197,4 +197,39 @@ export const docStyles: RawDesignStyle[] = [
    - 文档容器：长文用定宽阅读区；多页输出可使用 \`<section class="page">\`。
   【布局原则】适合产品方案、技术规格、项目需求；重点是让团队一眼看懂范围、状态和下一步。`,
     },
+  {
+    id: "gov-doc",
+    name: "公文排版",
+    category: "文档知识/公文文档",
+    accent: "#c0202c",
+    description: "符合 GB/T 9704-2012 标准的党政机关公文排版，红头文件、发文字号、密级标注、仿宋正文",
+    previewHtml: `<div style="font-family: 'FangSong', 'STFangsong', serif; background: #ffffff; padding: 18px 20px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box;">
+  <div style="text-align: left; font-size: 11px; color: #c0202c; font-weight: bold; margin-bottom: 4px;">绝密★保密期限</div>
+  <div style="text-align: center; font-size: 22px; font-weight: bold; color: #c0202c; font-family: 'STSong', 'SimSun', serif; letter-spacing: 4px; margin-bottom: 6px;">XX市人民政府办公厅</div>
+  <div style="text-align: center; font-size: 12px; color: #000; margin-bottom: 4px;">市政发〔2026〕第1号</div>
+  <div style="height: 3px; background: #c0202c; margin-bottom: 14px;"></div>
+  <div style="text-align: center; font-size: 16px; font-weight: bold; color: #000; font-family: 'STSong', 'SimSun', serif; margin-bottom: 12px;">关于推进数字经济发展的通知</div>
+  <div style="font-size: 11px; color: #000; line-height: 1.8; text-indent: 2em; text-align: justify;">各区人民政府，市政府各委、办、局：为深入贯彻数字经济发展战略，现就有关事项通知如下...</div>
+  <div style="margin-top: auto; text-align: right; font-size: 11px; color: #000; padding-top: 10px;">XX市人民政府办公厅<br>2026年6月20日</div>
+</div>`,
+    style: `【视觉主题】符合 GB/T 9704-2012 标准的党政机关公文排版
+  【色彩系统】
+   - 基础底色：纯白 #ffffff
+   - 红头颜色：公文红 #c0202c（发文机关名称与分隔线）
+   - 正文颜色：纯黑 #000000
+   - 密级标注：红色 #c0202c
+  【排版规则】
+   - 字体：发文机关名称用宋体加粗红色；正文使用仿宋 GB2312 / FangSong，三号字。
+   - 红头：发文机关名称居中，字号较大，下方红色分隔线。
+   - 发文字号：居中，置于红头下方、分隔线上方。
+   - 密级与紧急程度：左上角顶格，红色加粗。
+   - 标题：居中，二号宋体加粗。
+   - 主送机关：左顶格，后跟全角冒号。
+   - 正文：首行缩进两字，两端对齐，行距 28-30 磅。
+   - 落款：发文机关署名与日期右对齐，距正文两行。
+  【组件特征】
+   - 使用 <gov-header> 标签渲染公文头部（红头 + 发文字号 + 密级 + 签发人）。
+   - 公文头部独占首页顶部，正文紧随其后。
+  【布局原则】严格遵循公文格式规范，适合打印、归档、正式发文。`,
+  },
 ];

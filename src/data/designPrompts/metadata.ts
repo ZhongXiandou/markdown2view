@@ -63,4 +63,5 @@ export const STYLE_METADATA: Record<string, DesignStyleMetadata> = {
   "data-journalism": meta("报告", "数据", "data-journalism"),
   "academic-paper": meta("文档", "编辑", "academic-paper"),
   "product-spec": meta("文档", "数据", "product-spec"),
+  "gov-doc": meta("文档", "编辑", "gov-document"),
 };
