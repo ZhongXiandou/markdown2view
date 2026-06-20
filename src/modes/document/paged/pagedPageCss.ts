@@ -153,5 +153,31 @@ export function buildPageCss(settings: DocumentSettings, docTitle: string): stri
   width: 100%;
   height: auto;
 }
+
+/* ===== 公文头部样式 ===== */
+.document-content .gov-header {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+.document-content .gov-header + .document-block {
+  break-before: avoid;
+}
+
+/* ===== 公文正文专用类（配合 gov-doc 风格）===== */
+.document-content.document-gov-doc {
+  font-family: 'FangSong', 'STFangsong', serif !important;
+}
+.document-content.document-gov-doc .document-block[data-kind='heading'] h1 {
+  text-align: center;
+  font-family: 'STSong', 'SimSun', serif;
+  font-size: 22pt;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+.document-content.document-gov-doc .document-block[data-kind='paragraph'] p {
+  text-indent: 2em;
+  text-align: justify;
+  line-height: 1.9;
+}
 `
 }
