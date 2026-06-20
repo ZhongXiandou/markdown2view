@@ -27,6 +27,7 @@ import { Engage_DA02 } from '@engine/editor-components/Engage_DA02'
 import { Timeline_DA01 } from '@engine/editor-components/Timeline_DA01'
 import { Slider_DA01 } from '@engine/editor-components/Slider_DA01'
 import { Img_DA01 } from '@engine/editor-components/Img_DA01'
+import { GovHeader_DA01 } from '@engine/editor-components/GovHeader_DA01'
 
 export interface BlockRenderContext {
   t: ThemeColors
@@ -662,6 +663,16 @@ const imgTagRenderer: BlockRenderer = {
   },
 }
 
+const govHeaderRenderer: BlockRenderer = {
+  name: 'govHeader',
+  match: (line) => /^<gov-header\b/.test(line),
+  render: (ctx, _line, lines, i) => {
+    const block = extractBlock(lines, i, /^<gov-header\b([^>]*)>(.*)$/, /<\/gov-header>/)
+    if (!block) return null
+    return { html: GovHeader_DA01.render(block.attrs, block.body, ctx.t), next: block.next, warning: block.warning }
+  },
+}
+
 const paragraphRenderer: BlockRenderer = {
   name: 'paragraph',
   // 兜底 renderer：仅当所有专用 renderer 都未命中时才处理，显式标记最低优先级
@@ -742,6 +753,7 @@ export function createDefaultBlockRenderers(): BlockRenderer[] {
     orderedListRenderer,
     imageRenderer,
     imgTagRenderer,
+    govHeaderRenderer,
     paragraphRenderer,
   ].sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100))
 }
