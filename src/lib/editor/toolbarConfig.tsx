@@ -232,24 +232,11 @@ export const toolbarGroups: ToolbarGroup[] = [
         shortcut: 'Alt+R',
         action: (view) => wrapBlockFormat(view, '<slider>', '</slider>'),
       },
-    ],
-  },
-  {
-    id: 'gov-components',
-    name: '公文组件',
-    type: 'dropdown',
-    items: [
       {
         id: 'gov-header',
         label: '公文头部 <gov-header>',
         shortcut: 'Alt+G',
         action: (view) => wrapBlockFormat(view, '<gov-header issuer="发文机关名称" doc-no="发文字号">', '</gov-header>'),
-      },
-      {
-        id: 'page-break',
-        label: '强制分页 <page-break>',
-        shortcut: 'Alt+P',
-        action: (view) => insertDirectBlock(view, '<page-break/>'),
       },
     ],
   },
