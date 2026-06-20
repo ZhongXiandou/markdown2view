@@ -12,7 +12,7 @@ export const UI_LABELS = {
     exportLongImage: { label: '导出长图', tooltip: '将预览内容导出为长图 PNG' },
     exportPdf: { label: '导出 PDF', tooltip: '高保真导出 PDF，视觉完全一致' },
     exportPptx: { label: '导出全图 PPT', tooltip: '高保真导出 PPT，每页为完整图片，视觉完全一致' },
-    exportPptxEditable: { label: '导出可编辑 PPT', tooltip: '实验性功能：导出为可编辑文本框，复杂样式（渐变、毛玻璃、动画等）会丢失，适合二次编辑草稿' },
+    exportPptxEditable: { label: '导出可编辑 PPT', tooltip: '实验性功能：导出为可编辑文本框，字体、复杂样式（渐变、毛玻璃、动画等）可能会丢失，适合二次编辑草稿' },
     exportPng: { label: '导出 PNG', tooltip: '将预览内容导出为 PNG 图片' },
     exportCurrentPage: { label: '导出当前页', tooltip: '将当前页面导出为 PNG 图片' },
     exportZip: { label: '打包 ZIP', tooltip: '将所有页面打包为 ZIP 文件下载' },

@@ -14,7 +14,6 @@
  */
 
 import { sanitizeFilename } from './exportImage'
-import { getFontFamilyCss } from './fonts'
 import type PptxGenJS from 'pptxgenjs'
 
 export interface PptExportOptions {
@@ -40,32 +39,42 @@ export function colorToHex(color: string): string | null {
   return `${r}${g}${b}`
 }
 
-/** 检测文本是否包含中文字符 */
+/** 检测文本是否包含 CJK（中日韩统一表意文字）字符 */
 export function containsChinese(text: string): boolean {
+  // \u4e00-\u9fa5: 中文简/繁体字
   return /[\u4e00-\u9fa5]/.test(text)
 }
 
 /**
- * 从 CSS font-family 字符串中提取第一个可用的字体名称（去除引号和空格）。
- * 复用项目中 fonts.ts 的字体配置格式。
+ * 检测文本是否包含 CJK 字符（中文/日文/韩文等），
+ * 用于确定在 PowerPoint 中应该使用 East Asian 主题字体还是 Latin 主题字体。
  */
-function extractFirstFont(cssValue: string): string {
-  return cssValue.split(',')[0].replace(/['"]/g, '').trim()
+export function containsCJK(text: string): boolean {
+  // \u3000-\u303f: 中文标点符号
+  // \u3040-\u30ff: 日文平假名/片假名
+  // \u4e00-\u9fa5: 中文简/繁体字
+  // \uac00-\ud7af: 韩文 Hangul
+  return /[\u3000-\u303f\u3040-\u30ff\u4e00-\u9fa5\uac00-\ud7af]/.test(text)
 }
 
 /**
  * 获取适合文本内容的字体。
- * 复用项目中 fonts.ts 的字体支持范围（宋体 / 仿宋 / 黑体）：
- * - 中文文本：使用 songti 配置的第一个字体（SimSun），确保所有系统可读
- * - 英文文本：直接使用从 CSS 提取的原字体
  *
- * @param originalFontFamily 从 CSS 获取的原始字体名称
- * @param text 要显示的文本内容
- * @returns 适合的字体名称
+ * 核心问题：pptxgenjs 4.x 不嵌入字体文件，只在 PPTX XML 中声明字体名。
+ * 从 CSS 提取的字体名（如 "Inter"、"system-ui"）在 PowerPoint 中很可能不存在，
+ * 导致字体回退失败，文本显示为方块/乱码符号。
+ *
+ * 解决方案：所有文本都返回空字符串（不设置 fontFace），
+ * 让 PowerPoint 根据 lang 属性使用主题默认字体。
+ * - 含 CJK 的文本 lang="zh-CN" → 使用主题 East Asian 字体（等线/微软雅黑/PingFang SC）
+ * - 其他文本 lang="en-US" → 使用主题 Latin 字体（Calibri/Arial）
+ *
+ * @param _originalFontFamily 从 CSS 获取的原始字体名称（不使用）
+ * @param _text 文本内容（不使用，保留函数签名以兼容旧代码）
+ * @returns 空字符串，表示不设置 fontFace，使用主题默认字体
  */
-export function getSuitableFontFamily(originalFontFamily: string, text: string): string {
-  if (!containsChinese(text)) return originalFontFamily
-  return extractFirstFont(getFontFamilyCss('songti'))
+export function getSuitableFontFamily(_originalFontFamily: string, _text: string): string {
+  return ''
 }
 
 interface ExtractedText {
@@ -219,6 +228,13 @@ function writeSlide(
 
   for (const el of elements) {
     if (el.type === 'text') {
+      // 关键：不设置 fontFace（使用 PowerPoint 主题默认字体），仅设置 lang。
+      // - 含 CJK 的文本 lang="zh-CN" → PowerPoint 使用主题 East Asian 字体渲染
+      //   （Windows: 等线/微软雅黑, macOS: PingFang SC, Linux: Noto Sans CJK）
+      // - 其他文本 lang="en-US" → PowerPoint 使用主题 Latin 字体渲染（Calibri/Arial）
+      // 不设置 fontFace 的原因：从 CSS 提取的字体名（如 "Inter"、"system-ui"）
+      // 在 PowerPoint 中通常不存在，会导致字体回退失败，文本显示为符号。
+      const lang = containsCJK(el.text) ? 'zh-CN' : 'en-US'
       slide.addText(el.text, {
         x: el.x,
         y: el.y,
@@ -229,6 +245,7 @@ function writeSlide(
         bold: el.bold,
         align: el.align,
         fontFace: el.fontFamily,
+        lang,
         valign: 'top',
       })
     } else if (el.type === 'image') {

@@ -21,6 +21,9 @@ pnpm-debug.log*
 # TypeScript 构建产物
 *.tsbuildinfo
 
+# 调试输出
+scripts/_pptx-debug-out/
+
 # Excluded folders
 .agent/skills/
 .mimocode/

@@ -22,7 +22,7 @@ vi.mock('./exportImage', () => ({
   sanitizeFilename: (name: string) => name,
 }))
 
-import { extractSlideElements, colorToHex, containsChinese, getSuitableFontFamily } from './exportPptEditable'
+import { extractSlideElements, colorToHex, containsChinese, containsCJK, getSuitableFontFamily } from './exportPptEditable'
 
 /** 给元素设置 getBoundingClientRect 返回值 */
 function mockRect(el: Element, rect: { left: number; top: number; width: number; height: number }) {
@@ -190,39 +190,10 @@ describe('extractSlideElements', () => {
     document.body.removeChild(slide)
   })
 
-  it('中文文本自动切换为 SimSun 字体', () => {
+  it('所有文本 fontFamily 置空，使用 PowerPoint 主题默认字体', () => {
     const slide = document.createElement('section')
     const p = document.createElement('p')
-    p.textContent = '纯前端、零后端的 Markdown / HTML 多场景排版'
-    slide.appendChild(p)
-    document.body.appendChild(slide)
-
-    mockRect(slide, { left: 0, top: 0, width: 1600, height: 900 })
-    mockRect(p, { left: 50, top: 50, width: 600, height: 80 })
-    mockComputed(window, {
-      fontSize: '24px',
-      color: 'rgb(0, 0, 0)',
-      fontWeight: '400',
-      textAlign: 'left',
-      fontFamily: 'Inter, sans-serif',
-      backgroundColor: 'transparent',
-    })
-
-    const { elements } = extractSlideElements(slide, window, 10, 5.625)
-    const textEl = elements.find((e) => e.type === 'text')
-    expect(textEl).toBeDefined()
-    if (textEl && textEl.type === 'text') {
-      expect(textEl.fontFamily).toBe('SimSun')
-      expect(textEl.text).toBe('纯前端、零后端的 Markdown / HTML 多场景排版')
-    }
-
-    document.body.removeChild(slide)
-  })
-
-  it('纯英文文本保持原字体', () => {
-    const slide = document.createElement('section')
-    const p = document.createElement('p')
-    p.textContent = 'Hello World'
+    p.textContent = 'Hello World, 你好世界'
     slide.appendChild(p)
     document.body.appendChild(slide)
 
@@ -241,14 +212,17 @@ describe('extractSlideElements', () => {
     const textEl = elements.find((e) => e.type === 'text')
     expect(textEl).toBeDefined()
     if (textEl && textEl.type === 'text') {
-      expect(textEl.fontFamily).toBe('Inter')
+      // 所有文本 fontFamily 置空，让 PowerPoint 使用主题默认字体
+      // 避免 CSS 中 "Inter" / "system-ui" 等自定义字体在 PowerPoint 中不存在导致乱码
+      expect(textEl.fontFamily).toBe('')
+      expect(textEl.text).toBe('Hello World, 你好世界')
     }
 
     document.body.removeChild(slide)
   })
 })
 
-describe('中文字体工具函数', () => {
+describe('语言检测与字体工具函数', () => {
   describe('containsChinese', () => {
     it('检测中文字符', () => {
       expect(containsChinese('你好')).toBe(true)
@@ -259,17 +233,26 @@ describe('中文字体工具函数', () => {
     })
   })
 
-  describe('getSuitableFontFamily', () => {
-    it('中文文本统一使用项目 songti 配置的第一个字体', () => {
-      expect(getSuitableFontFamily('Inter', '你好')).toBe('SimSun')
-      expect(getSuitableFontFamily('Arial', 'Hello 世界')).toBe('SimSun')
-      expect(getSuitableFontFamily('SimSun', '你好')).toBe('SimSun')
-      expect(getSuitableFontFamily('Microsoft YaHei', '测试')).toBe('SimSun')
+  describe('containsCJK', () => {
+    it('检测 CJK 字符（中日韩）', () => {
+      expect(containsCJK('你好世界')).toBe(true)
+      expect(containsCJK('こんにちは')).toBe(true)
+      expect(containsCJK('안녕하세요')).toBe(true)
+      expect(containsCJK('Hello World')).toBe(false)
+      expect(containsCJK('Hello 世界')).toBe(true)
+      expect(containsCJK('')).toBe(false)
     })
+  })
 
-    it('英文文本保持原字体', () => {
-      expect(getSuitableFontFamily('Inter', 'Hello World')).toBe('Inter')
-      expect(getSuitableFontFamily('Arial', '123 Test')).toBe('Arial')
+  describe('getSuitableFontFamily', () => {
+    it('所有文本都返回空字符串，统一使用 PowerPoint 主题默认字体', () => {
+      // 不设置 fontFace，由 lang 属性引导 PowerPoint 选择正确的主题字体
+      // 避免 CSS 自定义字体在 PowerPoint 中不存在导致乱码
+      expect(getSuitableFontFamily('Inter', '你好')).toBe('')
+      expect(getSuitableFontFamily('Inter', 'Hello World')).toBe('')
+      expect(getSuitableFontFamily('SimSun', '测试')).toBe('')
+      expect(getSuitableFontFamily('Arial', '123')).toBe('')
+      expect(getSuitableFontFamily('', '')).toBe('')
     })
   })
 })

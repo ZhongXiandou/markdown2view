@@ -1,20 +1,12 @@
-merge: 完成合并并重构 A4 文档/卡片分页逻辑与预览滚动修复
+fix(html): 可编辑PPT修复中英文双语显示，lang属性驱动主题字体
 
-详细说明：
-1. A4 文档预览与导出方案升级：
-   - 移除原先基于 DOM 粗略分割高度并用 html2canvas + jspdf 手动转 PDF 的方案。
-   - 重构为基于 Paged.js 在 iframe 中进行高保真物理分页渲染，并调用浏览器原生打印机制无损导出 PDF，使得导出的 PDF 文字可选中、体积极小、排版更精准。
-   - 在 DocumentMode 中接入 usePagedPreview 并挂载 iframeRef，实时显示分页加载状态与总页数。
+根本原因：pptxgenjs 默认 lang="en-US"，PowerPoint 用 Latin 字体渲染所有文本，
+CJK 字符无法显示；从 CSS 提取的字体名 (Inter/system-ui) 在 PPT 中不存在，
+英文也显示异常。
 
-2. 预览区域滚动及功能栏定位修复：
-   - 修复 A4 预览页面宽于容器发生左右横移时，顶部操作栏跟随一起横向移出屏幕的体验问题。
-   - 重构 DocumentMode 预览容器布局，将外层设为 overflow-hidden，将真正的滚动逻辑（overflow-auto）及 previewScrollRef 下放到内部的 document-preview-area 容器。
-   - 实现了滚动只发生在预览页层，顶部工具栏固定保持不动的效果。
-
-3. 编辑器工具栏支持快捷「插入分页」：
-   - CodeEditor 属性增强，支持透传 mode 参数给 EditorToolbar。
-   - 在 A4 文档模式和卡片模式下的 Markdown 编辑器工具栏中，统一插入符合现有扁平图标风格的折角纸张 icon。
-   - 点击该按钮会在当前光标处快捷插入 \n<page-break/>\n。
-   - 在 cardModel.ts 中对小红书卡片引擎进行了重构，支持解析 <page-break/> 并在 paginateBlocks 逻辑中进行物理强行卡片切页与标签过滤。
-
-4. 新增 pagedjs 的验证 demo (poc/pagedjs/index.html)。
+修复方案：
+- 所有文本统一不设置 fontFace，让 PowerPoint 使用主题默认字体
+- 新增 containsCJK() 判断中/日/韩文，含 CJK 用 lang="zh-CN"，其他用 "en-US"
+- 按钮 tooltip 标注"仅支持中英文显示"
+- .gitignore 排除调试输出目录 scripts/_pptx-debug-out/
+- 更新开发经验文档 9.3 节，补充三轮踩坑过程与最终方案
