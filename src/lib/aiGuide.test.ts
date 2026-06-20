@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide } from './aiGuide'
+import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide, buildGovDocAiGuide, buildTechDocAiGuide } from './aiGuide'
 
 describe('AI Guide Prompts', () => {
   it('should generate WeChat Article guide with WeChat components', () => {
@@ -43,5 +43,46 @@ describe('AI Guide Prompts', () => {
     expect(guide).toContain('chips:')
     expect(guide).toContain('每张图只承载一个重点')
     expect(guide).toContain('分页建议')
+  })
+})
+
+describe('buildGovDocAiGuide', () => {
+  it('应包含公文头部标签说明', () => {
+    const guide = buildGovDocAiGuide()
+    expect(guide).toContain('<gov-header>')
+    expect(guide).toContain('issuer')
+    expect(guide).toContain('doc-no')
+    expect(guide).toContain('classification')
+    expect(guide).toContain('signer')
+  })
+
+  it('应包含公文排版规范', () => {
+    const guide = buildGovDocAiGuide()
+    expect(guide).toContain('仿宋')
+    expect(guide).toContain('红头')
+    expect(guide).toContain('发文字号')
+  })
+
+  it('应禁止使用社交互动组件', () => {
+    const guide = buildGovDocAiGuide()
+    expect(guide).toContain('<breaking>')
+    expect(guide).toContain('不要使用')
+  })
+})
+
+describe('buildTechDocAiGuide', () => {
+  it('应包含封面页元数据字段说明', () => {
+    const guide = buildTechDocAiGuide()
+    expect(guide).toContain('文档编号')
+    expect(guide).toContain('版本号')
+    expect(guide).toContain('编写者')
+    expect(guide).toContain('审核者')
+    expect(guide).toContain('机密等级')
+  })
+
+  it('应包含封面生成选项说明', () => {
+    const guide = buildTechDocAiGuide()
+    expect(guide).toContain('封面')
+    expect(guide).toContain('可选')
   })
 })

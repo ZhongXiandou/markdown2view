@@ -262,6 +262,110 @@ export function buildDocumentAiGuide(): string {
   ].join("\n");
 }
 
+const GOV_DOC_HEADER_SECTION = `## 三、公文头部写法（<gov-header> 标签）
+
+公文必须在正文开始前使用 <gov-header> 标签渲染红头文件头部。标签属性：
+
+- issuer（必填）：发文机关名称，如"XX市人民政府办公厅"
+- doc-no（可选）：发文字号，如"市政发〔2026〕第1号"
+- classification（可选）：密级，可选值：绝密 / 机密 / 秘密
+- urgency（可选）：紧急程度，可选值：特急 / 加急
+- signer（可选）：签发人姓名（仅上行文需要）
+
+示例：
+
+\`\`\`
+<gov-header issuer="XX市人民政府办公厅" doc-no="市政发〔2026〕第1号" classification="机密" signer="张三"></gov-header>
+\`\`\`
+
+公文头部要求：
+- 发文机关名称会以红色大字居中显示，下方有红色分隔线。
+- 密级与紧急程度显示在左上角，签发人显示在右上角。
+- 所有属性除 issuer 外均为可选，根据实际情况填写。`
+
+const GOV_DOC_RULES_SECTION = `## 四、公文排版规范（重要）
+
+1. **必须使用 <gov-header> 标签**渲染公文头部，不要用普通标题或表格模拟红头文件。
+2. 公文标题（正文第一个一级标题）居中显示，使用二号宋体加粗。
+3. 主送机关左顶格，后跟全角冒号，如"各区人民政府，市政府各委、办、局："
+4. 正文使用仿宋字体，首行缩进两字，两端对齐。
+5. 落款（发文机关署名 + 日期）右对齐，距正文两行。
+6. **不要使用**长图文里的社交互动组件（如 <breaking>、<timeline>、<engage> 等），保持公文严肃性。不要直接混入 \`<script>\`、事件处理器属性（如 \`onclick\`）、\`javascript:\` 链接或未列出的任意 HTML 标签。
+7. 附录前必须插入 <page-break/>。
+8. 直接输出可粘贴的 Markdown 正文，不要有任何多余的解释。`
+
+export function buildGovDocAiGuide(): string {
+  return [
+    "# 公文排版 Markdown 语法指令",
+    "",
+    "你是一位专业的党政机关公文编辑与排版助手。请把我提供的素材整理成符合 GB/T 9704-2012 标准的正式公文，",
+    "并严格使用标准 Markdown 及以下排版规范输出，确保格式规范、用语严谨、适合打印和归档。",
+    "",
+    DOCUMENT_META_SECTION,
+    "",
+    DOCUMENT_STANDARD_SECTION,
+    "",
+    GOV_DOC_HEADER_SECTION,
+    "",
+    MATH_SECTION,
+    "",
+    GOV_DOC_RULES_SECTION,
+    "",
+  ].join("\n");
+}
+
+const TECH_DOC_COVER_SECTION = `## 三、封面页写法（技术文档）
+
+技术文档可选择是否需要封面页。如需封面，在第一个 <page-break/> 之前只写一个一级标题和一个信息表格。
+
+封面页元数据字段（全部可选，根据实际情况填写）：
+
+- 文档编号：如 PRD-2026-001
+- 版本号：如 V1.0
+- 编写者 / 编写日期
+- 审核者 / 审核日期
+- 文档状态：草稿 / 评审中 / 已发布 / 已归档
+- 机密等级：绝密 / 机密 / 内部公开 / 授权公开 / 公开
+
+封面页参考格式：
+
+\`\`\`
+# 技术文档标题
+
+| 文档编号 | PRD-2026-001 | 版本号 | V1.0 |
+| --- | --- | --- | --- |
+| 编写 | 编写人 | 编写日期 | 2026-06-20 |
+| 审核 | 审核人 | 审核日期 | 2026-06-21 |
+| 文档状态 | 草稿 | 机密等级 | 内部公开 |
+
+<page-break/>
+\`\`\`
+
+封面页要求：
+- 一级标题只能有一个，作为文档主标题。
+- 信息表格采用四列双键值对格式，字段可根据实际情况增减。
+- 不需要封面时，直接从正文开始，不要插入 <page-break/>。`
+
+export function buildTechDocAiGuide(): string {
+  return [
+    "# 技术文档排版 Markdown 语法指令",
+    "",
+    "你是一位专业的技术文档编辑与排版助手。请把我提供的素材整理成适合技术评审、归档和交付的正式技术文档，",
+    "并严格使用标准 Markdown 及以下排版规范输出，确保结构清晰、术语准确、版面端庄。",
+    "",
+    DOCUMENT_META_SECTION,
+    "",
+    DOCUMENT_STANDARD_SECTION,
+    "",
+    TECH_DOC_COVER_SECTION,
+    "",
+    MATH_SECTION,
+    "",
+    DOCUMENT_RULES_SECTION,
+    "",
+  ].join("\n");
+}
+
 export function buildCardAiGuide(aspect: string): string {
   const platformName = "小红书";
   return [
