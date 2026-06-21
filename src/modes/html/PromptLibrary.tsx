@@ -11,9 +11,11 @@ import { StyleThumbnail } from './StyleThumbnail'
 import { CustomInstructionEditor } from './CustomInstructionEditor'
 import { useStore, type RenderMode, type CustomInstruction } from '@/lib/store'
 import { UI_LABELS } from '@/lib/uiLabels'
-import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide, buildGovDocAiGuide, buildTechDocAiGuide } from '@/lib/aiGuide'
+import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide, buildGovDocAiGuide, buildTechDocAiGuide, type DocCoverMetadata, type GovDocMetadata } from '@/lib/aiGuide'
 import { copyText } from '@/lib/clipboard'
 import { Book } from '@/components/ui/Icon'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 
 interface PromptLibraryProps {
   mode: RenderMode
@@ -99,6 +101,39 @@ const NON_HTML_BUILTIN_PROMPTS: Record<string, DesignStyle[]> = {
   ]
 }
 
+type MetaFieldType = 'text' | 'date' | 'select'
+
+interface MetaFieldDef {
+  key: string
+  label: string
+  type: MetaFieldType
+  placeholder?: string
+  options?: string[]
+}
+
+/** 正式文档/技术文档封面元数据字段定义 */
+const DOC_COVER_FIELDS: MetaFieldDef[] = [
+  { key: 'docNo', label: '文档编号', type: 'text', placeholder: '如 PRD-2026-001' },
+  { key: 'version', label: '版本号', type: 'text', placeholder: '如 V1.0' },
+  { key: 'author', label: '编写者', type: 'text', placeholder: '编写人姓名' },
+  { key: 'authorDate', label: '编写日期', type: 'date' },
+  { key: 'reviewer', label: '审核者', type: 'text', placeholder: '审核人姓名' },
+  { key: 'reviewDate', label: '审核日期', type: 'date' },
+  { key: 'status', label: '文档状态', type: 'select', options: ['', '草稿', '评审中', '已发布', '已归档'] },
+  { key: 'classification', label: '机密等级', type: 'select', options: ['', '绝密', '机密', '内部公开', '授权公开', '公开'] },
+]
+
+/** 公文元数据字段定义 */
+const GOV_DOC_FIELDS: MetaFieldDef[] = [
+  { key: 'issuer', label: '发文机关', type: 'text', placeholder: 'XX市人民政府办公厅' },
+  { key: 'docNo', label: '发文字号', type: 'text', placeholder: '如 市政发〔2026〕第1号' },
+  { key: 'classification', label: '密级', type: 'select', options: ['', '绝密', '机密', '秘密'] },
+  { key: 'urgency', label: '紧急程度', type: 'select', options: ['', '特急', '加急'] },
+  { key: 'signer', label: '签发人', type: 'text', placeholder: '签发人姓名（上行文）' },
+  { key: 'recipient', label: '主送机关', type: 'text', placeholder: '如 各区人民政府，市政府各委、办、局' },
+  { key: 'publishDate', label: '成文日期', type: 'date' },
+]
+
 export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLibraryProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('builtin')
   const [outputType, setOutputType] = useState<OutputType>('幻灯片')
@@ -109,6 +144,22 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
   const [showEditor, setShowEditor] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [cloneFromStyle, setCloneFromStyle] = useState<DesignStyle | null>(null)
+
+  // 文档模式：封面元数据与公文元数据
+  const [docCoverMeta, setDocCoverMeta] = useState<DocCoverMetadata>({ enabled: true })
+  const [govDocMeta, setGovDocMeta] = useState<GovDocMetadata>({})
+  const [showDocMetaPanel, setShowDocMetaPanel] = useState(false)
+  const [docMetaSubTab, setDocMetaSubTab] = useState<'cover' | 'gov'>('cover')
+
+  // 计算已填写的封面元数据字段数 (排除 enabled 属性)
+  const filledCoverFieldsCount = useMemo(() => {
+    return Object.entries(docCoverMeta).filter(([key, val]) => key !== 'enabled' && Boolean(val)).length
+  }, [docCoverMeta])
+
+  // 计算已填写的公文元数据字段数
+  const filledGovFieldsCount = useMemo(() => {
+    return Object.entries(govDocMeta).filter(([, val]) => Boolean(val)).length
+  }, [govDocMeta])
 
   const customInstructions = useStore((s) => s.customInstructions)
   const removeCustomInstruction = useStore((s) => s.removeCustomInstruction)
@@ -146,6 +197,29 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
     if (success && onToast) {
       onToast('复制指令成功')
     }
+  }
+
+  /** 根据当前元数据配置，重新生成文档模式的指令文本 */
+  const getCustomizedStyle = (style: DesignStyle): DesignStyle => {
+    if (mode !== 'document') return style
+    if (style.id === 'document-default') {
+      return { ...style, style: buildDocumentAiGuide(docCoverMeta) }
+    }
+    if (style.id === 'document-tech') {
+      return { ...style, style: buildTechDocAiGuide(docCoverMeta) }
+    }
+    if (style.id === 'document-gov') {
+      return { ...style, style: buildGovDocAiGuide(govDocMeta) }
+    }
+    return style
+  }
+
+  const handleDocCoverFieldChange = (key: string, value: string) => {
+    setDocCoverMeta((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleGovDocFieldChange = (key: string, value: string) => {
+    setGovDocMeta((prev) => ({ ...prev, [key]: value }))
   }
 
   return (
@@ -254,6 +328,150 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
               </div>
             )}
 
+            {/* 文档模式：封面元数据与公文元数据配置面板 */}
+            {mode === 'document' && (
+              <div className="border-b border-slate-200 bg-white px-6 py-4">
+                <button
+                  onClick={() => setShowDocMetaPanel(!showDocMetaPanel)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="h-4 w-1 rounded-full bg-[var(--accent)]" />
+                      <span className="text-sm font-semibold text-slate-800">封面与元数据选项</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                        docCoverMeta.enabled !== false 
+                          ? 'bg-blue-50 text-blue-700 border border-blue-100' 
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        📄 正式封面: {docCoverMeta.enabled !== false ? '启用' : '禁用'}
+                        {filledCoverFieldsCount > 0 && ` (已填${filledCoverFieldsCount}项)`}
+                      </span>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                        filledGovFieldsCount > 0 
+                          ? 'bg-red-50 text-red-700 border border-red-100' 
+                          : 'bg-slate-100 text-slate-400 border border-slate-200'
+                      }`}>
+                        🏛️ 严肃公文: {filledGovFieldsCount > 0 ? `已填${filledGovFieldsCount}项` : '无元数据'}
+                      </span>
+                    </div>
+                  </div>
+                  <svg
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className={`text-slate-400 transition-transform ${showDocMetaPanel ? 'rotate-180' : ''}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {showDocMetaPanel && (
+                  <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
+                    {/* 子 Tab 头部 */}
+                    <div className="flex border-b border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setDocMetaSubTab('cover')}
+                        className={`pb-2 text-[13px] font-semibold transition-colors relative mr-6 ${
+                          docMetaSubTab === 'cover'
+                            ? 'text-[var(--accent)]'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        📄 封面元数据
+                        {filledCoverFieldsCount > 0 && (
+                          <span className="ml-1 rounded bg-blue-50 px-1 text-[10px] text-blue-700 border border-blue-100 font-bold">
+                            {filledCoverFieldsCount}
+                          </span>
+                        )}
+                        {docMetaSubTab === 'cover' && (
+                          <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent)]" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDocMetaSubTab('gov')}
+                        className={`pb-2 text-[13px] font-semibold transition-colors relative ${
+                          docMetaSubTab === 'gov'
+                            ? 'text-[var(--accent)]'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        🏛️ 公文元数据
+                        {filledGovFieldsCount > 0 && (
+                          <span className="ml-1 rounded bg-red-50 px-1 text-[10px] text-red-700 border border-red-100 font-bold">
+                            {filledGovFieldsCount}
+                          </span>
+                        )}
+                        {docMetaSubTab === 'gov' && (
+                          <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent)]" />
+                        )}
+                      </button>
+                    </div>
+
+                    {/* 子 Tab 内容 */}
+                    <div className="transition-all duration-200">
+                      {docMetaSubTab === 'cover' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-medium text-slate-400">
+                              适用于「正式文档」「极简报告」，控制是否生成独立封面页
+                            </span>
+                            <label className="flex items-center gap-1.5 text-[12px] text-slate-600 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={docCoverMeta.enabled !== false}
+                                onChange={(e) => setDocCoverMeta((prev) => ({ ...prev, enabled: e.target.checked }))}
+                                className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
+                              />
+                              生成封面页
+                            </label>
+                          </div>
+                          {docCoverMeta.enabled !== false ? (
+                            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+                              {DOC_COVER_FIELDS.map((field) => (
+                                <MetaFieldInput
+                                  key={field.key}
+                                  field={field}
+                                  value={(docCoverMeta as Record<string, unknown>)[field.key] as string ?? ''}
+                                  onChange={(v) => handleDocCoverFieldChange(field.key, v)}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded-lg bg-slate-50 p-3 text-center border border-dashed border-slate-200">
+                              <p className="text-xs text-slate-500 italic">已关闭封面页生成，指令将告知 AI 直接从正文开始。</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {docMetaSubTab === 'gov' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-medium text-slate-400">
+                              适用于「严肃公文」，红头文件专用的发文机关、字号、密级等属性
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+                            {GOV_DOC_FIELDS.map((field) => (
+                              <MetaFieldInput
+                                key={field.key}
+                                field={field}
+                                value={(govDocMeta as Record<string, unknown>)[field.key] as string ?? ''}
+                                onChange={(v) => handleGovDocFieldChange(field.key, v)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex-1 overflow-y-auto p-6 lg:p-8">
               <div className="mx-auto space-y-10">
                 {groupedStyles.length === 0 ? (
@@ -292,8 +510,33 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
                             <p className="mb-4 flex-1 text-[13px] leading-relaxed text-slate-600">
                               {s.description}
                             </p>
+                            {mode === 'document' && (
+                              <div className="mt-2 mb-3 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600 border border-slate-100 flex flex-col gap-0.5">
+                                {s.id === 'document-gov' ? (
+                                  <>
+                                    <div className="flex items-center gap-1 font-semibold text-red-700">
+                                      <span>🏛️ 关联：公文元数据</span>
+                                      <span className="ml-auto rounded bg-red-50 border border-red-100 px-1 text-[9px] font-bold text-red-700">
+                                        {filledGovFieldsCount > 0 ? `已填 ${filledGovFieldsCount} 项` : '未填写'}
+                                      </span>
+                                    </div>
+                                    <span className="text-slate-400">复制后将生成红头属性：&lt;gov-header&gt;</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="flex items-center gap-1 font-semibold text-blue-700">
+                                      <span>📄 关联：封面元数据</span>
+                                      <span className="ml-auto rounded bg-blue-50 border border-blue-100 px-1 text-[9px] font-bold text-blue-700">
+                                        {docCoverMeta.enabled !== false ? `已启用 (${filledCoverFieldsCount}项)` : '未启用'}
+                                      </span>
+                                    </div>
+                                    <span className="text-slate-400">复制后将生成封面表格与分页</span>
+                                  </>
+                                )}
+                              </div>
+                            )}
                             <button
-                              onClick={() => onCopy(s)}
+                              onClick={() => onCopy(getCustomizedStyle(s))}
                               className="accent-bg mt-auto flex w-full items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-semibold text-white opacity-90 transition-all hover:opacity-100 hover:shadow-md hover:ring-2 hover:ring-[var(--accent)] hover:ring-offset-2 active:scale-[0.98] active:opacity-80 shadow-sm"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -301,7 +544,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
                             </button>
                             <button
                               onClick={() => {
-                                setCloneFromStyle(s)
+                                setCloneFromStyle(getCustomizedStyle(s))
                                 setEditingId(null)
                                 setActiveTab('custom')
                                 setShowEditor(true)
@@ -410,5 +653,32 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
         )}
       </aside>
     </>
+  )
+}
+
+function MetaFieldInput({ field, value, onChange }: { field: MetaFieldDef; value: string; onChange: (v: string) => void }) {
+  const baseClass = 'w-full h-8 rounded-md border border-slate-200 bg-white px-2.5 text-[12px] text-slate-700 outline-none transition-colors focus:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/30'
+
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] font-medium text-slate-600">{field.label}</span>
+      {field.type === 'select' ? (
+        <Select value={value} onChange={(e) => onChange(e.target.value)} className={baseClass}>
+          {field.options?.map((opt) => (
+            <option key={opt} value={opt}>{opt || '（不填）'}</option>
+          ))}
+        </Select>
+      ) : field.type === 'date' ? (
+        <Input type="date" value={value} onChange={(e) => onChange(e.target.value)} className={baseClass} />
+      ) : (
+        <Input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          className={baseClass}
+        />
+      )}
+    </label>
   )
 }
