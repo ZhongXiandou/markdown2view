@@ -491,7 +491,7 @@ const blockFormulaRenderer: BlockRenderer = {
     if (singleMatch) {
       const formula = singleMatch[1].trim()
       return {
-        html: `<section style="text-align:center;margin:${spacing[10]} 0;overflow-x:auto;color:${neutral.gray1000}">${resolveSvg(formula)}</section>`,
+        html: `<section style="overflow-x:auto;margin:${spacing[10]} 0;color:${neutral.gray1000}"><section style="display:inline-block;white-space:nowrap;text-align:center;max-width:none!important">${resolveSvg(formula)}</section></section>`,
         next: i + 1,
       }
     }
@@ -504,7 +504,7 @@ const blockFormulaRenderer: BlockRenderer = {
     if (j < lines.length) j++
     const formula = formulaLines.join('\n').trim()
     return {
-      html: `<section style="text-align:center;margin:${spacing[10]} 0;overflow-x:auto;color:${neutral.gray1000}">${resolveSvg(formula)}</section>`,
+      html: `<section style="overflow-x:auto;margin:${spacing[10]} 0;color:${neutral.gray1000}"><section style="display:inline-block;white-space:nowrap;text-align:center;max-width:none!important">${resolveSvg(formula)}</section></section>`,
       next: j,
     }
   },

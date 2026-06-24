@@ -82,17 +82,18 @@ export async function renderMath(formula: string, displayMode: boolean = false):
       .replace(/currentColor/g, '#333')
       // 微信不兼容 xlink 命名空间，统一改为现代 SVG
       .replace(/xlink:href/g, 'href')
-      // 强行设 display:inline（MathJax 可能通过样式表注入 display:block）
+      // 强行设 display:inline + max-width:none!important
+      // 公众号编辑器会注入 max-width:100% 压缩 SVG，导致公式变形；内联 !important 对抗
       .replace(
         /(<svg\b[^>]*style=")([^"]*)(")/i,
         (_m: string, before: string, styles: string, after: string) => {
           const cleaned = styles.replace(/display:\s*block\s*;?/gi, '')
-          return `${before}display:inline;${cleaned}${after}`
+          return `${before}display:inline;max-width:none!important;${cleaned}${after}`
         },
       )
       .replace(
         /<svg\b(?![^>]*style=")/i,
-        '<svg style="display:inline"',
+        '<svg style="display:inline;max-width:none!important"',
       )
   } catch {
     return ''
