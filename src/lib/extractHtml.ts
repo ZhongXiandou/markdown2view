@@ -148,17 +148,22 @@ body {
   body { margin: 0 !important; }
 }
 @media screen {
+  /* 多页模式：body 作为定位容器，高度撑满视口，隐藏溢出；
+     当前可见页由 JS 设置 position:absolute + translate(-50%,-50%) 居中缩放 */
   body:has(.page, .slide, .card) {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow: hidden; /* 防止拉伸后的轻微滚动条 */
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: transparent;
+  }
+  html:has(.page, .slide, .card) {
+    overflow: hidden;
   }
   .page, .slide, .card {
-    margin: auto !important;
-    transform: scale(var(--auto-scale, 1));
-    transform-origin: center center;
+    flex-shrink: 0;
+    /* transform 由 JS 在当前页上内联设置（包含 scale + translate 居中），非当前页 display:none */
   }
 }
 </style>

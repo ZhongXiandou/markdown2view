@@ -8,8 +8,8 @@ export interface PageInfo {
   node: HTMLElement
 }
 
-// 页面选择器：section.page, section.slide, section.card
-const PAGE_SELECTOR = 'section.page, section.slide, section.card'
+// 页面选择器：任何带 .page / .slide / .card 类的元素（section、div、article 等）
+const PAGE_SELECTOR = '.page, .slide, .card'
 
 /**
  * 从 iframe document 中检测多页节点。
