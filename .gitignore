@@ -31,3 +31,6 @@ scripts/_pptx-debug-out/
 public/vendor/html-anything
 public/vendor/r-markdown
 
+# 敏感测试文件，禁止提交
+public/html-test.html
+
