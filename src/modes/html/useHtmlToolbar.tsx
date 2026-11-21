@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { ToolbarItem } from '@/components/layout/PreviewToolbar'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { Button } from '@/components/ui/Button'
-import { Play, RotateCcw, Book, ImageIcon, Package, Download, Printer, Presentation } from '@/components/ui/Icon'
+import { Play, RotateCcw, Book, ImageIcon, Package, Download, Printer, Presentation, Clipboard } from '@/components/ui/Icon'
 import type { PageInfo } from '@/lib/multipage'
 
 interface UseHtmlToolbarOptions {
@@ -21,6 +21,7 @@ interface UseHtmlToolbarOptions {
   onExportCurrentPage: () => void
   onExportZip: () => void
   onExportSource: () => void
+  onCopyWechat: () => void
   onExportPng: () => void
   onExportPdf: () => void
   onExportPptx: () => void
@@ -47,6 +48,7 @@ export function useHtmlToolbar(opts: UseHtmlToolbarOptions): ToolbarItem[] {
     onExportCurrentPage,
     onExportZip,
     onExportSource,
+    onCopyWechat,
     onExportPng,
     onExportPdf,
     onExportPptx,
@@ -155,6 +157,15 @@ export function useHtmlToolbar(opts: UseHtmlToolbarOptions): ToolbarItem[] {
       onClick: onExportSource,
     })
 
+    items.push({
+      id: 'copyWechat',
+      icon: <Clipboard size={14} />,
+      label: UI_LABELS.toolbar.copyWechat.label,
+      tooltip: UI_LABELS.toolbar.copyWechat.tooltip,
+      onClick: onCopyWechat,
+      disabled: exporting,
+    })
+
     if (!hasPages) {
       items.push({
         id: 'exportPng',
@@ -215,6 +226,7 @@ export function useHtmlToolbar(opts: UseHtmlToolbarOptions): ToolbarItem[] {
     onExportCurrentPage,
     onExportZip,
     onExportSource,
+    onCopyWechat,
     onExportPng,
     onExportPdf,
     onExportPptx,

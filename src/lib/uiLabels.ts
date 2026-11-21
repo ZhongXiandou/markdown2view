@@ -10,6 +10,7 @@ export const UI_LABELS = {
     copyHtml: { label: 'HTML源码', tooltip: '复制带内联样式的 HTML 源码' },
     copyRichText: { label: '复制富文本', tooltip: '复制富文本，可直接粘贴到微信等编辑器，排版不丢失' },
     exportLongImage: { label: '导出长图', tooltip: '将预览内容导出为长图 PNG' },
+    copyWechat: { label: '复制到公众号', tooltip: '把画布内容转成内联样式的富文本，可粘贴到公众号编辑器；颜色、字体、边框等会保留，多栏布局会按单列重排' },
     exportPdf: { label: '导出 PDF', tooltip: '高保真导出 PDF，视觉完全一致' },
     exportPptx: { label: '导出全图 PPT', tooltip: '高保真导出 PPT，每页为完整图片，视觉完全一致' },
     exportPptxEditable: { label: '导出可编辑 PPT', tooltip: '实验性功能：导出为可编辑文本框，字体、复杂样式（渐变、毛玻璃、动画等）可能会丢失，适合二次编辑草稿' },

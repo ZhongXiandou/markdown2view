@@ -3,7 +3,9 @@ import { useExportAction } from '@/lib/useExportAction'
 import { downloadBlob, resolveBackground, captureElementInIframeToBlob } from '@/lib/exportImage'
 import { downloadAsZip, type ZipEntry } from '@/lib/export/zipDownload'
 import { exportHtmlSource } from '@/lib/exportSource'
-import { firstContentElement, withScaleReset, withVisiblePage } from './htmlModeUtils'
+import { firstContentElement, nextFrame, withScaleReset, withVisiblePage } from './htmlModeUtils'
+import { writeRichClipboard } from '@/lib/clipboard'
+import { toWechatHtmlFromDocument } from '@/lib/export/wechatHtml'
 import type { PageInfo } from '@/lib/multipage'
 
 async function captureIframeElement(iframe: HTMLIFrameElement, element: HTMLElement) {
@@ -173,6 +175,28 @@ export function useHtmlExports(
     })
   }, [iframeRef, pages, htmlTitle, onToast, runExport])
 
+  // 复制到公众号：从渲染后的 iframe 文档读取计算样式并内联
+  const handleCopyWechat = useCallback(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) {
+      onToast('预览尚未就绪')
+      return
+    }
+    runExport(async () => {
+      const ok = await withScaleReset(doc, async () => {
+        // 多页模式下非当前页是 display:none，复制时需要全部显示（withScaleReset 结束时会恢复）
+        pages.forEach((p) => {
+          p.node.style.display = ''
+        })
+        await nextFrame()
+        const html = toWechatHtmlFromDocument(doc)
+        return writeRichClipboard(html, doc.body.innerText)
+      })
+      if (!ok) throw new Error('浏览器拒绝写入剪贴板')
+      return '已复制，可粘贴到公众号编辑器（布局按单列重排）'
+    })
+  }, [iframeRef, pages, onToast, runExport])
+
   const handleExportSource = useCallback(() => {
     const title = htmlTitle || 'html'
     exportHtmlSource(localHtml, `${title}.html`)
@@ -187,5 +211,6 @@ export function useHtmlExports(
     handleExportPptx,
     handleExportPptxEditable,
     handleExportSource,
+    handleCopyWechat,
   }
 }

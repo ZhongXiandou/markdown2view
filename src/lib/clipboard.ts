@@ -103,8 +103,11 @@ export async function copyRichText(contentEl: HTMLElement, fontFamily?: string, 
   await convertSvgsToPng(compiledEl, imageHostConfig)
   const fontCss = fontFamily ? `;font-family:${fontFamily}` : ''
   const html = `<section style="background-color:#fff;color:#333;padding:0${fontCss}">${compiledEl.innerHTML}</section>`
-  const text = compiledEl.innerText
+  return writeRichClipboard(html, compiledEl.innerText)
+}
 
+/** 把一段 HTML 以富文本（text/html + text/plain）写入剪贴板，失败时回退到选区复制 */
+export async function writeRichClipboard(html: string, text: string): Promise<boolean> {
   try {
     const item = new ClipboardItem({
       'text/html': new Blob([html], { type: 'text/html' }),

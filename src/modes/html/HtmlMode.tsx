@@ -95,6 +95,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     handleExportPptx,
     handleExportPptxEditable,
     handleExportSource,
+    handleCopyWechat,
   } = useHtmlExports(iframeRef, pages, currentPage, htmlTitle, localHtml, onToast)
 
   // One-way scroll sync: editor → iframe
@@ -157,6 +158,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     onExportCurrentPage: handleExportCurrentPage,
     onExportZip: handleExportPagesZip,
     onExportSource: handleExportSource,
+    onCopyWechat: handleCopyWechat,
     onExportPng: handleExport,
     onExportPdf: handleExportPdf,
     onExportPptx: handleExportPptx,
