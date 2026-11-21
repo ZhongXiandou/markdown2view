@@ -166,6 +166,11 @@ export function CodeEditor({
     }
   }
 
+  // 用 ref 指向最新的处理函数：扩展列表不必因图床配置或回调变化而重建
+  // （重建会触发 CodeMirror reconfigure，输入过程中有丢字风险）
+  const pasteOrDropRef = useRef(handlePasteOrDrop)
+  pasteOrDropRef.current = handlePasteOrDrop
+
   // 快捷键 keymap 绑定
   const customKeymap = useMemo(() => {
     return keymap.of(editorShortcuts)
@@ -180,10 +185,10 @@ export function CodeEditor({
 
     const eventHandlers = EditorView.domEventHandlers({
       paste: (event, view) => {
-        handlePasteOrDrop(event, view)
+        pasteOrDropRef.current(event, view)
       },
       drop: (event, view) => {
-        handlePasteOrDrop(event, view)
+        pasteOrDropRef.current(event, view)
       },
     })
 
@@ -192,7 +197,7 @@ export function CodeEditor({
       exts.push(customKeymap)
     }
     return exts
-  }, [language, codeLangs, customKeymap, imageHostConfig])
+  }, [language, codeLangs, customKeymap])
 
   return (
     <div className="flex h-full flex-col">

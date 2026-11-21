@@ -25,7 +25,21 @@ function footerToContent(template: string): string {
   return pieces.length ? pieces.join(' ') : '""'
 }
 
-export function buildPageCss(settings: DocumentSettings, docTitle: string): string {
+/** 分页样式实际用到的设置项：收窄类型，调用方的 useMemo 依赖才能与之一一对应 */
+export type PageCssSettings = Pick<
+  DocumentSettings,
+  | 'pageWidth'
+  | 'pageHeight'
+  | 'marginTop'
+  | 'marginRight'
+  | 'marginBottom'
+  | 'marginLeft'
+  | 'headerLeft'
+  | 'headerRight'
+  | 'footerText'
+>
+
+export function buildPageCss(settings: PageCssSettings, docTitle: string): string {
   const { pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft } = settings
   const headerLeft = settings.headerLeft || docTitle || 'markdown2view'
   const headerRight = settings.headerRight || ''

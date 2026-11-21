@@ -117,14 +117,19 @@ export function DocumentMode({
         centerTitle: settings.centerTitle,
         indentParagraph: settings.indentParagraph,
       }, mermaidMap, onToast),
-    [blocks, colors, settings.fontFamily, settings.fontScale, settings.centerTitle, settings.indentParagraph, mermaidMap],
+    [blocks, colors, settings.fontFamily, settings.fontScale, settings.centerTitle, settings.indentParagraph, mermaidMap, onToast],
   )
 
   // @page 分页样式（随页面/页边距/页眉页脚/页码设置变化）
   // 注意：只依赖页面相关设置，避免字体微调触发整篇重排
+  const { pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft, headerLeft, headerRight, footerText } = settings
   const pageCss = useMemo(
-    () => buildPageCss(settings, rendered.meta.title),
-    [settings.pageWidth, settings.pageHeight, settings.marginTop, settings.marginRight, settings.marginBottom, settings.marginLeft, settings.headerLeft, settings.headerRight, settings.footerText, rendered.meta.title],
+    () =>
+      buildPageCss(
+        { pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft, headerLeft, headerRight, footerText },
+        rendered.meta.title,
+      ),
+    [pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft, headerLeft, headerRight, footerText, rendered.meta.title],
   )
 
   // 屏幕预览缩放：把 A4 页宽适配到预览面板
