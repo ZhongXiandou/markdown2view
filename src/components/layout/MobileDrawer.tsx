@@ -3,6 +3,7 @@ import type { RenderMode } from '@/lib/store'
 import { ThemeSwatches } from '@/components/layout/ThemePicker'
 import { FileText, Book, ImageIcon, Palette, HelpCircle, Settings, RotateCcw, Shield } from '@/components/ui/Icon'
 import { useEscapeKey } from '@/lib/useEscapeKey'
+import { isModeVisible } from '@/lib/modes'
 
 /** 抽屉内功能按钮统一样式 */
 function DrawerButton({
@@ -38,12 +39,14 @@ interface MobileDrawerProps {
   onRestoreDemo: () => void
 }
 
-const MODES: { key: RenderMode; label: string; icon: ReactNode }[] = [
-  { key: 'document', label: 'A4 规范文档', icon: <FileText size={20} /> },
-  { key: 'article', label: '长图文排版', icon: <Book size={20} /> },
-  { key: 'card', label: '分页图文卡', icon: <ImageIcon size={20} /> },
-  { key: 'html', label: '自由画布', icon: <Palette size={20} /> },
-]
+const MODES = (
+  [
+    { key: 'document', label: 'A4 规范文档', icon: <FileText size={20} /> },
+    { key: 'article', label: '长图文排版', icon: <Book size={20} /> },
+    { key: 'card', label: '分页图文卡', icon: <ImageIcon size={20} /> },
+    { key: 'html', label: '自由画布', icon: <Palette size={20} /> },
+  ] satisfies { key: RenderMode; label: string; icon: ReactNode }[]
+).filter((m) => isModeVisible(m.key))
 
 export function MobileDrawer({
   isOpen,

@@ -1,17 +1,13 @@
 import type { RenderMode } from '@/lib/store'
 import { MODE_LABELS } from '@/lib/uiLabels'
+import { VISIBLE_MODES } from '@/lib/modes'
 
 interface ModeItem {
   key: RenderMode
   label: string
 }
 
-const MODES: ModeItem[] = [
-  { key: 'document', label: MODE_LABELS.document },
-  { key: 'article', label: MODE_LABELS.article },
-  { key: 'card', label: MODE_LABELS.card },
-  { key: 'html', label: MODE_LABELS.html },
-]
+const MODES: ModeItem[] = VISIBLE_MODES.map((key) => ({ key, label: MODE_LABELS[key] }))
 
 export function ModeTabs({
   mode,

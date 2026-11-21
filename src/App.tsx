@@ -8,6 +8,7 @@ import { SettingsModal } from "@/components/editor/SettingsModal";
 import { PrivacyModal } from "@/components/layout/PrivacyModal";
 import { BrowserCompatDialog } from "@/components/ui/BrowserCompatDialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { isModeVisible } from "@/lib/modes";
 
 import { DEMO_ARTICLE } from "@/data/demoArticle";
 import { DEMO_DOCUMENT } from "@/data/demoDocument";
@@ -110,6 +111,11 @@ export default function App() {
       setIsMobileMenuOpen(false);
     }
   }, [headerWidth]);
+
+  // 上次停留的模式若已从导航下线（如分页图文），回到默认的 A4 文档模式，避免停在一个没有入口的页面
+  useEffect(() => {
+    if (appHydrated && !isModeVisible(mode)) setMode("document");
+  }, [appHydrated, mode, setMode]);
 
   // 持久化恢复完成后，按版本号同步示例：仅当 DEMO_VERSION 变化时，刷新用户未编辑过的字段为最新示例。
   useEffect(() => {

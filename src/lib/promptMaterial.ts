@@ -1,13 +1,14 @@
 import type { RenderMode } from '@/lib/store'
+import { isModeVisible } from '@/lib/modes'
 
 /** 可作为素材来源的模式：自由画布的内容是 HTML 源码，不适合直接当素材 */
 export type MaterialSource = Exclude<RenderMode, 'html'>
 
 const ALL_SOURCES: MaterialSource[] = ['document', 'article', 'card']
 
-/** 当前模式下可选的素材来源（排除自己） */
+/** 当前模式下可选的素材来源（排除自己，以及已从导航下线的模式） */
 export function materialSourcesFor(mode: RenderMode): MaterialSource[] {
-  return ALL_SOURCES.filter((s) => s !== mode)
+  return ALL_SOURCES.filter((s) => s !== mode && isModeVisible(s))
 }
 
 /**

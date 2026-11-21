@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { buildPromptWithMaterial, materialSourcesFor } from './promptMaterial'
 
 describe('promptMaterial', () => {
-  it('素材来源排除当前模式，且不含自由画布', () => {
-    expect(materialSourcesFor('article')).toEqual(['document', 'card'])
-    expect(materialSourcesFor('card')).toEqual(['document', 'article'])
-    expect(materialSourcesFor('html')).toEqual(['document', 'article', 'card'])
+  it('素材来源排除当前模式、自由画布，以及已下线入口的分页图文', () => {
+    expect(materialSourcesFor('article')).toEqual(['document'])
+    expect(materialSourcesFor('document')).toEqual(['article'])
+    expect(materialSourcesFor('html')).toEqual(['document', 'article'])
   })
 
   it('指令在前、原稿在后，并用明确的起止标记包住原稿', () => {
