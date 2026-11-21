@@ -48,6 +48,15 @@ export function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`
 }
 
+/** 分栏比例的允许范围：两侧都至少保留四分之一 */
+export const EDITOR_SPLIT_MIN = 0.25
+export const EDITOR_SPLIT_MAX = 0.75
+
+export function clampEditorSplit(ratio: number): number {
+  if (!Number.isFinite(ratio)) return 0.5
+  return Math.min(EDITOR_SPLIT_MAX, Math.max(EDITOR_SPLIT_MIN, ratio))
+}
+
 const MAX_CUSTOM_INSTRUCTIONS = 50
 const MAX_CONTENT_LENGTH = 5000
 
@@ -141,6 +150,9 @@ export interface AppState {
   // 卡片模式：画布比例与作者名（刷新后保留）
   cardAspect: XhsAspect
   cardAuthorName: string
+  // 编辑区占整体宽度的比例（桌面端分栏，可拖拽调整）
+  editorSplit: number
+  setEditorSplit: (ratio: number) => void
   accent: string
   accentDark: string
   colors: ThemeColors
@@ -184,6 +196,8 @@ export const useAppStore = create<AppState>()(
       cardFont: 'heiti',
       cardAspect: '3:4',
       cardAuthorName: 'Pintley Tasia',
+      editorSplit: 0.5,
+      setEditorSplit: (ratio) => set({ editorSplit: clampEditorSplit(ratio) }),
       accent: DEFAULT_ACCENT,
       accentDark: DEFAULT_DARK,
       colors: makeColors(DEFAULT_ACCENT, DEFAULT_DARK),
@@ -283,6 +297,7 @@ export const useAppStore = create<AppState>()(
         cardFont: state.cardFont,
         cardAspect: state.cardAspect,
         cardAuthorName: state.cardAuthorName,
+        editorSplit: state.editorSplit,
         accent: state.accent,
         accentDark: state.accentDark,
         imageHostConfig: stripImageHostSecrets(state.imageHostConfig),

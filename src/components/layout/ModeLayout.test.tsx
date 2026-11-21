@@ -58,3 +58,25 @@ describe('ModeLayout', () => {
     expect(onChange).toHaveBeenCalledWith('edit')
   })
 })
+
+describe('ModeLayout - 分栏拖拽', () => {
+  it('分隔条可用方向键调整比例，Home 恢复均分，且不超出允许范围', async () => {
+    const { useAppStore, clampEditorSplit } = await import('@/lib/appStore')
+    useAppStore.setState({ editorSplit: 0.5 })
+    render(<ModeLayout editor={<div>Editor</div>} preview={<div>Preview</div>} />)
+
+    const divider = screen.getByRole('separator')
+    expect(divider.getAttribute('aria-valuenow')).toBe('50')
+
+    fireEvent.keyDown(divider, { key: 'ArrowRight' })
+    expect(useAppStore.getState().editorSplit).toBeCloseTo(0.52)
+    expect(screen.getByRole('separator').getAttribute('aria-valuenow')).toBe('52')
+
+    fireEvent.keyDown(divider, { key: 'Home' })
+    expect(useAppStore.getState().editorSplit).toBe(0.5)
+
+    expect(clampEditorSplit(0.05)).toBe(0.25)
+    expect(clampEditorSplit(0.99)).toBe(0.75)
+    expect(clampEditorSplit(Number.NaN)).toBe(0.5)
+  })
+})

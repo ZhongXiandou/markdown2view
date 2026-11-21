@@ -480,3 +480,10 @@ body {
   }
 }
 
+
+/* 桌面端编辑/预览分栏：比例由 ModeLayout 写入 --m2v-split，中间一列是可拖拽的分隔条 */
+@media (min-width: 768px) {
+  .mode-split-grid {
+    grid-template-columns: minmax(0, var(--m2v-split, 50%)) 5px minmax(0, 1fr);
+  }
+}
