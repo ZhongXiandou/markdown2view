@@ -1,7 +1,7 @@
 import type { ThemeColors } from '../composables/useTheme'
 import { leaf, esc, parseAttrs } from './helpers'
 import { extractMath, restoreMath } from './math'
-import { protectCode, restoreCode } from './codeProtect'
+import { protectCode, restoreCode, stripFencedCodeBlocks } from './codeProtect'
 import { renderMath } from './mathRenderer'
 import { renderMermaidDiagram } from './mermaidRenderer'
 import { renderFrontMatter } from './components'
@@ -15,10 +15,9 @@ export function collectFormulas(md: string): Array<{ formula: string; display: b
   const seen = new Set<string>()
   const result: Array<{ formula: string; display: boolean }> = []
 
-  // 删除代码块（围栏 + 行内），避免其中的 $ / $$ 被误判为公式分隔符
-  const cleaned = md
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]+`/g, '')
+  // 删除代码块（围栏 + 行内），避免其中的 $ / $$ 被误判为公式分隔符。
+  // 围栏按长度配对；行内代码支持多重反引号但不跨行。
+  const cleaned = stripFencedCodeBlocks(md).replace(/(`+)([^\n]*?)\1/g, '')
 
   // 行内公式 $...$
   const inlineRe = /(?<!\$)(?<!\d)\$(?!\d)([^\$]+?)\$(?!\$|[\w])/g

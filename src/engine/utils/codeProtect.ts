@@ -26,6 +26,34 @@ export interface CodeStore {
 }
 
 /**
+ * 删除反引号围栏代码块（按围栏长度配对），用于在收集公式前剔除代码区域。
+ *
+ * 不能只用 /```[\s\S]*?```/g：示范「怎么写围栏」时外层会用四个反引号包住三个反引号，
+ * 简单正则会在内层就提前闭合，把代码原文漏进结果；残留的反引号数目失衡后，
+ * 后续的行内代码正则还会跨行把正文里的公式一并吞掉。
+ */
+export function stripFencedCodeBlocks(md: string): string {
+  const out: string[] = []
+  let openLen = 0
+  for (const line of md.split('\n')) {
+    if (openLen > 0) {
+      // 闭合：整行只有反引号（数量不少于开启时）和空白
+      const close = line.match(/^[ \t]*(`+)[ \t]*$/)
+      if (close && close[1].length >= openLen) openLen = 0
+      continue
+    }
+    // 开启：info 字符串里不允许再出现反引号（否则是 ```code``` 这种单行写法）
+    const open = line.match(/^[ \t]*(`{3,})[^`]*$/)
+    if (open) {
+      openLen = open[1].length
+      continue
+    }
+    out.push(line)
+  }
+  return out.join('\n')
+}
+
+/**
  * 保护 Markdown 中的代码区域，使公式/脚注等后续处理不会侵入代码内部。
  *
  * 保护范围：
@@ -82,7 +110,7 @@ export function restoreCode(html: string, store: CodeStore): string {
     if (entry.type === 'block') {
       replacement = renderCodeBlock(entry.code, entry.lang)
     } else {
-      replacement = `<code style="background:#f0f0f5;padding:2px 6px;border-radius:4px;font-size:13px;font-family:SF Mono,Consolas,monospace;color:#e83e8c">${esc(entry.code)}</code>`
+      replacement = `<code style="background:#f0f0f5;padding:2px 6px;border-radius:4px;font-size:13px;font-family:SF Mono,Consolas,monospace;color:#e83e8c;word-break:break-all">${esc(entry.code)}</code>`
     }
 
     // 块级占位符可能被 parseMarkdown 包进 <p>，先处理这种情况

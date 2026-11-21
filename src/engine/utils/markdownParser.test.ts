@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMarkdown, parseTableMarkdown } from './markdownParser'
+import { parseMarkdown, parseTableMarkdown, collectFormulas } from './markdownParser'
 import { makeColors } from '../index'
 
 describe('parseMarkdown - Caption parsing', () => {
@@ -359,3 +359,40 @@ describe('parseMarkdown - 自定义标签未闭合容错（EOF 截断）', () =>
   })
 })
 
+
+describe('parseMarkdown - 上游同步：围栏配对 / 标签跨行 / 行内代码断行', () => {
+  const colors = makeColors('#2563eb', '#1e40af')
+  const nestedFence = ['````markdown', '```js', 'const a = "$b$"', '```', '````'].join('\n')
+
+  it('collectFormulas 按围栏长度配对，四反引号示范不会吞掉后文公式', () => {
+    const md = `${nestedFence}\n\n正文公式 $y$ 与行内代码 \`code\``
+    const formulas = collectFormulas(md).map((f) => f.formula)
+    expect(formulas).toContain('y')
+    expect(formulas).not.toContain('b')
+  })
+
+  it('四反引号围栏内的三反引号原样作为代码内容输出', () => {
+    const html = parseMarkdown(`${nestedFence}\n\n后续段落`, colors)
+    expect(html).toContain('```js')
+    expect(html).toContain('后续段落')
+  })
+
+  it('<title> 开标签跨行（属性换行、> 单独成行）仍按组件渲染', () => {
+    const md = '<title\ntype="DA01"\n>跨行标题</title>\n\n后续段落'
+    const html = parseMarkdown(md, colors)
+    expect(html).toContain('跨行标题')
+    expect(html).not.toContain('&lt;title')
+    expect(html).toContain('后续段落')
+  })
+
+  it('<p-title> 开标签跨行仍按组件渲染', () => {
+    const html = parseMarkdown('<p-title\nnum="01"\n>跨行段落标题</p-title>', colors)
+    expect(html).toContain('data-block="ptitle"')
+    expect(html).toContain('跨行段落标题')
+  })
+
+  it('行内代码带 word-break:break-all，长串不会撑破版面', () => {
+    const html = parseMarkdown('路径 `a/very/long/path/that/should/wrap` 结束', colors)
+    expect(html).toMatch(/<code style="[^"]*word-break:break-all[^"]*">a\/very/)
+  })
+})
