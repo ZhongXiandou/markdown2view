@@ -10,3 +10,12 @@ allowBuilds:
   # 以下两个包的安装脚本对构建无用，明确拒绝
   core-js: false
   cos-js-sdk-v5: false
+
+# 间接依赖的安全修复：父包声明的版本范围停留在有已知漏洞的版本，这里强制抬到修复版本。
+# 父包发布了带修复的新版本后，对应条目即可删除。
+overrides:
+  'cos-js-sdk-v5>fast-xml-parser': 4.5.7
+  'ali-oss>urllib': ^2.44.1
+  qs: ^6.16.1
+  'docx>nanoid': ^5.1.16
+  dompurify: ^3.4.13
