@@ -188,3 +188,18 @@ describe('buildGovDocAiGuide with metadata', () => {
     expect(metaSection).not.toContain('signer=')
   })
 })
+
+describe('AI 指令 - 嵌套列表规则同步', () => {
+  it('长图文、A4 文档（含公文/技术）、卡片指令都说明了嵌套列表写法', () => {
+    for (const guide of [
+      buildArticleAiGuide(),
+      buildDocumentAiGuide(),
+      buildTechDocAiGuide(),
+      buildGovDocAiGuide(),
+      buildCardAiGuide('3:4'),
+    ]) {
+      expect(guide).toContain('多级嵌套')
+      expect(guide).toContain('多缩进 2 个空格')
+    }
+  })
+})

@@ -545,58 +545,78 @@ function convertCode(
   })
 }
 
-/** list → docx Paragraph */
+export interface ListItem {
+  /** 嵌套层级（0 起），上限 2，对应 numbering 配置的三级 */
+  level: number
+  kind: 'ul' | 'ol' | 'task'
+  checked?: boolean
+  text: string
+}
+
+/**
+ * 把一个列表块（顶层列表项及其缩进的子项）拆成带层级的条目。
+ * 层级按相对缩进推算（缩进比上一级深就进一层），因此 2 空格与 4 空格写法都适用。
+ */
+export function parseListItems(md: string): ListItem[] {
+  const items: ListItem[] = []
+  const indents: number[] = []
+  for (const line of md.split('\n')) {
+    const m = line.match(/^([ \t]*)([-*+]|\d+\.)\s+(.*)$/)
+    if (!m) {
+      // 非列表项的续行并入上一项
+      const last = items[items.length - 1]
+      if (last && line.trim()) last.text += ' ' + line.trim()
+      continue
+    }
+    const indent = m[1].replace(/\t/g, '    ').length
+    while (indents.length && indents[indents.length - 1] > indent) indents.pop()
+    if (!indents.length || indents[indents.length - 1] < indent) indents.push(indent)
+    const level = Math.min(indents.length - 1, 2)
+    const ordered = /^\d/.test(m[2])
+    const task = !ordered ? m[3].match(/^\[([xX ])\]\s*(.*)/) : null
+    if (task) items.push({ level, kind: 'task', checked: task[1].toLowerCase() === 'x', text: task[2] })
+    else items.push({ level, kind: ordered ? 'ol' : 'ul', text: m[3] })
+  }
+  return items
+}
+
+/** list → docx Paragraph[]（一个列表块可含多级子项，每项一个段落） */
 async function convertList(
   block: DocumentBlock,
   settings: DocumentSettings,
   formulaMap: FormulaMap,
-): Promise<InstanceType<typeof import('docx').Paragraph>> {
+): Promise<Array<InstanceType<typeof import('docx').Paragraph>>> {
   const { Paragraph, TextRun } = docxModule!
   const font = getFont(settings.fontFamily)
   const sizes = getSizes(settings.fontScale)
-  const md = block.markdown
+  const spacing = { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO }
 
-  // 计算缩进层级
-  const indent = md.match(/^( *)/)?.[1].length ?? 0
-  const level = Math.min(Math.floor(indent / 2), 2)
-
-  // 待办清单复选框
-  const checked = md.match(/^\s*[-*+]\s+\[([xX ])\]\s*(.*)/)
-  if (checked) {
-    const isChecked = checked[1].toLowerCase() === 'x'
-    return new Paragraph({
-      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
-      indent: { left: pxToTwip(24) },
-      children: [
-        new TextRun({ text: isChecked ? '☑ ' : '☐ ', font, size: sizes.body, bold: true, color: isChecked ? '16A34A' : '9CA3AF' }),
-        ...parseInlineToRuns(checked[2], font, sizes.body, '333333', formulaMap),
-      ],
-    })
+  const items = parseListItems(block.markdown)
+  if (items.length === 0) {
+    // 兜底：作为普通段落
+    return [new Paragraph({
+      spacing: { after: 60 },
+      children: parseInlineToRuns(block.markdown, font, sizes.body, '333333', formulaMap),
+    })]
   }
 
-  const ul = md.match(/^\s*[-*+]\s+(.*)/)
-  const ol = md.match(/^\s*(\d+)\.\s+(.*)/)
-
-  if (ul) {
+  return items.map((item) => {
+    if (item.kind === 'task') {
+      // 待办清单复选框
+      return new Paragraph({
+        spacing,
+        indent: { left: pxToTwip(24 + item.level * 36) },
+        children: [
+          new TextRun({ text: item.checked ? '☑ ' : '☐ ', font, size: sizes.body, bold: true, color: item.checked ? '16A34A' : '9CA3AF' }),
+          ...parseInlineToRuns(item.text, font, sizes.body, '333333', formulaMap),
+        ],
+      })
+    }
     return new Paragraph({
-      numbering: { reference: 'unordered-list', level },
-      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
-      children: parseInlineToRuns(ul[1], font, sizes.body, '333333', formulaMap),
+      numbering: { reference: item.kind === 'ul' ? 'unordered-list' : 'ordered-list', level: item.level },
+      spacing,
+      children: parseInlineToRuns(item.text, font, sizes.body, '333333', formulaMap),
     })
-  }
-
-  if (ol) {
-    return new Paragraph({
-      numbering: { reference: 'ordered-list', level },
-      spacing: { after: 60, line: getLineValue(settings.fontScale), lineRule: docxModule!.LineRuleType.AUTO },
-      children: parseInlineToRuns(ol[2], font, sizes.body, '333333', formulaMap),
-    })
-  }
-
-  // 兜底：作为普通段落
-  return new Paragraph({
-    spacing: { after: 60 },
-    children: parseInlineToRuns(md, font, sizes.body, '333333', formulaMap),
   })
 }
 
@@ -1076,7 +1096,7 @@ async function buildDocument(
       case 'paragraph': return [await convertParagraph(block, settings, formulaMap)]
       case 'quote':     return [convertQuote(block, settings)]
       case 'code':      return [convertCode(block, settings)]
-      case 'list':      return [await convertList(block, settings, formulaMap)]
+      case 'list':      return await convertList(block, settings, formulaMap)
       case 'rule':      return [convertRule()]
       case 'image':     return [await convertImage(block.markdown, settings, security, imageCache)]
       case 'mermaid':   return [await convertMermaid(block.markdown, settings, mermaidReady)]

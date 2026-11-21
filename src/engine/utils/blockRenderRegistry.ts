@@ -585,50 +585,80 @@ const tableRenderer: BlockRenderer = {
   },
 }
 
+/** 列表项行：缩进 + 标记（- * + 或 1.）+ 内容 */
+const LIST_ITEM_RE = /^([ \t]*)([-*+]|\d+\.)\s+(.*)$/
+
+/** 缩进宽度（制表符按 4 个空格计），只用于同一段列表内的相对比较 */
+function indentWidth(ws: string): number {
+  return ws.replace(/\t/g, '    ').length
+}
+
+/** 渲染单个列表项（任务项 / 无序项 / 有序项），不含子列表 */
+function renderListItem(marker: string, content: string, ctx: BlockRenderContext): string {
+  const { t, formulaMap } = ctx
+  const cb = content.match(/^\[([ x])\]\s*(.*)/)
+  if (cb && !/^\d/.test(marker)) {
+    const isChecked = cb[1] === 'x'
+    const uncheckedBorder = t.border === color.borderDefault ? color.inkFaint : t.border
+    const checkSvg = isChecked
+      ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 9l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : `<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="16" height="16" rx="3" stroke="${uncheckedBorder}" stroke-width="1.5" fill="none"/></svg>`
+    return `<section style="margin:${spacing[1]} 0px"><span style="display:inline-flex;align-items:center;gap:${spacing[3]}"><span style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;${isChecked ? `background:${t.accent};border-radius:${radius.sm}` : ''}">${checkSvg}</span><span>${inlineFormat(cb[2], t, formulaMap)}</span></span></section>`
+  }
+  if (/^\d/.test(marker)) {
+    // 序号按原文显示：A4/卡片模式下每个顶层列表项是独立的块，无法跨块连续计数
+    return `<section style="margin:${spacing[1]} 0px;line-height:${lineHeight.loosest};letter-spacing:${letterSpacing.wider};display:flex;align-items:flex-start"><span style="color:${t.accent};font-weight:${fontWeight.extrabold};margin-right:${spacing[3]};flex-shrink:0;min-width:16px">${marker}</span><span style="flex:1">${inlineFormat(content, t, formulaMap)}</span></section>`
+  }
+  return `<section style="margin:${spacing[1]} 0px;line-height:${lineHeight.loosest};letter-spacing:${letterSpacing.wider};display:flex;align-items:flex-start"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:${t.accent};margin-right:${spacing[5]};margin-top:${spacing[5]};flex-shrink:0"></span><span style="flex:1">${inlineFormat(content, t, formulaMap)}</span></section>`
+}
+
+/**
+ * 渲染一段列表（支持多级嵌套）。
+ * 同一层级内只收同类项（有序/无序），类型一变就结束本层，交回上层或主循环另起一段；
+ * 缩进更深的列表项递归渲染为子列表，紧跟在它所属的父项之后。
+ */
+function renderListLevel(
+  ctx: BlockRenderContext,
+  lines: string[],
+  start: number,
+  isTopLevel: boolean,
+): { html: string; next: number } {
+  const first = lines[start].match(LIST_ITEM_RE)!
+  const indent = indentWidth(first[1])
+  const ordered = /^\d/.test(first[2])
+  let i = start
+  let html = ''
+  while (i < lines.length) {
+    const m = lines[i].match(LIST_ITEM_RE)
+    if (!m) break
+    const lineIndent = indentWidth(m[1])
+    if (lineIndent < indent) break
+    if (lineIndent > indent) {
+      const nested = renderListLevel(ctx, lines, i, false)
+      html += nested.html
+      i = nested.next
+      continue
+    }
+    if (/^\d/.test(m[2]) !== ordered) break
+    html += renderListItem(m[2], m[3], ctx)
+    i++
+  }
+  const style = isTopLevel
+    ? `margin:${spacing[4]} 0px;padding-left:${spacing[9]}`
+    : `margin:0px;padding-left:${spacing[9]}`
+  return { html: `<section style="${style}">${html}</section>`, next: i }
+}
+
 const unorderedListRenderer: BlockRenderer = {
   name: 'unorderedList',
   match: (line) => /^\s*[-*+]\s/.test(line),
-  render: (ctx, _line, lines, i) => {
-    const { t, formulaMap } = ctx
-    let j = i
-    let html = `<section style="margin:${spacing[4]} 0px;padding-left:${spacing[9]}">`
-    while (j < lines.length && /^\s*[-*+]\s/.test(lines[j])) {
-      const li = lines[j].replace(/^\s*[-*+]\s/, '')
-      const cb = li.match(/^\[([ x])\]\s*(.*)/)
-      if (cb) {
-        const isChecked = cb[1] === 'x'
-        const uncheckedBorder = t.border === color.borderDefault ? color.inkFaint : t.border
-        const checkSvg = isChecked
-          ? '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 9l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-          : `<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="16" height="16" rx="3" stroke="${uncheckedBorder}" stroke-width="1.5" fill="none"/></svg>`
-        html += `<section style="margin:${spacing[1]} 0px"><span style="display:inline-flex;align-items:center;gap:${spacing[3]}"><span style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;${isChecked ? `background:${t.accent};border-radius:${radius.sm}` : ''}">${checkSvg}</span><span>${inlineFormat(cb[2], t, formulaMap)}</span></span></section>`
-      } else {
-        html += `<section style="margin:${spacing[1]} 0px;line-height:${lineHeight.loosest};letter-spacing:${letterSpacing.wider};display:flex;align-items:flex-start"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:${t.accent};margin-right:${spacing[5]};margin-top:${spacing[5]};flex-shrink:0"></span><span style="flex:1">${inlineFormat(li, t, formulaMap)}</span></section>`
-      }
-      j++
-    }
-    html += `</section>`
-    return { html, next: j }
-  },
+  render: (ctx, _line, lines, i) => renderListLevel(ctx, lines, i, true),
 }
 
 const orderedListRenderer: BlockRenderer = {
   name: 'orderedList',
   match: (line) => /^\s*\d+\.\s/.test(line),
-  render: (ctx, _line, lines, i) => {
-    const { t, formulaMap } = ctx
-    let j = i
-    let html = `<section style="margin:${spacing[4]} 0px;padding-left:${spacing[9]}">`
-    while (j < lines.length && /^\s*\d+\.\s/.test(lines[j])) {
-      const match = lines[j].match(/^\s*(\d+)\.\s/)
-      const num = match ? match[1] : '1'
-      const content = lines[j].replace(/^\s*\d+\.\s/, '')
-      html += `<section style="margin:${spacing[1]} 0px;line-height:${lineHeight.loosest};letter-spacing:${letterSpacing.wider};display:flex;align-items:flex-start"><span style="color:${t.accent};font-weight:${fontWeight.extrabold};margin-right:${spacing[3]};flex-shrink:0;min-width:16px">${num}.</span><span style="flex:1">${inlineFormat(content, t, formulaMap)}</span></section>`
-      j++
-    }
-    html += `</section>`
-    return { html, next: j }
-  },
+  render: (ctx, _line, lines, i) => renderListLevel(ctx, lines, i, true),
 }
 
 const imageRenderer: BlockRenderer = {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { FormulaCache, preprocessFormulasSafe, protectCodeRegions, restoreCodeRegions } from './exportDocx'
+import { FormulaCache, parseListItems, preprocessFormulasSafe, protectCodeRegions, restoreCodeRegions } from './exportDocx'
 
 describe('FormulaCache', () => {
   it('为不同公式生成不同占位符', () => {
@@ -69,5 +69,25 @@ describe('preprocessFormulasSafe', () => {
     expect(result).toContain('$inside$')
     expect(result).toContain('__INLINE_FORMULA_0__')
     expect(result).not.toContain('$outside$')
+  })
+})
+
+describe('parseListItems', () => {
+  it('按相对缩进计算层级，兼容 2 空格与 4 空格', () => {
+    expect(parseListItems('- 甲\n  - 乙\n    - 丙\n- 丁').map((i) => i.level)).toEqual([0, 1, 2, 0])
+    expect(parseListItems('- 甲\n    - 乙').map((i) => i.level)).toEqual([0, 1])
+  })
+
+  it('识别无序、有序与任务项，层级上限为 2', () => {
+    const items = parseListItems('1. 一\n   - [x] 完成\n      - 深\n         - 更深')
+    expect(items.map((i) => i.kind)).toEqual(['ol', 'task', 'ul', 'ul'])
+    expect(items[1].checked).toBe(true)
+    expect(items.map((i) => i.level)).toEqual([0, 1, 2, 2])
+  })
+
+  it('非列表项的续行并入上一项文本', () => {
+    const items = parseListItems('- 甲\n  续行文字')
+    expect(items).toHaveLength(1)
+    expect(items[0].text).toBe('甲 续行文字')
   })
 })

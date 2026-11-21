@@ -396,3 +396,41 @@ describe('parseMarkdown - 上游同步：围栏配对 / 标签跨行 / 行内代
     expect(html).toMatch(/<code style="[^"]*word-break:break-all[^"]*">a\/very/)
   })
 })
+
+describe('parseMarkdown - 嵌套列表', () => {
+  const colors = makeColors('#2563eb', '#1e40af')
+  // 每一级列表容器都带 padding-left:20px，用它的出现次数判断嵌套层数
+  const countLevels = (html: string) => html.split('padding-left:20px').length - 1
+
+  it('平铺列表保持单层结构', () => {
+    const html = parseMarkdown('- 甲\n- 乙', colors)
+    expect(countLevels(html)).toBe(1)
+  })
+
+  it('缩进的子项渲染为嵌套层级，且顺序不变', () => {
+    const html = parseMarkdown('- 甲\n  - 乙\n  - 丙\n- 丁', colors)
+    expect(countLevels(html)).toBe(2)
+    const order = ['甲', '乙', '丙', '丁'].map((s) => html.indexOf(s))
+    expect(order).toEqual([...order].sort((a, b) => a - b))
+    // 子列表在父列表容器内部闭合：丁 之前应已出现一次子容器的闭合
+    expect(html.indexOf('丙')).toBeLessThan(html.indexOf('</section></section>'))
+  })
+
+  it('支持三级嵌套与 4 空格缩进', () => {
+    expect(countLevels(parseMarkdown('- 甲\n  - 乙\n    - 丙', colors))).toBe(3)
+    expect(countLevels(parseMarkdown('- 甲\n    - 乙', colors))).toBe(2)
+  })
+
+  it('无序列表下可嵌套有序列表，序号按原文显示', () => {
+    const html = parseMarkdown('- 甲\n  1. 一\n  2. 二', colors)
+    expect(countLevels(html)).toBe(2)
+    expect(html).toContain('>1.</span>')
+    expect(html).toContain('>2.</span>')
+  })
+
+  it('嵌套的任务列表项仍渲染复选框', () => {
+    const html = parseMarkdown('- 甲\n  - [x] 已完成\n  - [ ] 未完成', colors)
+    expect(countLevels(html)).toBe(2)
+    expect(html.split('<svg').length - 1).toBe(2)
+  })
+})

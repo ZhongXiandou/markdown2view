@@ -278,3 +278,17 @@ describe('documentModel', () => {
     })
   })
 })
+
+describe('documentModel - 嵌套列表分块', () => {
+  it('子项随所属的顶层列表项留在同一个块内，保留缩进', () => {
+    const blocks = splitMarkdownBlocks(['- 甲', '  - 乙', '  - 丙', '- 丁'].join('\n'))
+    expect(blocks.map((b) => b.kind)).toEqual(['list', 'list'])
+    expect(blocks[0].markdown).toBe('- 甲\n  - 乙\n  - 丙')
+    expect(blocks[1].markdown).toBe('- 丁')
+  })
+
+  it('平铺列表仍按每项一个块拆分，便于跨页打断', () => {
+    const blocks = splitMarkdownBlocks('1. 一\n2. 二\n3. 三')
+    expect(blocks.map((b) => b.markdown)).toEqual(['1. 一', '2. 二', '3. 三'])
+  })
+})

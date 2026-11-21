@@ -58,21 +58,21 @@ export function splitMarkdownBlocks(markdown: string): string[] {
 
   flush()
 
-  // 列表项拆分：每个列表项作为独立块
+  // 列表项拆分：每个顶层列表项作为独立块；缩进的子项随父项留在同一块内（保留缩进即嵌套层级）
   const rawBlocks: string[] = []
   for (const block of initialBlocks) {
     if (/^([-*+]\s|\d+\.\s)/.test(block) && !/^---+$/.test(block)) {
       const lines = block.split('\n')
       let currentItem = ''
       for (const line of lines) {
-        if (/^\s*([-*+]\s|\d+\.\s)/.test(line)) {
-          if (currentItem) rawBlocks.push(currentItem.trim())
+        if (/^([-*+]\s|\d+\.\s)/.test(line)) {
+          if (currentItem) rawBlocks.push(currentItem.trimEnd())
           currentItem = line
         } else {
           currentItem += '\n' + line
         }
       }
-      if (currentItem) rawBlocks.push(currentItem.trim())
+      if (currentItem) rawBlocks.push(currentItem.trimEnd())
     } else {
       rawBlocks.push(block)
     }
