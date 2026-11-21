@@ -17,7 +17,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # package.json 锁定的 pnpm 11 要求 Node >= 22.13
+          node-version: 22
           cache: pnpm
 
       - name: 安装依赖
