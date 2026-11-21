@@ -87,27 +87,6 @@ export function AppHeader({
 
       {headerWidth >= 960 ? (
         <div className="flex items-center gap-4">
-          {headerWidth >= 1300 && (
-            <Tooltip position="bottom" text="作者的另一个项目：BeeEffy——个人AI待办与复盘成长系统">
-              <a
-                href="https://www.beeeffy.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-              >
-              <svg width="48" height="14" viewBox="0 0 77.63 21.69" fill="none" className="shrink-0">
-                <circle cx="10.84" cy="10.84" r="10.84" fill="currentColor"/>
-                <circle cx="35.1" cy="10.84" r="10.84" fill="currentColor" opacity="0.45"/>
-                <path d="M50.74 1.97 L62.55 10.84 L50.74 19.72" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M64.32 1.97 L76.13 10.84 L64.32 19.72" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.45"/>
-              </svg>
-              {headerWidth >= 1450 && <span>BeeEffy</span>}
-              </a>
-            </Tooltip>
-          )}
-
-          {headerWidth >= 1300 && <div className="w-px h-4 bg-slate-200" />}
-
           <Tooltip position="bottom" text="完全开源的纯前端项目，数据不传输至服务器。访问 GitHub 源码仓库">
             <a
               href="https://github.com/ZhongXiandou/markdown2view"

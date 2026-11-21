@@ -177,15 +177,7 @@ export function MobileDrawer({
             >
               GitHub 仓库
             </a>
-            <span className="text-slate-300">|</span>
-            <a
-              href="https://www.beeeffy.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline"
-            >
-              作者网站 BeeEffy
-            </a>
+
           </div>
           <div className="text-[11px] text-slate-400 leading-relaxed">
             本项目为 100% 纯前端开源工具<br />所有编辑数据均存储在您的本地浏览器中

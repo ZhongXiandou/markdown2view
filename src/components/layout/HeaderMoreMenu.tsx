@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Rocket, Settings, RotateCcw } from '@/components/ui/Icon'
+import { Settings, RotateCcw } from '@/components/ui/Icon'
 
 interface HeaderMoreMenuProps {
   onOpenSettings: () => void
@@ -51,17 +51,6 @@ export function HeaderMoreMenu({ onOpenSettings, onRestoreDemo }: HeaderMoreMenu
           <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setOpen(false)} />
           
           <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl z-50 origin-top-right animate-fade-in">
-            <a
-              href="https://www.beeeffy.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-            >
-              <Rocket size={14} />
-              <span>访问 BeeEffy</span>
-            </a>
-            
             <button
               onClick={() => {
                 setOpen(false)
