@@ -203,3 +203,15 @@ describe('AI 指令 - 嵌套列表规则同步', () => {
     }
   })
 })
+
+describe('AI 指令 - <text> 行内样式标签同步', () => {
+  it('长图文指令说明了 <text> 的属性与取值限制', () => {
+    const guide = buildArticleAiGuide()
+    expect(guide).toContain('<text color="#e74c3c" size="18px" weight="700">文字</text>')
+    expect(guide).toContain('含分号、冒号、斜杠的值会被丢弃')
+  })
+
+  it('A4 文档指令禁止写死样式，因此不推荐 <text>', () => {
+    expect(buildDocumentAiGuide()).not.toContain('<text ')
+  })
+})

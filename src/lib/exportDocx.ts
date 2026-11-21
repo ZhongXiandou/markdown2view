@@ -136,6 +136,9 @@ function parseInlineToRuns(
   const runs: DocxRun[] = []
   if (!md) return runs
 
+  // <text> 行内样式标签在 Word 中不还原样式，只保留内容，避免标签原文出现在正文里
+  md = md.replace(/<text\b[^>]*>([\s\S]*?)<\/text>/g, '$1')
+
   // 先按行内代码拆分（保护代码内容不被进一步解析）
   const codeParts = md.split(/(`[^`]+`)/g)
 

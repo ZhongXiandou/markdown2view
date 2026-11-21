@@ -434,3 +434,34 @@ describe('parseMarkdown - 嵌套列表', () => {
     expect(html.split('<svg').length - 1).toBe(2)
   })
 })
+
+describe('parseMarkdown - <text> 行内样式标签', () => {
+  const colors = makeColors('#2563eb', '#1e40af')
+
+  it('把属性映射为内联样式', () => {
+    const html = parseMarkdown('前文 <text color="#e74c3c" size="18px" weight="700">重点</text> 后文', colors)
+    expect(html).toContain('<span style="color:#e74c3c;font-size:18px;font-weight:700">重点</span>')
+    expect(html).not.toContain('<text')
+  })
+
+  it('写了 align 时独占一行', () => {
+    const html = parseMarkdown('<text align="center" spacing="2px">居中</text>', colors)
+    expect(html).toContain('text-align:center;letter-spacing:2px;display:block;width:100%')
+  })
+
+  it('内部仍可使用其他行内语法', () => {
+    const html = parseMarkdown('<text color="#16a34a">**粗**体</text>', colors)
+    expect(html).toMatch(/<span style="color:#16a34a"><strong[^>]*>.*粗.*<\/strong>体<\/span>/)
+  })
+
+  it('丢弃含分号、冒号、斜杠等字符的属性值，避免注入额外样式', () => {
+    const html = parseMarkdown('<text color="red;position:fixed" bg="url(//x/y.png)" size="16px">文字</text>', colors)
+    expect(html).toContain('<span style="font-size:16px">文字</span>')
+    expect(html).not.toContain('position')
+    expect(html).not.toContain('url(')
+  })
+
+  it('没有可用属性时退化为普通 span', () => {
+    expect(parseMarkdown('<text>文字</text>', colors)).toContain('<span>文字</span>')
+  })
+})

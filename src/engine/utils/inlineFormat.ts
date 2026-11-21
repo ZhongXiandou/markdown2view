@@ -1,7 +1,27 @@
 import type { ThemeColors } from '../composables/useTheme'
-import { esc, leaf, lightenHex, pangu } from './helpers'
+import { esc, leaf, lightenHex, pangu, parseAttrs } from './helpers'
 import { getCachedImageUrl } from '@/lib/editor/imageStorage'
 import { color, fontSize, fontWeight, neutral, radius, spacing } from '../tokens'
+
+/** <text> 标签属性 → CSS 属性 */
+const TEXT_STYLE_MAP: [string, string][] = [
+  ['color', 'color'],
+  ['size', 'font-size'],
+  ['weight', 'font-weight'],
+  ['style', 'font-style'],
+  ['height', 'line-height'],
+  ['align', 'text-align'],
+  ['decoration', 'text-decoration'],
+  ['spacing', 'letter-spacing'],
+  ['transform', 'text-transform'],
+  ['bg', 'background'],
+]
+
+/**
+ * <text> 属性值白名单：只放行字母、数字、#、%、小数点、逗号、括号、连字符和空格。
+ * 分号、冒号、斜杠、引号一律拒绝，防止借属性值追加额外声明或 url() 外链。
+ */
+const SAFE_TEXT_STYLE_VALUE = /^[\w\s#%.,()-]+$/
 
 export function inlineFormat(text: string, t: ThemeColors, formulaMap?: Map<string, string>): string {
   // 中英文/数字自动加空格：先保护行内代码与链接/图片 URL，避免破坏代码与网址
@@ -120,6 +140,18 @@ export function inlineFormat(text: string, t: ThemeColors, formulaMap?: Map<stri
     /\[([^\]]+)\]\(([^)\s]+)\)/g,
     (_m, p1: string, p2: string) => `<a href="${p2}" style="color:${t.accent}">${leaf(p1)}</a>`,
   )
+  // <text 属性>内容</text> — 自定义行内文字样式（放在其他行内语法之后，内容里可继续用加粗等标记）
+  text = text.replace(/<text\b([^>]*)>([\s\S]*?)<\/text>/g, (_m, attrsStr: string, body: string) => {
+    const attrs = parseAttrs(attrsStr)
+    const styles: string[] = []
+    for (const [attrKey, cssKey] of TEXT_STYLE_MAP) {
+      const val = attrs[attrKey]
+      if (val && SAFE_TEXT_STYLE_VALUE.test(val)) styles.push(`${cssKey}:${val}`)
+    }
+    // 行内元素设置对齐无效，写了 align 就改为块级独占一行
+    if (styles.some((s) => s.startsWith('text-align:'))) styles.push('display:block', 'width:100%')
+    return `<span${styles.length ? ` style="${styles.join(';')}"` : ''}>${body}</span>`
+  })
   // 还原行内代码占位符
   text = text.replace(/\x00CODE_(\d+)\x00/g, (_m, p1: string) => codeStore[parseInt(p1)] || _m)
 

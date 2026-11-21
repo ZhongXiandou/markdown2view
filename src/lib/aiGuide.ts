@@ -70,7 +70,11 @@ const INLINE_SECTION = `## 二、行内强调语法（写在正文里）
 - ~~文字~~        删除线
 - ~文字~          下标（如 H~2~O）
 - ^文字^          上标（如 m^2^）
-- \`文字\`          行内代码`;
+- \`文字\`          行内代码
+- <text color="#e74c3c" size="18px" weight="700">文字</text>   自定义行内文字样式，仅在上面的强调语法无法满足时使用
+  - 可用属性：color 颜色 / size 字号 / weight 字重 / style 字形（italic）/ decoration 装饰线（如 underline）/ spacing 字间距 / height 行高 / bg 背景 / transform 大小写 / align 对齐（写了 align 会独占一行）
+  - 属性值只能包含字母、数字、#、%、小数点、逗号、括号、连字符和空格；含分号、冒号、斜杠的值会被丢弃（例如不能写 url(...)）
+  - 标签内部可继续使用 **粗体** 等行内语法；导出 Word 时只保留文字，不保留样式`;
 
 const ARTICLE_STANDARD_SECTION = `## 一、标准 Markdown
 
