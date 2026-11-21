@@ -4,6 +4,8 @@
 
 # markdown2view
 
+**简体中文** | [English](./README.en-US.md)
+
 **纯前端、零后端** 的 Markdown / HTML 多场景排版与导出工作台。
 
 通过使用本工作台既定的渲染方式，与外部 AI 协作，快捷将内容渲染为 **A4 正式文档 · 公众号长图文 · 风格化 HTML 画布**，
