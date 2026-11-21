@@ -79,3 +79,17 @@ export function codeLines(rows: Array<[number, ...Array<[number, string]>]>, hei
     .join('')
   return `<div style="display:flex;flex-direction:column;gap:${gap}px;">${lines}</div>`
 }
+
+/**
+ * 竖版多页预览：在画布上并排摆放 3:4 的页面，用于卡片、海报、多页图文类风格。
+ * 每页为 [样式, 内容]；恰好三页时中间一页略大，形成主次。
+ */
+export function portraitPages(bg: string, pages: Array<[string, string]>): string {
+  const cells = pages
+    .map(([css, inner], i) => {
+      const w = pages.length === 3 && i === 1 ? 156 : 132
+      return `<div style="position:relative;flex:none;overflow:hidden;box-sizing:border-box;width:${w}px;height:${(w * 4) / 3}px;box-shadow:0 10px 24px rgba(15,23,42,0.16);${css}">${inner}</div>`
+    })
+    .join('')
+  return canvas(`background:${bg};display:flex;align-items:center;justify-content:center;gap:14px;`, cells)
+}
