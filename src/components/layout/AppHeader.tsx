@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import type { RenderMode } from '@/lib/store'
 import { ModeTabs } from '@/components/layout/ModeTabs'
-import { THEMES } from '@engine/composables/useTheme'
+import { ThemePicker } from '@/components/layout/ThemePicker'
 import { HeaderMoreMenu } from '@/components/layout/HeaderMoreMenu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Shield } from '@/components/ui/Icon'
@@ -166,22 +166,7 @@ export function AppHeader({
 
           {headerWidth >= 1300 && <div className="w-px h-4 bg-slate-200" />}
 
-          <div className="flex items-center gap-1.5">
-            {THEMES.map((t) => (
-              <Tooltip key={t.accent} position="bottom" text={t.accent}>
-                <button
-                  onClick={() => setTheme(t.accent, t.dark)}
-                  className="h-5 w-5 rounded-full transition-transform hover:scale-110 cursor-pointer"
-                style={{
-                  background: t.accent,
-                  boxShadow: accent === t.accent
-                    ? '0 0 0 2px #fff, 0 0 0 4px var(--accent)'
-                    : 'none',
-                }}
-                />
-              </Tooltip>
-            ))}
-          </div>
+          <ThemePicker accent={accent} setTheme={setTheme} />
 
           {headerWidth < 1300 && <div className="w-px h-4 bg-slate-200" />}
 

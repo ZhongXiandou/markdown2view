@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import type { RenderMode } from '@/lib/store'
-import { THEMES } from '@engine/composables/useTheme'
+import { ThemeSwatches } from '@/components/layout/ThemePicker'
 import { FileText, Book, ImageIcon, Palette, HelpCircle, Settings, RotateCcw, Shield } from '@/components/ui/Icon'
 import { useEscapeKey } from '@/lib/useEscapeKey'
 
@@ -152,21 +152,7 @@ export function MobileDrawer({
         {/* 主题色切换 */}
         <div className="border-t border-slate-100 pt-5 mb-6">
           <div className="mb-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">切换系统主题色</div>
-          <div className="flex items-center gap-3 justify-center">
-            {THEMES.map((t) => (
-              <button
-                key={t.accent}
-                title={t.accent}
-                onClick={() => setTheme(t.accent, t.dark)}
-                className="h-8 w-8 rounded-full border transition-transform hover:scale-110 cursor-pointer flex items-center justify-center"
-                style={{
-                  background: t.accent,
-                  borderColor: accent === t.accent ? '#111' : 'transparent',
-                  boxShadow: accent === t.accent ? '0 0 0 2px #fff, 0 0 0 4px var(--accent)' : 'none',
-                }}
-              />
-            ))}
-          </div>
+          <ThemeSwatches accent={accent} setTheme={setTheme} large />
         </div>
 
         {/* 关于与外链 */}
