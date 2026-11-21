@@ -1,0 +1,12 @@
+# pnpm 11 不再读取 package.json 里的 pnpm.onlyBuiltDependencies，构建脚本白名单改在这里声明。
+# 未列入白名单的包在全新安装（CI / Vercel）时会以 ERR_PNPM_IGNORED_BUILDS 报错退出。
+# package.json 中的同名配置保留，供 pnpm 10 使用。
+packages:
+  - '.'
+
+allowBuilds:
+  # Vite 的打包器，postinstall 负责下载平台二进制，必须允许
+  esbuild: true
+  # 以下两个包的安装脚本对构建无用，明确拒绝
+  core-js: false
+  cos-js-sdk-v5: false
