@@ -47,8 +47,11 @@ export function usePagedPreview({
   const renderingRef = useRef(false)
 
   const setFit = useCallback((scale: number) => {
-    const el = iframeRef.current?.contentDocument?.getElementById('m2v-pages')
-    el?.style.setProperty('--m2v-fit', String(scale))
+    const doc = iframeRef.current?.contentDocument
+    doc?.getElementById('m2v-pages')?.style.setProperty('--m2v-fit', String(scale))
+    // transform 缩放不改变布局高度，用负的下外边距收回缩小后空出来的部分
+    const pages = doc?.querySelector('.pagedjs_pages') as HTMLElement | null
+    if (pages) pages.style.marginBottom = scale < 1 ? `${pages.offsetHeight * (scale - 1)}px` : ''
   }, [iframeRef])
 
   const applyFit = useCallback(() => {
@@ -57,8 +60,8 @@ export function usePagedPreview({
   }, [setFit])
 
   // 渲染完成后让 iframe 高度等于内容高度，使外层面板整体滚动（而非 iframe 内部滚动）。
-  // 用 getBoundingClientRect().height 度量：页面通过 zoom 缩放，scrollHeight 在 Chrome 下
-  // 对含 zoom 子元素的祖先会返回未缩放高度，导致高度偏大、末页下方留大片空白。
+  // 用 #m2v-pages 的 getBoundingClientRect().height 度量：它包含 setFit 里按缩放比例
+  // 收回的下外边距，因此就是缩放后的可见高度。
   const resizeToContent = useCallback(() => {
     const iframe = iframeRef.current
     const doc = iframe?.contentDocument
@@ -103,8 +106,8 @@ export function usePagedPreview({
     } catch {
       /* 跨域兜底，忽略 */
     }
-    // 分页必须在 zoom=1 下进行，排版完成后再应用预览缩放。
-    // Paged.js 0.4.3 判断溢出时把缩放后的元素坐标与未缩放的列间距相加，zoom<1 时
+    // 分页必须在缩放为 1 时进行，排版完成后再应用预览缩放。
+    // Paged.js 0.4.3 判断溢出时把缩放后的元素坐标与未缩放的列间距相加，缩放小于 1 时
     // 落进溢出列的内容不会被识别为溢出，表现为跨页处丢失标题或若干行文字（即「跨页吞字」）。
     renderingRef.current = true
     setFit(1)
@@ -161,7 +164,7 @@ export function usePagedPreview({
     return () => window.clearTimeout(timer)
   }, [contentHtml, pageCss, renderNow, debounceMs])
 
-  // 仅缩放变化 → 应用 zoom 并重算高度（无需整篇重排）
+  // 仅缩放变化 → 应用缩放并重算高度（无需整篇重排）
   useEffect(() => {
     if (!readyRef.current) return
     applyFit()

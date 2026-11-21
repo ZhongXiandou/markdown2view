@@ -52,26 +52,43 @@ const BOOTSTRAP_SCRIPT = `
         }
       }
 
-      // 每页布局后：为被拆分表格的续接片段补表头 + 续表标记
-      afterPageLayout(pageElement) {
-        var tables = pageElement.querySelectorAll('table[data-split-from]');
-        for (var i = 0; i < tables.length; i++) {
-          var table = tables[i];
-          var ref = table.getAttribute('data-split-from');
-          var headHtml = cachedHeads[ref] || lastHead;
-          var existing = table.querySelector('thead');
-          if (headHtml && (!existing || !existing.querySelector('tr'))) {
-            if (existing) existing.remove();
-            table.insertAdjacentHTML('afterbegin', headHtml);
-          }
-          var prev = table.previousElementSibling;
-          if (!(prev && prev.classList && prev.classList.contains('continued-caption'))) {
-            var cap = document.createElement('div');
-            cap.className = 'continued-caption';
-            cap.textContent = '（续表）';
-            table.parentNode.insertBefore(cap, table);
+      // 为被拆分表格的续接片段补表头 + 续表标记（幂等）
+      ensureContinuation(table) {
+        var ref = table.getAttribute('data-split-from');
+        var headHtml = cachedHeads[ref] || lastHead;
+        var existing = table.querySelector('thead');
+        if (headHtml && (!existing || !existing.querySelector('tr'))) {
+          if (existing) existing.remove();
+          table.insertAdjacentHTML('afterbegin', headHtml);
+          // 补入的表头是副本：去掉 data-ref，避免与原表头重复而干扰 Paged.js 按 ref 查找节点
+          var head = table.querySelector('thead');
+          if (head) {
+            head.removeAttribute('data-ref');
+            var refs = head.querySelectorAll('[data-ref]');
+            for (var k = 0; k < refs.length; k++) refs[k].removeAttribute('data-ref');
           }
         }
+        var prev = table.previousElementSibling;
+        if (table.parentNode && !(prev && prev.classList && prev.classList.contains('continued-caption'))) {
+          var cap = document.createElement('div');
+          cap.className = 'continued-caption';
+          cap.textContent = '（续表）';
+          table.parentNode.insertBefore(cap, table);
+        }
+      }
+
+      // 续接片段的节点一渲染出来就补表头：必须赶在本页的溢出判断之前占好高度。
+      // 若等到 afterPageLayout 再补，表头和「（续表）」会把本页最后一两行挤出页面而不可见。
+      renderNode(node) {
+        var el = node && node.nodeType === 1 ? node : node && node.parentElement;
+        var table = el && el.closest ? el.closest('table[data-split-from]') : null;
+        if (table) this.ensureContinuation(table);
+      }
+
+      // 兜底：每页布局后再检查一遍
+      afterPageLayout(pageElement) {
+        var tables = pageElement.querySelectorAll('table[data-split-from]');
+        for (var i = 0; i < tables.length; i++) this.ensureContinuation(tables[i]);
       }
     }
 
@@ -146,15 +163,19 @@ ${parentStyles}
 <style media="screen">
   html, body { margin: 0; padding: 0; }
   body { background: #eef2f7; overflow-x: hidden; }
-  /* 屏幕预览缩放（适配预览面板宽度），打印时忽略 */
-  #m2v-pages { --m2v-fit: 1; padding: 12px 0 24px; }
-  .pagedjs_pages { zoom: var(--m2v-fit, 1); }
+  /* 屏幕预览缩放（适配预览面板宽度），打印时忽略。
+     用 transform 而非 zoom：zoom 会按缩放后的字号重新排版，行尾换行位置可能变化，
+     使已分好页的内容多出一行而溢出页面；transform 只缩放画面，不触发重排。
+     父级用 flex 居中，页面比预览区宽时向两侧等量溢出，缩放后正好居中。 */
+  #m2v-pages { --m2v-fit: 1; padding: 12px 0 24px; display: flex; justify-content: center; }
+  .pagedjs_pages { flex: none; max-width: none; transform: scale(var(--m2v-fit, 1)); transform-origin: top center; }
   .pagedjs_page { background: #fff; margin: 12px auto; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.14); }
   #m2v-loading { padding: 24px; color: #94a3b8; font: 14px sans-serif; }
 </style>
 <style media="print">
   html, body { margin: 0; padding: 0; background: #fff; }
-  .pagedjs_pages { zoom: 1; }
+  #m2v-pages { display: block; }
+  .pagedjs_pages { transform: none; margin-bottom: 0 !important; }
   .pagedjs_page { margin: 0; box-shadow: none; }
 </style>
 <script>
