@@ -18,6 +18,7 @@ import { Book } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { MaterialSelect } from '@/components/ui/MaterialSelect'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { MaterialSourceState } from '@/lib/useMaterialSource'
 
 interface PromptLibraryProps {
@@ -149,6 +150,8 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
   const [showEditor, setShowEditor] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [cloneFromStyle, setCloneFromStyle] = useState<DesignStyle | null>(null)
+  // 待确认删除的自定义指令 id（与工具栏「我的指令」浮层的删除行为保持一致）
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   // 文档模式：封面元数据与公文元数据
   const [docCoverMeta, setDocCoverMeta] = useState<DocCoverMetadata>({ enabled: true })
@@ -702,7 +705,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                           </button>
                           <button
-                            onClick={() => removeCustomInstruction(inst.id)}
+                            onClick={() => setPendingDeleteId(inst.id)}
                             className="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
                             title="删除"
                           >
@@ -718,6 +721,17 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
           </div>
         )}
       </aside>
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="删除该指令？"
+        message="删除后无法恢复。"
+        confirmLabel="删除"
+        onConfirm={() => {
+          if (pendingDeleteId) removeCustomInstruction(pendingDeleteId)
+          setPendingDeleteId(null)
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </>
   )
 }
