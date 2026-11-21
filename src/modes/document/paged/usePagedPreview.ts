@@ -43,10 +43,18 @@ export function usePagedPreview({
   const latest = useRef({ contentHtml, pageCss, title, fitScale })
   latest.current = { contentHtml, pageCss, title, fitScale }
 
-  const applyFit = useCallback(() => {
+  // 分页进行中标记：期间不得改动预览缩放（见 renderNow）
+  const renderingRef = useRef(false)
+
+  const setFit = useCallback((scale: number) => {
     const el = iframeRef.current?.contentDocument?.getElementById('m2v-pages')
-    el?.style.setProperty('--m2v-fit', String(latest.current.fitScale))
+    el?.style.setProperty('--m2v-fit', String(scale))
   }, [iframeRef])
+
+  const applyFit = useCallback(() => {
+    if (renderingRef.current) return
+    setFit(latest.current.fitScale)
+  }, [setFit])
 
   // 渲染完成后让 iframe 高度等于内容高度，使外层面板整体滚动（而非 iframe 内部滚动）。
   // 用 getBoundingClientRect().height 度量：页面通过 zoom 缩放，scrollHeight 在 Chrome 下
@@ -95,9 +103,14 @@ export function usePagedPreview({
     } catch {
       /* 跨域兜底，忽略 */
     }
-    applyFit()
+    // 分页必须在 zoom=1 下进行，排版完成后再应用预览缩放。
+    // Paged.js 0.4.3 判断溢出时把缩放后的元素坐标与未缩放的列间距相加，zoom<1 时
+    // 落进溢出列的内容不会被识别为溢出，表现为跨页处丢失标题或若干行文字（即「跨页吞字」）。
+    renderingRef.current = true
+    setFit(1)
     Promise.resolve(win.__m2vRender(latest.current.contentHtml, latest.current.pageCss))
       .then((total: number) => {
+        renderingRef.current = false
         setPageCount(total || 0)
         setStatus('done')
         requestAnimationFrame(() => {
@@ -106,8 +119,11 @@ export function usePagedPreview({
           resizeToContent()
         })
       })
-      .catch(() => setStatus('error'))
-  }, [iframeRef, applyFit, scaleMermaidBlocks, resizeToContent])
+      .catch(() => {
+        renderingRef.current = false
+        setStatus('error')
+      })
+  }, [iframeRef, setFit, applyFit, scaleMermaidBlocks, resizeToContent])
 
   // 初始化 iframe（仅一次）：写入外壳 → 轮询等待 bootstrap 就绪 → 首次渲染。
   // 采用轮询而非依赖 load 事件：兼容 React 严格模式重挂载与相同 srcdoc 不重载的情况。
