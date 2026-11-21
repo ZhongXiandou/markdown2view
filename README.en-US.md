@@ -209,6 +209,7 @@ src/
 | [r-markdown](https://github.com/RobocopMao/r-markdown) | MIT | WeChat rendering engine core, custom layout components, theme color schemes |
 | [html-anything](https://github.com/nexu-io/html-anything) | Apache-2.0 | iframe sandbox isolation design and export layer architecture |
 | [guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill) | AGPL-3.0 | "Electronic Magazine" & "Swiss International Typographic" style references & web PPT pacing inspiration (design experience only, not merged into template source code) |
+| [awesome-design-md](https://github.com/VoltAgent/awesome-design-md) | MIT | Reference for the palettes, type scales and radius rules of the brand-inspired canvas styles (Vercel, Stripe, Linear, etc.) |
 
 ---
 

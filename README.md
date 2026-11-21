@@ -210,6 +210,7 @@ src/
 | [r-markdown](https://github.com/RobocopMao/r-markdown) | MIT | 公众号渲染引擎核心、自定义排版组件、主题配色方案 |
 | [html-anything](https://github.com/nexu-io/html-anything) | Apache-2.0 | iframe 沙箱隔离设计与导出层架构 |
 | [guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill) | AGPL-3.0 | 「电子杂志」「瑞士国际主义」风格参考与网页 PPT 节奏启发（仅转译设计经验，未并入模板源码） |
+| [awesome-design-md](https://github.com/VoltAgent/awesome-design-md) | MIT | 自由画布中品牌类风格（Vercel、Stripe、Linear 等）的色板、字号阶梯与圆角规则参考 |
 
 ---
 
