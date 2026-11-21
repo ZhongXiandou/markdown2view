@@ -391,9 +391,9 @@ describe('parseMarkdown - 上游同步：围栏配对 / 标签跨行 / 行内代
     expect(html).toContain('跨行段落标题')
   })
 
-  it('行内代码带 word-break:break-all，长串不会撑破版面', () => {
+  it('行内代码允许在放不下时断行，长串不会撑破版面', () => {
     const html = parseMarkdown('路径 `a/very/long/path/that/should/wrap` 结束', colors)
-    expect(html).toMatch(/<code style="[^"]*word-break:break-all[^"]*">a\/very/)
+    expect(html).toMatch(/<code style="[^"]*overflow-wrap:anywhere[^"]*">a\/very/)
   })
 })
 

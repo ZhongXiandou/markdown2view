@@ -110,7 +110,7 @@ export function restoreCode(html: string, store: CodeStore): string {
     if (entry.type === 'block') {
       replacement = renderCodeBlock(entry.code, entry.lang)
     } else {
-      replacement = `<code style="background:#f0f0f5;padding:2px 6px;border-radius:4px;font-size:13px;font-family:SF Mono,Consolas,monospace;color:#e83e8c;word-break:break-all">${esc(entry.code)}</code>`
+      replacement = `<code style="background:#f0f0f5;padding:2px 6px;border-radius:4px;font-size:13px;font-family:SF Mono,Consolas,monospace;color:#e83e8c;word-break:break-word;overflow-wrap:anywhere">${esc(entry.code)}</code>`
     }
 
     // 块级占位符可能被 parseMarkdown 包进 <p>，先处理这种情况
