@@ -147,6 +147,7 @@ export default function App() {
         accent={accent}
         setTheme={setTheme}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onRestoreDemo={handleRestoreDemo}
         onTriggerGuide={() => triggerGuide(mode)}
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}

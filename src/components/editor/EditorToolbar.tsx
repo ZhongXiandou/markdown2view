@@ -108,6 +108,7 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
       <Tooltip position="bottom" text="导入文档">
         <button
           onClick={() => importInputRef.current?.click()}
+          aria-label="导入文档"
           className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer text-slate-600"
         >
           <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">
@@ -141,6 +142,7 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
                     onClick={() => {
                       if (view) item.action(view)
                     }}
+                    aria-label={item.label}
                     className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer"
                   >
                     <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">{item.icon}</span>
@@ -190,6 +192,7 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
           <Tooltip position="bottom" text="插入分页标识 <page-break/>">
             <button
               onClick={handleInsertPageBreak}
+              aria-label="插入分页标识"
               className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer text-slate-600"
             >
               <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">
@@ -206,6 +209,7 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
         <Tooltip position="bottom" text="上传图片">
           <button
             onClick={triggerFileSelect}
+            aria-label="上传图片"
             className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer text-slate-600"
           >
             <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">

@@ -4,6 +4,7 @@ import { ModeTabs } from '@/components/layout/ModeTabs'
 import { THEMES } from '@engine/composables/useTheme'
 import { HeaderMoreMenu } from '@/components/layout/HeaderMoreMenu'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Shield } from '@/components/ui/Icon'
 
 interface AppHeaderProps {
   mode: RenderMode
@@ -11,6 +12,7 @@ interface AppHeaderProps {
   accent: string
   setTheme: (accent: string, dark: string) => void
   onOpenSettings: () => void
+  onOpenPrivacy: () => void
   onRestoreDemo: () => void
   onTriggerGuide: () => void
   onOpenMobileMenu: () => void
@@ -23,6 +25,7 @@ export function AppHeader({
   accent,
   setTheme,
   onOpenSettings,
+  onOpenPrivacy,
   onRestoreDemo,
   onTriggerGuide,
   onOpenMobileMenu,
@@ -92,6 +95,7 @@ export function AppHeader({
               href="https://github.com/ZhongXiandou/markdown2view"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="GitHub 源码仓库"
               className="flex items-center rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
             >
             <svg width="14" height="14" viewBox="0 0 98 96" fill="currentColor" className="shrink-0">
@@ -103,6 +107,7 @@ export function AppHeader({
           <Tooltip position="bottom" text="查看使用帮助">
             <button
               onClick={onTriggerGuide}
+              aria-label="查看使用帮助"
               className="flex items-center rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
             >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -113,12 +118,23 @@ export function AppHeader({
             </button>
           </Tooltip>
 
+          <Tooltip position="bottom" text="隐私与安全说明">
+            <button
+              onClick={onOpenPrivacy}
+              aria-label="隐私与安全说明"
+              className="flex items-center rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <Shield size={14} className="shrink-0" />
+            </button>
+          </Tooltip>
+
           <div className="w-px h-4 bg-slate-200" />
 
           {headerWidth >= 1300 && (
             <Tooltip position="bottom" text="图床设置（配置图片上传与云存储参数）">
               <button
                 onClick={onOpenSettings}
+                aria-label="图床设置"
                 className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
               >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -136,6 +152,7 @@ export function AppHeader({
             <Tooltip position="bottom" text="恢复当前模块的示例内容">
               <button
                 onClick={onRestoreDemo}
+                aria-label="恢复示例"
                 className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
               >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
