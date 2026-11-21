@@ -551,11 +551,33 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                         return (
                           <div
                             key={s.id}
-                            className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                            className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
                           >
-                            <div className="mb-3">
+                            <div className="relative border-b border-slate-200">
                               <StyleThumbnail style={s} />
+                              {/* 悬停操作层：仅在支持悬停的设备上启用；触屏设备使用卡片底部的按钮 */}
+                              <div className="absolute inset-0 hidden items-center justify-center gap-2 bg-slate-900/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:hover)]:flex">
+                                <button
+                                  onClick={() => onCopy(getCustomizedStyle(s))}
+                                  className="accent-bg flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-semibold text-white shadow-lg transition-transform hover:scale-[1.03] active:scale-[0.98]"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                  {UI_LABELS.promptLibrary.copyPrompt.label}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setCloneFromStyle(getCustomizedStyle(s))
+                                    setEditingId(null)
+                                    setActiveTab('custom')
+                                    setShowEditor(true)
+                                  }}
+                                  className="cursor-pointer rounded-lg bg-white/95 px-3 py-2.5 text-[13px] font-medium text-slate-700 shadow-lg transition-transform hover:scale-[1.03] active:scale-[0.98]"
+                                >
+                                  克隆为自定义
+                                </button>
+                              </div>
                             </div>
+                            <div className="flex flex-1 flex-col p-4">
                             <div className="mb-2 flex items-center gap-2">
                               <span
                                 className="h-3 w-3 shrink-0 rounded-full shadow-inner"
@@ -566,7 +588,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                                 {subCategory}
                               </span>
                             </div>
-                            <p className="mb-4 flex-1 text-[13px] leading-relaxed text-slate-600">
+                            <p className="flex-1 text-[13px] leading-relaxed text-slate-600">
                               {s.description}
                             </p>
                             {mode === 'document' && (
@@ -604,6 +626,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                                 )}
                               </div>
                             )}
+                            <div className="mt-4 [@media(hover:hover)]:hidden">
                             <button
                               onClick={() => onCopy(getCustomizedStyle(s))}
                               className="accent-bg mt-auto flex w-full items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-semibold text-white opacity-90 transition-all hover:opacity-100 hover:shadow-md hover:ring-2 hover:ring-[var(--accent)] hover:ring-offset-2 active:scale-[0.98] active:opacity-80 shadow-sm"
@@ -623,6 +646,8 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 7V5a2 2 0 0 1 2-2h4.5l5.5 5.5v8a2 2 0 0 1-2 2h-2"/><path d="M16 18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6.5L16 11.5z"/></svg>
                               克隆为自定义
                             </button>
+                            </div>
+                            </div>
                           </div>
                         )
                       })}
@@ -674,13 +699,14 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                     {filteredCustomInstructions.map((inst) => (
                       <div
                         key={inst.id}
-                        className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                        className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
                       >
-                        <div className="mb-3">
+                        <div className="border-b border-slate-200">
                           <StyleThumbnail
                             style={{ ...inst, id: inst.id, category: `自定义/${inst.visualTone}`, displayLevel: 'primary', style: inst.content, family: 'custom' } as DesignStyle}
                           />
                         </div>
+                        <div className="flex flex-1 flex-col p-4">
                         <div className="mb-2 flex items-center gap-2">
                           <span className="h-3 w-3 shrink-0 rounded-full shadow-inner" style={{ background: inst.accent }} />
                           <span className="font-semibold text-slate-900 truncate">{inst.name}</span>
@@ -711,6 +737,7 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                           </button>
+                        </div>
                         </div>
                       </div>
                     ))}

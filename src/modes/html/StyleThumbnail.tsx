@@ -1,4 +1,5 @@
 import React from 'react'
+import { PREVIEW_CANVAS_MARKER, PREVIEW_HEIGHT, PREVIEW_WIDTH } from '@/data/designPrompts'
 import type { DesignStyle } from '@/data/designPrompts'
 
 interface StyleThumbnailProps {
@@ -188,25 +189,43 @@ export function generateFallbackHtml(s: DesignStyle): string {
 export const StyleThumbnail = React.memo(
   function StyleThumbnail({ style }: StyleThumbnailProps) {
     const html = style.previewHtml || generateFallbackHtml(style)
+    // 内置风格画在固定画布上；其它模式的内联预览和自定义指令的自动预览是流式宽度的旧式片段
+    const isCanvas = html.startsWith(`<div ${PREVIEW_CANVAS_MARKER}`)
+    const frameRef = React.useRef<HTMLDivElement>(null)
+    const [scale, setScale] = React.useState(0)
+
+    // 固定画布按容器实际宽度等比缩放（卡片宽度随栅格变化）
+    React.useEffect(() => {
+      const frame = frameRef.current
+      if (!isCanvas || !frame) return
+      const update = () => setScale(frame.clientWidth / PREVIEW_WIDTH)
+      update()
+      if (typeof ResizeObserver === 'undefined') return
+      const observer = new ResizeObserver(update)
+      observer.observe(frame)
+      return () => observer.disconnect()
+    }, [isCanvas])
+
+    const innerStyle: React.CSSProperties = isCanvas
+      ? {
+          width: PREVIEW_WIDTH,
+          height: PREVIEW_HEIGHT,
+          transform: `scale(${scale})`,
+          // 尺寸未量出前先隐藏，避免首帧闪一下未缩放的画面
+          visibility: scale > 0 ? 'visible' : 'hidden',
+        }
+      : { width: '125%', height: '125%', transform: 'scale(0.8)' }
 
     return (
-      <div className="group/thumb relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all" style={{ aspectRatio: '4/3' }}>
-        {/* 缩放容器：在固定区域内渲染真实 HTML 并缩放 */}
+      <div
+        ref={frameRef}
+        className="relative w-full overflow-hidden bg-white"
+        style={{ aspectRatio: `${PREVIEW_WIDTH}/${PREVIEW_HEIGHT}` }}
+      >
         <div
-          className="absolute inset-0 origin-top-left"
-          style={{
-            width: '125%',
-            height: '125%',
-            transform: 'scale(0.8)',
-            transformOrigin: 'top left',
-            pointerEvents: 'none',
-          }}
-        >
-          <div
-            dangerouslySetInnerHTML={{ __html: html }}
-            style={{ width: '100%', height: '100%', overflow: 'hidden' }}
-          />
-        </div>
+          dangerouslySetInnerHTML={{ __html: html }}
+          style={{ ...innerStyle, overflow: 'hidden', transformOrigin: 'top left', pointerEvents: 'none' }}
+        />
       </div>
     )
   },
