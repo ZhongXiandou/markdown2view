@@ -21,13 +21,14 @@ import { Input } from '@/components/ui/Input'
 import { FontSelect } from '@/components/ui/FontSelect'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { PreviewToolbar, type ToolbarItem } from '@/components/layout/PreviewToolbar'
+import { ToolbarPopover } from '@/components/layout/ToolbarPopover'
 import { exportMarkdownSource } from '@/lib/exportSource'
 import { exportToDocx } from '@/lib/exportDocx'
 import { useExportAction } from '@/lib/useExportAction'
 import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
 import { useStore } from '@/lib/store'
 import { ModeLayout } from '@/components/layout/ModeLayout'
-import { Download, Printer, FileText, Book, Package } from '@/components/ui/Icon'
+import { Download, Printer, FileText, Book, Package, Sliders } from '@/components/ui/Icon'
 import { useMaterialSource } from '@/lib/useMaterialSource'
 import { snapshotBeforeOverwrite } from '@/lib/libraryStore'
 
@@ -181,7 +182,7 @@ export function DocumentMode({
 
   const [exporting, , runExport] = useExportAction(onToast)
 
-  const toolbarActions: ToolbarItem[] = [
+  const toolbarLeftActions: ToolbarItem[] = [
     {
       id: 'copyGuide',
       icon: <Book size={14} />,
@@ -196,27 +197,36 @@ export function DocumentMode({
       tooltip: '选择文档模板，快速填充字段',
       onClick: () => setTemplateDialogOpen(true),
     },
-    'separator',
+  ]
+
+  const toolbarActions: ToolbarItem[] = [
     {
-      id: 'exportSource',
+      id: 'exportMore',
       icon: <Download size={14} />,
-      label: UI_LABELS.toolbar.exportSource.label,
-      tooltip: '导出为 .md 文件',
-      onClick: () => exportMarkdownSource(debouncedMarkdown, filename.replace(/\.pdf$/, '.md')),
-    },
-    {
-      id: 'exportDocx',
-      icon: <FileText size={14} />,
-      label: '导出 Word',
-      tooltip: '实验性功能：文本样式可能与预览存在差异。建议使用 Markdown 编辑内容，用 PDF 导出进行分享和打印',
-      onClick: () => runExport(async () => {
-        const docxFilename = buildDocumentFilename(rendered.meta.title, contentMarkdown, '.docx')
-        return exportToDocx(blocks, settings, docxFilename, {
-          allowIntranet: allowIntranetResources,
-          sendCredentials,
-        })
-      }),
-      disabled: exporting,
+      label: '导出',
+      menu: [
+        {
+          id: 'exportDocx',
+          icon: <FileText size={14} />,
+          label: '导出 Word',
+          hint: '实验性：文本样式可能与预览有差异，分享和打印建议用 PDF',
+          onClick: () => runExport(async () => {
+            const docxFilename = buildDocumentFilename(rendered.meta.title, contentMarkdown, '.docx')
+            return exportToDocx(blocks, settings, docxFilename, {
+              allowIntranet: allowIntranetResources,
+              sendCredentials,
+            })
+          }),
+          disabled: exporting,
+        },
+        {
+          id: 'exportSource',
+          icon: <Download size={14} />,
+          label: UI_LABELS.toolbar.exportSource.label,
+          hint: '导出为 .md 文件',
+          onClick: () => exportMarkdownSource(debouncedMarkdown, filename.replace(/\.pdf$/, '.md')),
+        },
+      ],
     },
     {
       id: 'exportPdf',
@@ -232,61 +242,74 @@ export function DocumentMode({
 
   const toolbarLeftContent = (
     <>
-      <label className="flex items-center gap-1.5 text-[12px] text-slate-500 shrink-0">
-        左页眉
-        <Input
-          value={settings.headerLeft}
-          onChange={(e) => updateSettings({ headerLeft: e.target.value })}
-          className="w-24"
-        />
-      </label>
-      <label className="flex items-center gap-1.5 text-[12px] text-slate-500 ml-1 border-r border-slate-200 pr-3 shrink-0">
-        右页眉
-        <Input
-          value={settings.headerRight}
-          onChange={(e) => updateSettings({ headerRight: e.target.value })}
-          className="w-24"
-        />
-      </label>
-      <FontSelect
-        value={settings.fontFamily as 'songti' | 'fangsong' | 'heiti'}
-        onChange={(v) => updateSettings({ fontFamily: v })}
-      />
-      <div className="flex items-center gap-0.5 border border-slate-200 rounded-md p-0.5 bg-slate-50 mr-1 shrink-0">
-        {(['small', 'normal', 'large'] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => updateSettings({ fontScale: s })}
-            className={`rounded text-[11px] px-2 py-1 transition-colors ${
-              settings.fontScale === s
-                ? 'bg-white text-slate-900 shadow-sm font-medium'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {{ small: '小', normal: '标准', large: '大' }[s]}
-          </button>
-        ))}
-      </div>
-      <div className="w-px h-4 bg-slate-200 mx-1 shrink-0" />
-      <label className="flex items-center gap-1.5 text-[12px] text-slate-600 hover:text-slate-900 cursor-pointer select-none shrink-0">
-        <input
-          type="checkbox"
-          checked={settings.centerTitle}
-          onChange={(e) => updateSettings({ centerTitle: e.target.checked })}
-          className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
-        />
-        标题居中
-      </label>
-      <label className="flex items-center gap-1.5 text-[12px] text-slate-600 hover:text-slate-900 cursor-pointer select-none shrink-0">
-        <input
-          type="checkbox"
-          checked={settings.indentParagraph}
-          onChange={(e) => updateSettings({ indentParagraph: e.target.checked })}
-          className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
-        />
-        首行缩进
-      </label>
-      <span className="text-[12px] text-slate-400 ml-1 shrink-0 flex items-center gap-1 font-mono">
+      <ToolbarPopover icon={<Sliders size={14} />} label="版式" align="left" panelClassName="w-72">
+        <div className="flex flex-col gap-3 p-2">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1 text-[12px] text-slate-500">
+              左页眉
+              <Input
+                value={settings.headerLeft}
+                onChange={(e) => updateSettings({ headerLeft: e.target.value })}
+                className="w-full"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[12px] text-slate-500">
+              右页眉
+              <Input
+                value={settings.headerRight}
+                onChange={(e) => updateSettings({ headerRight: e.target.value })}
+                className="w-full"
+              />
+            </label>
+          </div>
+          <div className="flex items-center justify-between text-[12px] text-slate-500">
+            字体
+            <FontSelect
+              value={settings.fontFamily as 'songti' | 'fangsong' | 'heiti'}
+              onChange={(v) => updateSettings({ fontFamily: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[12px] text-slate-500">
+            字号
+            <div className="flex items-center gap-0.5 border border-slate-200 rounded-md p-0.5 bg-slate-50 shrink-0">
+              {(['small', 'normal', 'large'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => updateSettings({ fontScale: s })}
+                  className={`rounded text-[12px] px-3 py-1 transition-colors cursor-pointer ${
+                    settings.fontScale === s
+                      ? 'bg-white text-slate-900 shadow-sm font-medium'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {{ small: '小', normal: '标准', large: '大' }[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-5 border-t border-slate-100 pt-3">
+            <label className="flex items-center gap-1.5 text-[12px] text-slate-600 hover:text-slate-900 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={settings.centerTitle}
+                onChange={(e) => updateSettings({ centerTitle: e.target.checked })}
+                className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
+              />
+              标题居中
+            </label>
+            <label className="flex items-center gap-1.5 text-[12px] text-slate-600 hover:text-slate-900 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={settings.indentParagraph}
+                onChange={(e) => updateSettings({ indentParagraph: e.target.checked })}
+                className="rounded border-slate-300 accent-[var(--accent)] cursor-pointer"
+              />
+              首行缩进
+            </label>
+          </div>
+        </div>
+      </ToolbarPopover>
+      <span className="text-[12px] text-slate-400 ml-2 shrink-0 flex items-center gap-1 tabular-nums">
         {status === 'rendering' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />}
         {status === 'rendering' ? '分页中…' : status === 'done' ? `共 ${pageCount} 页` : ''}
       </span>
@@ -312,7 +335,7 @@ export function DocumentMode({
             onToast={onToast}
           />
         }
-        toolbar={<PreviewToolbar leftContent={toolbarLeftContent} actions={toolbarActions} className="document-toolbar shrink-0" />}
+        toolbar={<PreviewToolbar leftActions={toolbarLeftActions} leftContent={toolbarLeftContent} actions={toolbarActions} className="document-toolbar shrink-0" />}
         preview={
           <div ref={previewScrollRef} className="document-preview-area w-full flex-1 overflow-auto px-4 py-4 relative">
             {status !== 'done' && (

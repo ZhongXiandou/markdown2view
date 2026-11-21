@@ -139,7 +139,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     onToast(ok ? `已复制「${style.name}」风格指令${material.suffix}` : '复制失败，请重试')
   }
 
-  const toolbarActions = useHtmlToolbar({
+  const toolbar = useHtmlToolbar({
     pages,
     currentPage,
     expectedPageCount,
@@ -188,7 +188,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
             onToast={onToast}
           />
         }
-        toolbar={!isFullscreen ? <PreviewToolbar actions={toolbarActions} className="shrink-0" /> : undefined}
+        toolbar={!isFullscreen ? <PreviewToolbar leftActions={toolbar.left} actions={toolbar.right} className="shrink-0" /> : undefined}
         preview={
           <div ref={previewPaneRef} className="flex-1 min-h-0 relative">
             {previewLoading && (

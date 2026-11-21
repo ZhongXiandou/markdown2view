@@ -3,16 +3,18 @@ import { useStore, type RenderMode } from '@/lib/store'
 import { CustomInstructionEditor } from '@/modes/html/CustomInstructionEditor'
 import { copyText } from '@/lib/clipboard'
 import { UI_LABELS } from '@/lib/uiLabels'
-import { Wrench } from '@/components/ui/Icon'
+import { ChevronDown, Wrench } from '@/components/ui/Icon'
 import { useEscapeKey } from '@/lib/useEscapeKey'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 interface CustomPromptPopoverProps {
   mode: RenderMode
   onToast: (msg: string) => void
+  /** 桌面端弹层与按钮的哪一侧对齐，默认右对齐 */
+  align?: 'left' | 'right'
 }
 
-export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps) {
+export function CustomPromptPopover({ mode, onToast, align = 'right' }: CustomPromptPopoverProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   
@@ -82,13 +84,14 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
               {filteredInstructions.length}
             </span>
           )}
+          <ChevronDown size={12} className={`ml-1 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
 
         {open && (
           <>
             {/* 移动端遮罩 */}
             <div className="fixed inset-0 z-40 bg-black/20 md:hidden" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 md:right-0 md:top-full fixed md:absolute top-1/2 left-1/2 md:left-auto md:top-auto -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 mt-2 w-72 max-w-[calc(100vw-32px)] rounded-lg border border-slate-200 bg-white p-2 shadow-xl z-50 origin-center md:origin-top-right">
+            <div className={`${align === 'left' ? 'md:left-0 md:right-auto' : 'md:right-0 md:left-auto'} md:top-full fixed md:absolute top-1/2 left-1/2 md:top-auto -translate-x-1/2 -translate-y-1/2 md:translate-x-0 md:translate-y-0 mt-2 w-72 max-w-[calc(100vw-32px)] rounded-lg border border-slate-200 bg-white p-2 shadow-xl z-50 origin-center md:origin-top-right`}>
               <div className="mb-2 flex items-center justify-between px-2 pt-1">
                 <span className="text-xs font-semibold text-slate-500">自定义指令管理</span>
                 <button

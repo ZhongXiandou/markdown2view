@@ -125,7 +125,8 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
     }
   }
 
-  const toolbarActions: ToolbarItem[] = [
+  // 左侧：AI 指令相关（准备内容）
+  const toolbarLeftActions: ToolbarItem[] = [
     {
       id: 'copyGuide',
       icon: <Sparkles size={14} />,
@@ -136,37 +137,47 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
     {
       id: 'copyGuideWithMaterial',
       label: '指令 + 素材',
-      node: <MaterialCopyMenu mode="article" buildPrompt={buildArticleAiGuide} onToast={onToast} />,
+      node: <MaterialCopyMenu mode="article" buildPrompt={buildArticleAiGuide} onToast={onToast} align="left" />,
     },
     {
       id: 'customPrompt',
       label: '自定义指令',
-      node: <CustomPromptPopover mode="article" onToast={onToast} />
+      node: <CustomPromptPopover mode="article" onToast={onToast} align="left" />
     },
-    'separator',
+  ]
+
+  // 右侧：输出（次要导出收进菜单，主操作单独成按钮）
+  const toolbarActions: ToolbarItem[] = [
     {
-      id: 'exportSource',
+      id: 'exportMore',
       icon: <Download size={14} />,
-      label: UI_LABELS.toolbar.exportSource.label,
-      tooltip: '导出为 .md 文件',
-      onClick: () => {
-        const title = (meta.title || 'article').replace(/[\\/:*?"<>|]/g, '_').slice(0, 40)
-        exportMarkdownSource(markdown, `${title}.md`)
-      },
-    },
-    {
-      id: 'copyHtml',
-      icon: <Clipboard size={14} />,
-      label: '复制源码',
-      tooltip: '复制渲染后的完整 HTML 源码（含内联样式）',
-      onClick: handleCopyHtml,
-    },
-    {
-      id: 'exportImage',
-      icon: <ImageIcon size={14} />,
-      label: UI_LABELS.toolbar.exportLongImage.label,
-      tooltip: UI_LABELS.toolbar.exportLongImage.tooltip,
-      onClick: handleExportLongImage,
+      label: '导出',
+      menu: [
+        {
+          id: 'exportImage',
+          icon: <ImageIcon size={14} />,
+          label: UI_LABELS.toolbar.exportLongImage.label,
+          hint: UI_LABELS.toolbar.exportLongImage.tooltip,
+          onClick: handleExportLongImage,
+        },
+        {
+          id: 'copyHtml',
+          icon: <Clipboard size={14} />,
+          label: '复制 HTML 源码',
+          hint: '复制渲染后的完整 HTML 源码（含内联样式）',
+          onClick: handleCopyHtml,
+        },
+        {
+          id: 'exportSource',
+          icon: <Download size={14} />,
+          label: UI_LABELS.toolbar.exportSource.label,
+          hint: '导出为 .md 文件',
+          onClick: () => {
+            const title = (meta.title || 'article').replace(/[\\/:*?"<>|]/g, '_').slice(0, 40)
+            exportMarkdownSource(markdown, `${title}.md`)
+          },
+        },
+      ],
     },
     {
       id: 'copyRichText',
@@ -182,7 +193,7 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
   return (
     <section className="flex h-full flex-col">
       {/* 操作工具栏 */}
-      <PreviewToolbar actions={toolbarActions} />
+      <PreviewToolbar leftActions={toolbarLeftActions} actions={toolbarActions} />
 
       {/* 公众号本地图片裂图警告 */}
       {hasLocalImages && imageHostConfig.activeType === 'local' && (

@@ -5,7 +5,7 @@ import { buildPromptWithMaterial, materialSourcesFor, type MaterialSource } from
 import { countChars } from '@/lib/editor/docStats'
 import { copyText } from '@/lib/clipboard'
 import { useEscapeKey } from '@/lib/useEscapeKey'
-import { Package } from '@/components/ui/Icon'
+import { ChevronDown, Package } from '@/components/ui/Icon'
 
 interface MaterialCopyMenuProps {
   /** 当前模式（素材来源会排除它） */
@@ -13,6 +13,8 @@ interface MaterialCopyMenuProps {
   /** 生成当前模式的排版指令 */
   buildPrompt: () => string
   onToast: (msg: string) => void
+  /** 弹层与按钮的哪一侧对齐，默认右对齐 */
+  align?: 'left' | 'right'
 }
 
 function readMaterial(source: MaterialSource): string {
@@ -26,7 +28,7 @@ function readMaterial(source: MaterialSource): string {
  * 与「复制排版指令」分开成两个入口，且不记忆上次的选择——附带哪份内容必须每次明确点选，
  * 避免用户只想复制指令时，不知不觉把别的模式的稿子也带了出去。
  */
-export function MaterialCopyMenu({ mode, buildPrompt, onToast }: MaterialCopyMenuProps) {
+export function MaterialCopyMenu({ mode, buildPrompt, onToast, align = 'right' }: MaterialCopyMenuProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const sources = materialSourcesFor(mode)
@@ -70,13 +72,14 @@ export function MaterialCopyMenu({ mode, buildPrompt, onToast }: MaterialCopyMen
       >
         <Package size={14} />
         指令 + 素材
+        <ChevronDown size={12} className={`text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
         <div
           role="menu"
           aria-label="选择要附带的素材"
-          className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-200 bg-white p-2 shadow-xl animate-fade-in"
+          className={`absolute top-full z-50 mt-2 w-72 rounded-lg border border-slate-200 bg-white p-2 shadow-xl animate-fade-in ${align === 'left' ? 'left-0' : 'right-0'}`}
         >
           <p className="px-2 pb-2 pt-1 text-[12px] leading-relaxed text-slate-500">
             把另一模式里已写好的内容作为原稿，附在排版指令后面一起复制，让 AI 改写为「{MODE_LABELS[mode]}」。
