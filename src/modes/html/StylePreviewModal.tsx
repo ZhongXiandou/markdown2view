@@ -5,6 +5,7 @@ import { copyText } from '@/lib/clipboard'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { useState, useEffect } from 'react'
 import { generateFallbackHtml } from './StyleThumbnail'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 interface StylePreviewModalProps {
   style: DesignStyle | null
@@ -17,6 +18,8 @@ export function StylePreviewModal({ style, onClose }: StylePreviewModalProps) {
   useEffect(() => {
     setCopied(false)
   }, [style])
+
+  useEscapeKey(style !== null, onClose)
 
   if (!style) return null
 

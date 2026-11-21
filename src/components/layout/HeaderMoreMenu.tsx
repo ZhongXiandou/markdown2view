@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Settings, RotateCcw } from '@/components/ui/Icon'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 interface HeaderMoreMenuProps {
   onOpenSettings: () => void
@@ -19,6 +20,8 @@ export function HeaderMoreMenu({ onOpenSettings, onRestoreDemo }: HeaderMoreMenu
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
+
+  useEscapeKey(open, () => setOpen(false))
 
   return (
     <div className="relative" ref={containerRef}>

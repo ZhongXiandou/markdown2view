@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import type { RenderMode } from '@/lib/store'
 import { THEMES } from '@engine/composables/useTheme'
 import { FileText, Book, ImageIcon, Palette, HelpCircle, Settings, RotateCcw, Shield } from '@/components/ui/Icon'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 /** 抽屉内功能按钮统一样式 */
 function DrawerButton({
@@ -66,6 +67,8 @@ export function MobileDrawer({
       }
     }
   }, [isOpen])
+
+  useEscapeKey(isOpen, onClose)
 
   if (!isOpen) return null
 

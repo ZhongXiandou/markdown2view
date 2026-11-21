@@ -4,6 +4,7 @@ import { CustomInstructionEditor } from '@/modes/html/CustomInstructionEditor'
 import { copyText } from '@/lib/clipboard'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { Wrench } from '@/components/ui/Icon'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 interface CustomPromptPopoverProps {
   mode: RenderMode
@@ -33,6 +34,9 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
+
+  useEscapeKey(open, () => setOpen(false))
+  useEscapeKey(showEditor, () => setShowEditor(false))
 
   const handleCopy = async (content: string) => {
     const ok = await copyText(content)

@@ -12,6 +12,7 @@ import {
   isSecureContext,
   assessPassphraseStrength,
 } from '@/lib/secureVault'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -94,6 +95,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setSaveError('')
     setAllowIntranet(allowIntranetResources)
   }, [isOpen, imageHostConfig, allowIntranetResources])
+
+  useEscapeKey(isOpen, onClose)
 
   if (!isOpen) return null
 

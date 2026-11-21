@@ -1,9 +1,13 @@
+import { useEscapeKey } from '@/lib/useEscapeKey'
+
 interface PrivacyModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
 export function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
+  useEscapeKey(isOpen, onClose)
+
   if (!isOpen) return null
 
   return (

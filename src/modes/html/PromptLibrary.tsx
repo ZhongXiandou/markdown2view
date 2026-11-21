@@ -13,6 +13,7 @@ import { useStore, type RenderMode, type CustomInstruction } from '@/lib/store'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide, buildGovDocAiGuide, buildTechDocAiGuide, type DocCoverMetadata, type GovDocMetadata } from '@/lib/aiGuide'
 import { copyText } from '@/lib/clipboard'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 import { Book } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -221,6 +222,10 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
   const handleGovDocFieldChange = (key: string, value: string) => {
     setGovDocMeta((prev) => ({ ...prev, [key]: value }))
   }
+
+  // 后注册的在栈顶：编辑器打开时 Esc 先退出编辑器，再按一次才关闭指令库
+  useEscapeKey(open, onClose)
+  useEscapeKey(open && showEditor, () => setShowEditor(false))
 
   return (
     <>

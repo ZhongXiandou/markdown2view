@@ -1,5 +1,6 @@
 import { Button } from './Button'
 import { AlertTriangle } from './Icon'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 interface MermaidImageHostDialogProps {
   isOpen: boolean
@@ -18,6 +19,8 @@ export function MermaidImageHostDialog({
   onDowngrade,
   onConfigure,
 }: MermaidImageHostDialogProps) {
+  useEscapeKey(isOpen, onClose)
+
   if (!isOpen) return null
 
   return (

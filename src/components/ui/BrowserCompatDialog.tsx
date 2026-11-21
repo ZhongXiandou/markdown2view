@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { AlertTriangle, Shield } from '@/components/ui/Icon'
 import { detectBrowserCompat, type BrowserCompatResult } from '@/lib/browserCompat'
 import { copyText } from '@/lib/clipboard'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 /**
  * 浏览器兼容性警告弹窗
@@ -29,15 +30,13 @@ export function BrowserCompatDialog() {
     }
   }, [])
 
+  const handleDismiss = () => {
+    sessionStorage.setItem(DISMISS_KEY, '1')
+    setResult(null)
+  }
+
   // Escape 键关闭弹窗
-  useEffect(() => {
-    if (!result) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleDismiss()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [result])
+  useEscapeKey(result !== null, handleDismiss)
 
   if (!result) return null
 
@@ -47,11 +46,6 @@ export function BrowserCompatDialog() {
       setCopied(true)
       timerRef.current = setTimeout(() => setCopied(false), 2000)
     }
-  }
-
-  const handleDismiss = () => {
-    sessionStorage.setItem(DISMISS_KEY, '1')
-    setResult(null)
   }
 
   return (

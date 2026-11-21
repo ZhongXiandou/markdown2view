@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { DOC_TEMPLATES, fillTemplateSkeleton, type DocTemplate, type TemplateField } from './docTemplates'
 import { copyText } from '@/lib/clipboard'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 interface DocTemplateDialogProps {
   open: boolean
@@ -41,6 +42,8 @@ export function DocTemplateDialog({ open, onClose, onApply, onToast }: DocTempla
     const ok = await copyText(filledMarkdown)
     onToast?.(ok ? '已复制模板内容' : '复制失败，请重试')
   }
+
+  useEscapeKey(open, onClose)
 
   if (!open) return null
 

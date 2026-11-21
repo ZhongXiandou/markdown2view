@@ -1,5 +1,6 @@
 import { useState, useEffect, Fragment } from 'react'
 import { CopyIcon, AIIcon, ExportIcon, CheckIcon } from './GuideIcons'
+import { useEscapeKey } from '@/lib/useEscapeKey'
 
 export interface GuideStep {
   icon: 'copy' | 'ai' | 'export'
@@ -57,6 +58,12 @@ export function UserGuidePopover({
       setCurrentStep(0)
     }
   }, [forceOpenTrigger])
+
+  // Esc 等同于「本次会话不再提示」，不写入永久标记
+  useEscapeKey(visible, () => {
+    sessionSeenKeys.add(guideKey)
+    setVisible(false)
+  })
 
   if (!visible) return null
 
