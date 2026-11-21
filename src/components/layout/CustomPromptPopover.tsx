@@ -10,11 +10,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 interface CustomPromptPopoverProps {
   mode: RenderMode
   onToast: (msg: string) => void
-  /** 复制前对指令文本做加工（如附带素材）；返回 null 表示放弃本次复制 */
-  transformPrompt?: (prompt: string) => string | null
 }
 
-export function CustomPromptPopover({ mode, onToast, transformPrompt }: CustomPromptPopoverProps) {
+export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   
@@ -46,9 +44,7 @@ export function CustomPromptPopover({ mode, onToast, transformPrompt }: CustomPr
   useEscapeKey(showEditor, () => setShowEditor(false))
 
   const handleCopy = async (content: string) => {
-    const prompt = transformPrompt ? transformPrompt(content) : content
-    if (prompt === null) return
-    const ok = await copyText(prompt)
+    const ok = await copyText(content)
     onToast(ok ? '已复制指令' : '复制失败，请重试')
     setOpen(false)
   }

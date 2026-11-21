@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DESIGN_STYLES,
   OUTPUT_TYPES,
@@ -10,7 +10,7 @@ import {
 import { StyleThumbnail } from './StyleThumbnail'
 import { CustomInstructionEditor } from './CustomInstructionEditor'
 import { useStore, type RenderMode, type CustomInstruction } from '@/lib/store'
-import { UI_LABELS } from '@/lib/uiLabels'
+import { UI_LABELS, MODE_LABELS } from '@/lib/uiLabels'
 import { buildArticleAiGuide, buildDocumentAiGuide, buildCardAiGuide, buildGovDocAiGuide, buildTechDocAiGuide, type DocCoverMetadata, type GovDocMetadata } from '@/lib/aiGuide'
 import { copyText } from '@/lib/clipboard'
 import { useEscapeKey } from '@/lib/useEscapeKey'
@@ -229,6 +229,12 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
     setGovDocMeta((prev) => ({ ...prev, [key]: value }))
   }
 
+  // 指令库关闭即取消附带素材：下次打开必须重新选择，避免不知不觉把别的模式的稿子带出去
+  const resetMaterialSource = material?.setSource
+  useEffect(() => {
+    if (!open) resetMaterialSource?.('')
+  }, [open, resetMaterialSource])
+
   // 后注册的在栈顶：编辑器打开时 Esc 先退出编辑器，再按一次才关闭指令库
   useEscapeKey(open, onClose)
   useEscapeKey(open && showEditor, () => setShowEditor(false))
@@ -272,6 +278,20 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </header>
+
+        {material?.source && (
+          <div role="status" className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-6 py-2.5 text-[13px] text-amber-800">
+            <span className="flex-1">
+              现在复制任何指令，都会在后面附带<strong>「{MODE_LABELS[material.source]}」的当前内容（{material.sourceChars} 字）</strong>作为原稿，供 AI 改写。
+            </span>
+            <button
+              onClick={() => material.setSource('')}
+              className="shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-[12px] font-medium text-amber-800 hover:bg-amber-100 transition-colors cursor-pointer"
+            >
+              取消附带
+            </button>
+          </div>
+        )}
 
         <div className="flex border-b border-slate-200 bg-white">
           <button

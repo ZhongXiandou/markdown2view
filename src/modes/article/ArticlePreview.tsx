@@ -12,8 +12,7 @@ import { getFontFamilyCss } from '@/lib/fonts'
 import { Sparkles, Download, Clipboard, ImageIcon, Rocket } from '@/components/ui/Icon'
 import { MermaidImageHostDialog } from '@/components/ui/MermaidImageHostDialog'
 import { collectMermaidDiagrams } from '@engine'
-import { useMaterialSource } from '@/lib/useMaterialSource'
-import { MaterialSelect } from '@/components/ui/MaterialSelect'
+import { MaterialCopyMenu } from '@/components/ui/MaterialCopyMenu'
 
 /** 长图文模式固定使用黑体系统字体栈，确保复制到微信公众号时字体一致 */
 const ARTICLE_FONT = getFontFamilyCss('heiti')
@@ -35,8 +34,6 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
 
   const [showMermaidDialog, setShowMermaidDialog] = useState(false)
   const [pendingCopyType, setPendingCopyType] = useState<'richText' | 'htmlSource' | null>(null)
-
-  const material = useMaterialSource('article', onToast)
 
   const hasMermaid = html.includes('m2v-mermaid-figure')
 
@@ -104,10 +101,8 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
   }
 
   const handleCopyGuide = async () => {
-    const prompt = material.withMaterial(buildArticleAiGuide())
-    if (prompt === null) return
-    const ok = await copyText(prompt)
-    onToast(ok ? `已复制长图文 AI 排版指令${material.suffix}，可发给 AI 使用` : '复制失败，请重试')
+    const ok = await copyText(buildArticleAiGuide())
+    onToast(ok ? '已复制长图文 AI 排版指令，可发给 AI 使用' : '复制失败，请重试')
   }
 
   const handleCopyHtml = () => {
@@ -132,22 +127,21 @@ export function ArticlePreview({ rendered, markdown, scrollRef, onToast }: Artic
 
   const toolbarActions: ToolbarItem[] = [
     {
-      id: 'material',
-      label: '附带素材',
-      tooltip: '复制指令时附带另一模式的当前内容，让 AI 把它改写为长图文',
-      node: <MaterialSelect value={material.source} options={material.options} onChange={material.setSource} />,
-    },
-    {
       id: 'copyGuide',
       icon: <Sparkles size={14} />,
       label: '复制排版指令',
-      tooltip: '复制长图文排版 AI 指令',
+      tooltip: '只复制长图文排版 AI 指令，不附带任何内容',
       onClick: handleCopyGuide,
+    },
+    {
+      id: 'copyGuideWithMaterial',
+      label: '指令 + 素材',
+      node: <MaterialCopyMenu mode="article" buildPrompt={buildArticleAiGuide} onToast={onToast} />,
     },
     {
       id: 'customPrompt',
       label: '自定义指令',
-      node: <CustomPromptPopover mode="article" onToast={onToast} transformPrompt={material.withMaterial} />
+      node: <CustomPromptPopover mode="article" onToast={onToast} />
     },
     'separator',
     {

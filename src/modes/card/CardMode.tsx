@@ -33,8 +33,7 @@ import { useExportAction } from '@/lib/useExportAction'
 import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
 import { ModeLayout } from '@/components/layout/ModeLayout'
 import { Sparkles, Download, Clipboard, ImageIcon, Package } from '@/components/ui/Icon'
-import { useMaterialSource } from '@/lib/useMaterialSource'
-import { MaterialSelect } from '@/components/ui/MaterialSelect'
+import { MaterialCopyMenu } from '@/components/ui/MaterialCopyMenu'
 
 interface CardModeProps {
   markdown: string;
@@ -265,33 +264,28 @@ export function CardMode({
     onToast(ok ? "已复制发布文案" : "复制失败，请重试");
   };
 
-  const material = useMaterialSource("card", onToast);
-
   const handleCopyGuide = async () => {
-    const prompt = material.withMaterial(buildCardAiGuide(aspect));
-    if (prompt === null) return;
-    const ok = await copyText(prompt);
-    onToast(ok ? `已复制图文卡片排版指令${material.suffix}，可发给 AI 使用` : "复制失败，请重试");
+    const ok = await copyText(buildCardAiGuide(aspect));
+    onToast(ok ? "已复制图文卡片排版指令，可发给 AI 使用" : "复制失败，请重试");
   };
 
   const toolbarActions: ToolbarItem[] = [
     {
-      id: "material",
-      label: "附带素材",
-      tooltip: "复制指令时附带另一模式的当前内容，让 AI 把它改写为图文卡片",
-      node: <MaterialSelect value={material.source} options={material.options} onChange={material.setSource} />,
-    },
-    {
       id: "copyGuide",
       icon: <Sparkles size={14} />,
       label: "复制排版指令",
-      tooltip: "复制图文卡片排版 AI 指令",
+      tooltip: "只复制图文卡片排版 AI 指令，不附带任何内容",
       onClick: handleCopyGuide,
+    },
+    {
+      id: "copyGuideWithMaterial",
+      label: "指令 + 素材",
+      node: <MaterialCopyMenu mode="card" buildPrompt={() => buildCardAiGuide(aspect)} onToast={onToast} />,
     },
     {
       id: "customPrompt",
       label: "自定义指令",
-      node: <CustomPromptPopover mode="card" onToast={onToast} transformPrompt={material.withMaterial} />,
+      node: <CustomPromptPopover mode="card" onToast={onToast} />,
     },
     "separator",
     {
