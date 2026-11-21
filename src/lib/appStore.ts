@@ -4,6 +4,7 @@ import { THEMES, makeColors, type ThemeColors } from '@engine/composables/useThe
 import { DEFAULT_DOCUMENT_SETTINGS, type DocumentSettings } from '@/modes/document/documentModel'
 import type { FontFamilyOption } from '@/lib/fonts'
 import type { OutputType, VisualTone } from '@/data/designPrompts'
+import type { XhsAspect } from '@engine/utils/xhsCards'
 
 export type ImageHostType = 'local' | 'smms' | 'oss' | 'cos'
 
@@ -137,6 +138,9 @@ export interface AppState {
   documentSettings: DocumentSettings
   articleFont: FontFamilyOption
   cardFont: FontFamilyOption
+  // 卡片模式：画布比例与作者名（刷新后保留）
+  cardAspect: XhsAspect
+  cardAuthorName: string
   accent: string
   accentDark: string
   colors: ThemeColors
@@ -163,6 +167,8 @@ export interface AppState {
   updateDocumentSettings: (patch: Partial<DocumentSettings>) => void
   setArticleFont: (f: FontFamilyOption) => void
   setCardFont: (f: FontFamilyOption) => void
+  setCardAspect: (aspect: XhsAspect) => void
+  setCardAuthorName: (name: string) => void
   restoreDocumentSettingsDemo: () => void
   setTheme: (accent: string, dark: string) => void
 }
@@ -176,6 +182,8 @@ export const useAppStore = create<AppState>()(
       documentSettings: DEFAULT_DOCUMENT_SETTINGS,
       articleFont: 'songti',
       cardFont: 'heiti',
+      cardAspect: '3:4',
+      cardAuthorName: 'Pintley Tasia',
       accent: DEFAULT_ACCENT,
       accentDark: DEFAULT_DARK,
       colors: makeColors(DEFAULT_ACCENT, DEFAULT_DARK),
@@ -245,6 +253,8 @@ export const useAppStore = create<AppState>()(
         set((state) => ({ documentSettings: { ...state.documentSettings, ...patch } })),
       setArticleFont: (f) => set({ articleFont: f }),
       setCardFont: (f) => set({ cardFont: f }),
+      setCardAspect: (cardAspect) => set({ cardAspect }),
+      setCardAuthorName: (cardAuthorName) => set({ cardAuthorName }),
       restoreDocumentSettingsDemo: () =>
         set((state) => {
           const cur = state.documentSettings
@@ -271,6 +281,8 @@ export const useAppStore = create<AppState>()(
         documentSettings: state.documentSettings,
         articleFont: state.articleFont,
         cardFont: state.cardFont,
+        cardAspect: state.cardAspect,
+        cardAuthorName: state.cardAuthorName,
         accent: state.accent,
         accentDark: state.accentDark,
         imageHostConfig: stripImageHostSecrets(state.imageHostConfig),

@@ -60,12 +60,14 @@ export function CardMode({
   platform,
   onToast,
 }: CardModeProps) {
-  const [aspect, setAspect] = useState<XhsAspect>("3:4");
+  const aspect = useStore((s) => s.cardAspect);
+  const setAspect = useStore((s) => s.setCardAspect);
   const [exporting, , runExport] = useExportAction(onToast);
   const cardFont = useStore((s) => s.cardFont);
   const setCardFont = useStore((s) => s.setCardFont);
   const guideTrigger = useStore((s) => s.guideTrigger.card);
-  const [authorName, setAuthorName] = useState("Pintley Tasia");
+  const authorName = useStore((s) => s.cardAuthorName);
+  const setAuthorName = useStore((s) => s.setCardAuthorName);
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
   const cardsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -172,7 +174,7 @@ export function CardMode({
         ),
       })),
     ];
-  }, [model, aspect, colors, cardFont, mermaidMap]);
+  }, [model, aspect, colors, cardFont, mermaidMap, finalBrand, onToast]);
 
   const exportOne = (card: PreviewCard, index: number) => {
     const node = cardRefs.current[card.id];
