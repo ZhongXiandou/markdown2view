@@ -5,6 +5,7 @@ import { copyText } from '@/lib/clipboard'
 import { UI_LABELS } from '@/lib/uiLabels'
 import { Wrench } from '@/components/ui/Icon'
 import { useEscapeKey } from '@/lib/useEscapeKey'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 interface CustomPromptPopoverProps {
   mode: RenderMode
@@ -18,6 +19,8 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
   // 用于编辑/新增指令的状态
   const [showEditor, setShowEditor] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // 待确认删除的指令 id
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const customInstructions = useStore(s => s.customInstructions)
   const removeCustomInstruction = useStore(s => s.removeCustomInstruction)
@@ -27,13 +30,15 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      // 确认弹窗渲染在 body 下，点击它不应被当作「点到外面」而收起列表
+      if (pendingDeleteId !== null) return
       if (open && containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [open])
+  }, [open, pendingDeleteId])
 
   useEscapeKey(open, () => setOpen(false))
   useEscapeKey(showEditor, () => setShowEditor(false))
@@ -53,9 +58,7 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (window.confirm('确定要删除该指令吗？')) {
-      removeCustomInstruction(id)
-    }
+    setPendingDeleteId(id)
   }
 
   const handleAddNew = () => {
@@ -144,6 +147,18 @@ export function CustomPromptPopover({ mode, onToast }: CustomPromptPopoverProps)
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="删除该指令？"
+        message="删除后无法恢复。"
+        confirmLabel="删除"
+        onConfirm={() => {
+          if (pendingDeleteId) removeCustomInstruction(pendingDeleteId)
+          setPendingDeleteId(null)
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
 
       {showEditor && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowEditor(false)}>

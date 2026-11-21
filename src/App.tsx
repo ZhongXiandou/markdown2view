@@ -7,6 +7,7 @@ import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { SettingsModal } from "@/components/editor/SettingsModal";
 import { PrivacyModal } from "@/components/layout/PrivacyModal";
 import { BrowserCompatDialog } from "@/components/ui/BrowserCompatDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 import { DEMO_ARTICLE } from "@/data/demoArticle";
 import { DEMO_DOCUMENT } from "@/data/demoDocument";
@@ -118,18 +119,17 @@ export default function App() {
 
   const restoreDocumentSettingsDemo = useStore((s) => s.restoreDocumentSettingsDemo);
 
-  const handleRestoreDemo = useCallback(() => {
-    if (
-      window.confirm(
-        "确定要恢复当前模块的示例内容吗？这将会覆盖当前编辑区内容。",
-      )
-    ) {
-      if (mode === 'document') {
-        restoreDocumentSettingsDemo();
-      }
-      restoreDemo(mode, DEMOS);
-      showToast("已恢复当前模块示例");
+  // 恢复示例会覆盖当前内容，先弹确认
+  const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
+  const handleRestoreDemo = useCallback(() => setConfirmRestoreOpen(true), []);
+
+  const confirmRestoreDemo = useCallback(() => {
+    setConfirmRestoreOpen(false);
+    if (mode === 'document') {
+      restoreDocumentSettingsDemo();
     }
+    restoreDemo(mode, DEMOS);
+    showToast("已恢复当前模块示例");
   }, [mode, restoreDemo, restoreDocumentSettingsDemo, showToast]);
 
   // 监听子组件打开设置弹窗的请求（如 Mermaid 图床提醒弹窗的「配置图床」按钮）
@@ -197,6 +197,14 @@ export default function App() {
       <PrivacyModal
         isOpen={isPrivacyOpen}
         onClose={() => setIsPrivacyOpen(false)}
+      />
+      <ConfirmDialog
+        open={confirmRestoreOpen}
+        title="恢复当前模块的示例内容？"
+        message="这将会覆盖当前编辑区内容。"
+        confirmLabel="恢复示例"
+        onConfirm={confirmRestoreDemo}
+        onCancel={() => setConfirmRestoreOpen(false)}
       />
       <Toast toast={toast} />
 

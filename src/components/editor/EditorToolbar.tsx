@@ -9,7 +9,7 @@ import { uploadImageFile } from '@/lib/editor/imageStorage'
 interface EditorToolbarProps {
   view: EditorView | null
   mode?: 'article' | 'document' | 'card' | 'html'
-  onToast?: (msg: string) => void
+  onToast: (msg: string) => void
 }
 
 export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
@@ -29,13 +29,13 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
 
     if (!allowed.includes(ext)) {
       const types = mode === 'html' ? '.md, .txt, .html' : '.md, .txt'
-      alert(`不支持的文件类型: .${ext}\n请导入 ${types} 格式的文件`)
+      onToast(`不支持的文件类型 .${ext}，请导入 ${types} 格式的文件`)
       e.target.value = ''
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('文件过大，请导入 5MB 以内的文件')
+      onToast('文件过大，请导入 5MB 以内的文件')
       e.target.value = ''
       return
     }
@@ -45,19 +45,19 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
       try {
         const content = String(reader.result ?? '')
         if (!content.trim()) {
-          alert('文件内容为空，无法导入')
+          onToast('文件内容为空，无法导入')
           return
         }
         const doc = view.state.doc.toString()
         view.dispatch({ changes: { from: 0, to: doc.length, insert: content } })
         view.focus()
-        onToast?.(`已导入: ${file.name}`)
+        onToast(`已导入: ${file.name}`)
       } catch {
-        alert('文件解析失败，请检查文件格式是否正确')
+        onToast('文件解析失败，请检查文件格式是否正确')
       }
     }
     reader.onerror = () => {
-      alert('文件读取失败，请重试')
+      onToast('文件读取失败，请重试')
     }
     reader.readAsText(file, 'utf-8')
     e.target.value = ''
@@ -92,12 +92,7 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
       })
     } catch (err) {
       console.error(err)
-      const msg = `图片上传失败: ${err instanceof Error ? err.message : '未知错误'}`
-      if (onToast) {
-        onToast(msg)
-      } else {
-        alert(msg)
-      }
+      onToast(`图片上传失败: ${err instanceof Error ? err.message : '未知错误'}`)
     } finally {
       e.target.value = ''
     }

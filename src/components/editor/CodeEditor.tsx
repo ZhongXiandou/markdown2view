@@ -21,7 +21,7 @@ interface CodeEditorProps {
   onViewReady?: (view: EditorView) => void
   language?: 'markdown' | 'html'
   mode?: 'article' | 'document' | 'card' | 'html'
-  onToast?: (msg: string) => void
+  onToast: (msg: string) => void
 }
 
 const lightTheme = EditorView.theme({
@@ -160,12 +160,7 @@ export function CodeEditor({
       view.focus()
     } catch (err) {
       console.error('Paste/Drop image error:', err)
-      const msg = `图片导入失败: ${err instanceof Error ? err.message : '未知错误'}`
-      if (onToast) {
-        onToast(msg)
-      } else {
-        alert(msg)
-      }
+      onToast(`图片导入失败: ${err instanceof Error ? err.message : '未知错误'}`)
     }
   }
 
