@@ -43,7 +43,9 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'app-chunks',
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              // 构建产物约有 190 个 JS chunk（mermaid 各图表类型、编辑器语言包等按需加载），
+              // 上限过小会把已访问过的 chunk 淘汰掉，离线时对应功能不可用
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
         ],
