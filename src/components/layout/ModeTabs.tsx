@@ -1,4 +1,5 @@
 import type { RenderMode } from '@/lib/store'
+import { MODE_LABELS } from '@/lib/uiLabels'
 
 interface ModeItem {
   key: RenderMode
@@ -6,10 +7,10 @@ interface ModeItem {
 }
 
 const MODES: ModeItem[] = [
-  { key: 'document', label: 'A4 文档' },
-  { key: 'article', label: '长图文' },
-  { key: 'card', label: '分页图文' },
-  { key: 'html', label: '自由画布' },
+  { key: 'document', label: MODE_LABELS.document },
+  { key: 'article', label: MODE_LABELS.article },
+  { key: 'card', label: MODE_LABELS.card },
+  { key: 'html', label: MODE_LABELS.html },
 ]
 
 export function ModeTabs({

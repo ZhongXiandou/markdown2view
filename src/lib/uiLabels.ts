@@ -3,6 +3,14 @@
  * 各模块统一引用此文件，避免散落的硬编码字符串。
  */
 
+/** 各模式的显示名称（顶栏标签、素材来源等处共用） */
+export const MODE_LABELS = {
+  document: 'A4 文档',
+  article: '长图文',
+  card: '分页图文',
+  html: '自由画布',
+} as const
+
 export const UI_LABELS = {
   /** 全局功能区/工具栏通用文案 */
   toolbar: {

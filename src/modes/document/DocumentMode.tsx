@@ -28,6 +28,7 @@ import { UserGuidePopover } from '@/components/ui/UserGuidePopover'
 import { useStore } from '@/lib/store'
 import { ModeLayout } from '@/components/layout/ModeLayout'
 import { Download, Printer, FileText, Book, Package } from '@/components/ui/Icon'
+import { useMaterialSource } from '@/lib/useMaterialSource'
 
 
 interface DocumentModeProps {
@@ -158,9 +159,13 @@ export function DocumentMode({
     setPromptLibraryOpen(true)
   }
 
+  const material = useMaterialSource('document', onToast)
+
   const handleCopyStyle = async (style: DesignStyle) => {
-    const ok = await copyText(style.style)
-    onToast(ok ? `已复制「${style.name}」指令` : '复制失败，请重试')
+    const prompt = material.withMaterial(style.style)
+    if (prompt === null) return
+    const ok = await copyText(prompt)
+    onToast(ok ? `已复制「${style.name}」指令${material.suffix}` : '复制失败，请重试')
   }
 
   const handleApplyTemplate = (markdown: string) => {
@@ -332,6 +337,7 @@ export function DocumentMode({
         onClose={() => setPromptLibraryOpen(false)}
         onCopy={handleCopyStyle}
         onToast={onToast}
+        material={material}
       />
       <DocTemplateDialog
         open={templateDialogOpen}

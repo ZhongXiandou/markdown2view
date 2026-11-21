@@ -17,12 +17,16 @@ import { useEscapeKey } from '@/lib/useEscapeKey'
 import { Book } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { MaterialSelect } from '@/components/ui/MaterialSelect'
+import type { MaterialSourceState } from '@/lib/useMaterialSource'
 
 interface PromptLibraryProps {
   mode: RenderMode
   open: boolean
   onClose: () => void
   onCopy: (style: DesignStyle) => void
+  /** 复制指令时附带素材的状态（由所在模式持有，保证内置与自定义指令行为一致） */
+  material?: MaterialSourceState
   onToast?: (msg: string) => void
 }
 
@@ -135,7 +139,7 @@ const GOV_DOC_FIELDS: MetaFieldDef[] = [
   { key: 'publishDate', label: '成文日期', type: 'date' },
 ]
 
-export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLibraryProps) {
+export function PromptLibrary({ mode, open, onClose, onCopy, onToast, material }: PromptLibraryProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('builtin')
   const [outputType, setOutputType] = useState<OutputType>('幻灯片')
   const [visualTone, setVisualTone] = useState<VisualTone | '全部'>('全部')
@@ -194,9 +198,11 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
   }, [filteredStyles])
 
   const handleCopyCustom = async (inst: CustomInstruction) => {
-    const success = await copyText(inst.content)
+    const prompt = material ? material.withMaterial(inst.content) : inst.content
+    if (prompt === null) return
+    const success = await copyText(prompt)
     if (success && onToast) {
-      onToast('复制指令成功')
+      onToast(`复制指令成功${material?.suffix ?? ''}`)
     }
   }
 
@@ -252,6 +258,12 @@ export function PromptLibrary({ mode, open, onClose, onCopy, onToast }: PromptLi
               <span>3. 将生成的 HTML/Markdown 贴回系统渲染</span>
             </div>
           </div>
+          {material && (
+            <label className="ml-auto mr-3 flex shrink-0 items-center gap-2 text-[12px] text-slate-500" title="复制指令时附带另一模式的当前内容，让 AI 以它为素材改写">
+              附带素材
+              <MaterialSelect value={material.source} options={material.options} onChange={material.setSource} />
+            </label>
+          )}
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"

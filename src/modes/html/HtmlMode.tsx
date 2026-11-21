@@ -15,6 +15,7 @@ import { useIframeScale } from './useIframeScale'
 import { usePageNavigation } from './usePageNavigation'
 import { useHtmlExports } from './useHtmlExports'
 import { useHtmlToolbar } from './useHtmlToolbar'
+import { useMaterialSource } from '@/lib/useMaterialSource'
 
 interface HtmlModeProps {
   html: string
@@ -129,9 +130,13 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
     }
   }, [editorReady, refreshKey])
 
+  const material = useMaterialSource('html', onToast)
+
   const handleCopyPrompt = async (style: DesignStyle) => {
-    const ok = await copyText(buildDesignPrompt(style))
-    onToast(ok ? `已复制「${style.name}」风格指令` : '复制失败，请重试')
+    const prompt = material.withMaterial(buildDesignPrompt(style))
+    if (prompt === null) return
+    const ok = await copyText(prompt)
+    onToast(ok ? `已复制「${style.name}」风格指令${material.suffix}` : '复制失败，请重试')
   }
 
   const toolbarActions = useHtmlToolbar({
@@ -227,6 +232,7 @@ export function HtmlMode({ html, setHtml, onToast }: HtmlModeProps) {
         onClose={() => setPromptOpen(false)}
         onCopy={handleCopyPrompt}
         onToast={onToast}
+        material={material}
       />
       <UserGuidePopover
         guideKey="m2v-html-guide-seen"
