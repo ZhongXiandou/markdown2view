@@ -5,6 +5,7 @@ import { toolbarGroups } from '@/lib/editor/toolbarConfig'
 import { Select } from '@/components/ui/Select'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { uploadImageFile } from '@/lib/editor/imageStorage'
+import { formatMarkdown, describeFormatStats } from '@/lib/editor/formatMarkdown'
 
 interface EditorToolbarProps {
   view: EditorView | null
@@ -61,6 +62,20 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
     }
     reader.readAsText(file, 'utf-8')
     e.target.value = ''
+  }
+
+  // 格式化文档：只做不改变语义的整理，整体作为一次编辑写回，可用 Ctrl+Z 撤销
+  const handleFormat = () => {
+    if (!view) return
+    const doc = view.state.doc.toString()
+    const { text, stats, changed } = formatMarkdown(doc)
+    if (!changed) {
+      onToast('文档格式已规范，无需调整')
+      return
+    }
+    view.dispatch({ changes: { from: 0, to: doc.length, insert: text } })
+    view.focus()
+    onToast(`已格式化：${describeFormatStats(stats) || '整理首尾空行'}（可按 Ctrl+Z 撤销）`)
   }
 
   // 快捷插入分页标识
@@ -205,6 +220,22 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
             </button>
           </Tooltip>
         )}
+
+        <Tooltip position="bottom" text="格式化文档：组件标签去缩进、整理空行与行尾空白、补全未闭合的代码块">
+          <button
+            onClick={handleFormat}
+            aria-label="格式化文档"
+            className="flex items-center justify-center rounded p-1.5 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer text-slate-600"
+          >
+            <span className="flex items-center justify-center w-[18px] h-[18px] shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="21" y1="6" x2="3" y2="6"></line>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
+                <line x1="17" y1="18" x2="3" y2="18"></line>
+              </svg>
+            </span>
+          </button>
+        </Tooltip>
 
         <Tooltip position="bottom" text="上传图片">
           <button
