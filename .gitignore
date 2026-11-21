@@ -34,3 +34,15 @@ public/vendor/r-markdown
 # 敏感测试文件，禁止提交
 public/html-test.html
 
+
+# AI 工具的本地知识库与记忆，不入库
+.qoder/
+.workbuddy/
+
+# 历史文档与一次性验证页，仅本地保留
+docs/旧文档/
+poc/
+
+# 已下线的卡片模式截图、已被 ci.yml 取代的手动工作流（本地保留）
+docs/screenshots/card.png
+.github/workflows/manual.yml
