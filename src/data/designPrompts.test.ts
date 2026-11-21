@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DESIGN_STYLES, buildDesignPrompt } from './designPrompts'
+import { DESIGN_STYLES, PREVIEW_CANVAS_MARKER, buildDesignPrompt } from './designPrompts'
 
 const EXPECTED_SERIES = [
   '演示汇报',
@@ -144,5 +144,20 @@ describe('Design Prompt Library', () => {
     expect(prompt).toContain('先列出版式节奏')
     expect(prompt).toContain('标准比例')
     expect(prompt).toContain('低性能')
+  })
+  it('keeps every built-in style at the shared thumbnail and spec standard', () => {
+    const requiredSections = ['【视觉主题】', '【色彩系统】', '【字体与字号】', '【组件特征】', '【禁忌】', '【布局原则】']
+
+    for (const style of DESIGN_STYLES) {
+      // 缩略图统一画在 previewKit 的固定画布上
+      expect(style.previewHtml?.startsWith(`<div ${PREVIEW_CANVAS_MARKER}`), style.id).toBe(true)
+      // 设计说明是完整规范，而不是几行概述
+      expect(style.style.length, style.id).toBeGreaterThanOrEqual(600)
+      for (const section of requiredSections) {
+        expect(style.style, style.id).toContain(section)
+      }
+      // 自由画布只认标准 HTML：不得引用 Markdown 引擎专用的自定义标签
+      expect(style.style, style.id).not.toContain('<gov-header')
+    }
   })
 })
