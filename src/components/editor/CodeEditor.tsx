@@ -1,9 +1,11 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import CodeMirror, { EditorView, keymap, type Extension } from '@uiw/react-codemirror'
+import CodeMirror, { EditorState, EditorView, keymap, type Extension } from '@uiw/react-codemirror'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import type { LanguageDescription } from '@codemirror/language'
 import { html } from '@codemirror/lang-html'
 import { EditorToolbar } from './EditorToolbar'
+import { EditorStatusBar } from './EditorStatusBar'
+import { zhPhrases } from '@/lib/editor/phrases'
 import { useStore } from '@/lib/store'
 import {
   uploadImageFile,
@@ -185,7 +187,7 @@ export function CodeEditor({
       },
     })
 
-    const exts = [langExtension, EditorView.lineWrapping, eventHandlers]
+    const exts = [langExtension, EditorView.lineWrapping, eventHandlers, EditorState.phrases.of(zhPhrases)]
     if (language === 'markdown') {
       exts.push(customKeymap)
     }
@@ -220,6 +222,7 @@ export function CodeEditor({
           }}
         />
       </div>
+      {language === 'markdown' && <EditorStatusBar view={editorView} value={value} />}
     </div>
   )
 }
