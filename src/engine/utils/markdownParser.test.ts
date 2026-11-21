@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseMarkdown, parseTableMarkdown, collectFormulas } from './markdownParser'
 import { makeColors } from '../index'
+import { parseCellSpan } from './helpers'
 
 describe('parseMarkdown - Caption parsing', () => {
   const colors = makeColors('#2563eb', '#1e40af')
@@ -463,5 +464,68 @@ describe('parseMarkdown - <text> 行内样式标签', () => {
 
   it('没有可用属性时退化为普通 span', () => {
     expect(parseMarkdown('<text>文字</text>', colors)).toContain('<span>文字</span>')
+  })
+})
+
+describe('表格单元格合并', () => {
+  const colors = makeColors('#2563eb', '#1e40af')
+
+  it('parseCellSpan 解析 {col:N} / {row:N} / 组合写法并剥离标记', () => {
+    expect(parseCellSpan('合计 {col:2}')).toEqual({ text: '合计', colspan: 2, rowspan: 1 })
+    expect(parseCellSpan('{row:3} 分类')).toEqual({ text: '分类', colspan: 1, rowspan: 3 })
+    expect(parseCellSpan('块 {col:2,row:2}')).toEqual({ text: '块', colspan: 2, rowspan: 2 })
+    expect(parseCellSpan('块 {col:2}{row:2}')).toEqual({ text: '块', colspan: 2, rowspan: 2 })
+  })
+
+  it('parseCellSpan 把 {cover} 记为被吸收格，其它花括号内容原样保留', () => {
+    expect(parseCellSpan(' {cover} ')).toEqual({ text: '', colspan: 0, rowspan: 0 })
+    expect(parseCellSpan('变量 {name}')).toEqual({ text: '变量 {name}', colspan: 1, rowspan: 1 })
+    expect(parseCellSpan('普通')).toEqual({ text: '普通', colspan: 1, rowspan: 1 })
+  })
+
+  it('渲染时输出 colspan / rowspan 并跳过被吸收格', () => {
+    const md = [
+      '| 分组 {col:2} | {cover} | 备注 |',
+      '| --- | --- | --- |',
+      '| 甲 {row:2} | 一 | 说明一 |',
+      '| {cover} | 二 | 说明二 |',
+    ].join('\n')
+    const html = parseMarkdown(md, colors)
+    // 注意用 '<th '（带空格）计数，避免把 <thead> 算进去
+    expect(html.split('<th ').length - 1).toBe(2)
+    expect(html).toMatch(/<th colspan="2"/)
+    expect(html).toMatch(/<td rowspan="2"/)
+    // 第二个数据行只剩 2 个单元格
+    const lastRow = html.slice(html.lastIndexOf('<tr>'))
+    expect(lastRow.split('<td').length - 1).toBe(2)
+    expect(html).not.toContain('{col')
+    expect(html).not.toContain('{row')
+    expect(html).not.toContain('{cover}')
+  })
+
+  it('没有合并标记的表格输出不带 colspan / rowspan，且只有一个 tbody', () => {
+    const html = parseMarkdown('| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |', colors)
+    expect(html).not.toContain('colspan')
+    expect(html).not.toContain('rowspan')
+    expect(html.split('<tbody').length - 1).toBe(1)
+    expect(html).not.toContain('break-inside')
+  })
+
+  it('纵向合并的行组各自放进禁止内部分页的 tbody，普通行另起 tbody', () => {
+    const md = [
+      '| 组 | 项 |',
+      '| --- | --- |',
+      '| 普通 | 0 |',
+      '| 甲 {row:2} | 1 |',
+      '| {cover} | 2 |',
+      '| 乙 {row:2} | 3 |',
+      '| {cover} | 4 |',
+      '| 普通 | 5 |',
+    ].join('\n')
+    const html = parseMarkdown(md, colors)
+    const bodies = html.split('<tbody').slice(1).map((s) => s.slice(0, s.indexOf('</tbody>')))
+    expect(bodies).toHaveLength(4)
+    expect(bodies.map((b) => b.includes('break-inside:avoid'))).toEqual([false, true, true, false])
+    expect(bodies.map((b) => b.split('<tr>').length - 1)).toEqual([1, 2, 2, 1])
   })
 })

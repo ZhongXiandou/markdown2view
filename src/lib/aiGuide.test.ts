@@ -215,3 +215,21 @@ describe('AI 指令 - <text> 行内样式标签同步', () => {
     expect(buildDocumentAiGuide()).not.toContain('<text ')
   })
 })
+
+describe('AI 指令 - 表格合并单元格规则同步', () => {
+  it('长图文、A4 文档（含公文/技术）、卡片指令都说明了合并标记与 {cover} 占位', () => {
+    for (const guide of [
+      buildArticleAiGuide(),
+      buildDocumentAiGuide(),
+      buildTechDocAiGuide(),
+      buildGovDocAiGuide(),
+      buildCardAiGuide('3:4'),
+    ]) {
+      expect(guide).toContain('{col:N}')
+      expect(guide).toContain('{row:N}')
+      expect(guide).toContain('{cover}')
+      // 模板插值必须已展开
+      expect(guide).not.toContain('TABLE_MERGE_RULE')
+    }
+  })
+})

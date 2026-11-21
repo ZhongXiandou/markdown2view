@@ -1,5 +1,5 @@
 import type { ThemeColors } from '../composables/useTheme'
-import { esc, leaf, parseAttrs } from './helpers'
+import { esc, leaf, parseAttrs, parseCellSpan, type TableCellSpan } from './helpers'
 import { inlineFormat } from './inlineFormat'
 import { renderCodeBlock } from './codeBlock'
 import { getCachedImageUrl } from '@/lib/editor/imageStorage'
@@ -557,30 +557,54 @@ const tableRenderer: BlockRenderer = {
       if (s.endsWith('|')) s = s.substring(0, s.length - 1)
       return s.split('|').map((x) => x.trim())
     }
-    const headers = parseRow(line)
+    // 单元格内的 {col:N} / {row:N} 为合并标记，{cover} 为被吸收格
+    const headers = parseRow(line).map(parseCellSpan)
     let j = i + 2
-    const rows: string[][] = []
+    const rows: TableCellSpan[][] = []
     while (j < lines.length && lines[j].indexOf('|') >= 0 && lines[j].trim() !== '') {
-      rows.push(parseRow(lines[j]))
+      rows.push(parseRow(lines[j]).map(parseCellSpan))
       j++
     }
+    const spanAttrs = (c: TableCellSpan) =>
+      (c.colspan > 1 ? ` colspan="${c.colspan}"` : '') + (c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : '')
+    // 跨行的合并格垂直居中，其余保持顶对齐
+    const vAlign = (c: TableCellSpan) => (c.rowspan > 1 ? 'middle' : 'top')
     let html = ''
     if (isContinuation) {
       html += `<section style="margin:0px 0px ${spacing[4]};text-align:center;font-size:${fontSize.sm};color:${color.inkMuted};font-style:italic">（续表）</section>`
     }
     html += `<section style="margin:0px 0px ${spacing[12]};display:flex;justify-content:center;width:100%"><section style="${shadowRaw.card};border-radius:${radius['2xl']};border:1px solid ${neutral.gray250};overflow:hidden;background:${color.surface};max-width:100%;width:max-content"><section style="padding:${spacing[7]};background:${color.surface}"><section class="tableWrapper"><table style="border-collapse:collapse;table-layout:auto;width:100%;border:1px solid ${neutral.gray300}"><thead><tr style="background-color:${neutral.gray100}">`
     headers.forEach((h) => {
-      html += `<th valign="top" align="left" style="vertical-align:top;border:1px solid ${neutral.gray300};padding:${spacing[4]} ${spacing[6]};text-align:left;font-size:${fontSize.base};font-weight:${fontWeight.bold};color:${color.textTertiary}">${inlineFormat(h, t, formulaMap) || '&nbsp;'}</th>`
+      if (h.colspan === 0) return
+      html += `<th${spanAttrs(h)} valign="${vAlign(h)}" align="left" style="vertical-align:${vAlign(h)};border:1px solid ${neutral.gray300};padding:${spacing[4]} ${spacing[6]};text-align:left;font-size:${fontSize.base};font-weight:${fontWeight.bold};color:${color.textTertiary}">${inlineFormat(h.text, t, formulaMap) || '&nbsp;'}</th>`
     })
-    html += `</tr></thead><tbody>`
+    html += `</tr></thead>`
+    // 被纵向合并（rowspan）绑在一起的若干行单独放进一个禁止内部分页的 <tbody>：
+    // Paged.js 在合并组中间断页时会重复/错位单元格，而它会尊重 tbody 上的 break-inside:avoid。
+    // 没有纵向合并的表格仍只输出一个普通 <tbody>，结构与之前一致。
+    const rowKinds: Array<'start' | 'cont' | 'plain'> = []
+    let spanRowsLeft = 0 // 当前合并组还需覆盖的后续行数
     rows.forEach((r) => {
+      const rowSpanMax = Math.max(1, ...r.map((c) => c.rowspan))
+      rowKinds.push(spanRowsLeft > 0 ? 'cont' : rowSpanMax > 1 ? 'start' : 'plain')
+      spanRowsLeft = Math.max(spanRowsLeft - 1, rowSpanMax - 1)
+    })
+    rows.forEach((r, idx) => {
+      const kind = rowKinds[idx]
+      // 新开 <tbody> 的时机：首行；合并组开始；合并组结束后的第一个普通行
+      if (idx === 0 || kind === 'start' || (kind === 'plain' && rowKinds[idx - 1] !== 'plain')) {
+        if (idx > 0) html += `</tbody>`
+        html += kind === 'start' ? `<tbody style="break-inside:avoid;page-break-inside:avoid">` : `<tbody>`
+      }
       html += `<tr>`
       r.forEach((c) => {
-        html += `<td valign="top" align="left" style="vertical-align:top;border:1px solid ${neutral.gray300};padding:${spacing[4]} ${spacing[6]};text-align:left;font-size:${fontSize.base};color:${color.textTertiary}">${inlineFormat(c, t, formulaMap) || '&nbsp;'}</td>`
+        if (c.colspan === 0) return
+        html += `<td${spanAttrs(c)} valign="${vAlign(c)}" align="left" style="vertical-align:${vAlign(c)};border:1px solid ${neutral.gray300};padding:${spacing[4]} ${spacing[6]};text-align:left;font-size:${fontSize.base};color:${color.textTertiary}">${inlineFormat(c.text, t, formulaMap) || '&nbsp;'}</td>`
       })
       html += `</tr>`
     })
-    html += `</tbody></table></section></section></section></section>`
+    html += rows.length > 0 ? `</tbody>` : `<tbody></tbody>`
+    html += `</table></section></section></section></section>`
     return { html, next: j }
   },
 }

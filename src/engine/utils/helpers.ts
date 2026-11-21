@@ -112,3 +112,39 @@ export function parseAttrs(s: string): Record<string, string> {
   )
   return attrs
 }
+
+/** 表格单元格：剥离合并标记后的文本与跨列/跨行数（被吸收格两者均为 0） */
+export interface TableCellSpan {
+  text: string
+  colspan: number
+  rowspan: number
+}
+
+/**
+ * 解析单元格内的合并标记并剥离。
+ * - `{col:2}` 向右跨 2 列，`{row:3}` 向下跨 3 行，可写成 `{col:2,row:3}` 或 `{col:2}{row:3}`
+ * - 整格内容仅为 `{cover}` 表示该格被相邻的合并格吸收，渲染时跳过
+ * - 其它花括号内容（如 `{name}`）不是标记，原样保留
+ */
+export function parseCellSpan(raw: string): TableCellSpan {
+  const trimmed = raw.trim()
+  if (trimmed === '{cover}') return { text: '', colspan: 0, rowspan: 0 }
+  let colspan = 1
+  let rowspan = 1
+  const text = raw
+    .replace(/\{\s*[^{}]*\}/g, (block) => {
+      const inner = block.slice(1, -1)
+      const kvRe = /(col|row)\s*:\s*(\d+)/g
+      let m: RegExpExecArray | null
+      while ((m = kvRe.exec(inner)) !== null) {
+        const n = parseInt(m[2], 10)
+        if (m[1] === 'col') colspan = Math.max(colspan, n)
+        else rowspan = Math.max(rowspan, n)
+      }
+      // 去掉键值对后还有别的内容，说明不是纯合并标记，保持原样
+      const rest = inner.replace(/(col|row)\s*:\s*\d+/g, '').replace(/[\s,]/g, '')
+      return rest ? block : ''
+    })
+    .trim()
+  return { text, colspan, rowspan }
+}

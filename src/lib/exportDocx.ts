@@ -6,6 +6,7 @@
 
 import type { DocumentBlock, DocumentSettings } from '@/modes/document/documentModel'
 import { parseTableMarkdown } from '@/engine/utils/markdownParser'
+import { parseCellSpan } from '@/engine/utils/helpers'
 import { downloadBlob } from './exportImage'
 import { ensureMathJax } from '@engine/utils/mathRenderer'
 import { ensureMermaid } from '@engine/utils/mermaidRenderer'
@@ -653,34 +654,43 @@ function convertTable(
   const border = { style: BorderStyle.SINGLE, size: 1, color: '9CA3AF' }
   const borders = { top: border, bottom: border, left: border, right: border }
 
-  const makeCell = (
-    text: string,
+  // 单元格内的 {col:N} / {row:N} 映射为 columnSpan / rowSpan；{cover} 被吸收格不生成单元格
+  // （纵向合并的续接格由 docx 库按 rowSpan 自动补齐）
+  const makeCells = (
+    cells: string[],
     isHeader: boolean,
-  ): InstanceType<typeof TableCell> =>
-    new TableCell({
-      width: { size: colWidthPct, type: WidthType.PERCENTAGE },
-      borders,
-      verticalAlign: VerticalAlign.TOP,
-      shading: isHeader ? { fill: 'F3F4F6' } : undefined,
-      children: [
-        new Paragraph({
-          spacing: { before: 40, after: 40 },
-          children: parseInlineToRuns(text, font, bodySize, '333333'),
+  ): Array<InstanceType<typeof TableCell>> =>
+    cells
+      .map(parseCellSpan)
+      .filter((c) => c.colspan > 0)
+      .map((c) =>
+        new TableCell({
+          width: { size: colWidthPct * c.colspan, type: WidthType.PERCENTAGE },
+          borders,
+          verticalAlign: c.rowspan > 1 ? VerticalAlign.CENTER : VerticalAlign.TOP,
+          shading: isHeader ? { fill: 'F3F4F6' } : undefined,
+          ...(c.colspan > 1 ? { columnSpan: c.colspan } : {}),
+          ...(c.rowspan > 1 ? { rowSpan: c.rowspan } : {}),
+          children: [
+            new Paragraph({
+              spacing: { before: 40, after: 40 },
+              children: parseInlineToRuns(c.text, font, bodySize, '333333'),
+            }),
+          ],
         }),
-      ],
-    })
+      )
 
   // 表头行
   const headerRow = new TableRow({
     tableHeader: true,
-    children: tableData.headers.map((h) => makeCell(h, true)),
+    children: makeCells(tableData.headers, true),
   })
 
   // 数据行
   const dataRows = tableData.rows.map(
     (row) =>
       new TableRow({
-        children: row.map((cell) => makeCell(cell, false)),
+        children: makeCells(row, false),
       }),
   )
 
