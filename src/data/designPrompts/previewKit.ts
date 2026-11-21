@@ -93,3 +93,7 @@ export function portraitPages(bg: string, pages: Array<[string, string]>): strin
     .join('')
   return canvas(`background:${bg};display:flex;align-items:center;justify-content:center;gap:14px;`, cells)
 }
+
+/** 公文与论文类缩略图用的宋体、仿宋字体栈 */
+export const SONGTI = getFontFamilyCss('songti')
+export const FANGSONG = getFontFamilyCss('fangsong')
