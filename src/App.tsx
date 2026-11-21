@@ -9,6 +9,7 @@ import { PrivacyModal } from "@/components/layout/PrivacyModal";
 import { BrowserCompatDialog } from "@/components/ui/BrowserCompatDialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { isModeVisible } from "@/lib/modes";
+import { snapshotBeforeOverwrite } from "@/lib/libraryStore";
 
 import { DEMO_ARTICLE } from "@/data/demoArticle";
 import { DEMO_DOCUMENT } from "@/data/demoDocument";
@@ -131,12 +132,19 @@ export default function App() {
 
   const confirmRestoreDemo = useCallback(() => {
     setConfirmRestoreOpen(false);
+    snapshotBeforeOverwrite(mode, "恢复示例前");
     if (mode === 'document') {
       restoreDocumentSettingsDemo();
     }
     restoreDemo(mode, DEMOS);
     showToast("已恢复当前模块示例");
   }, [mode, restoreDemo, restoreDocumentSettingsDemo, showToast]);
+
+  // 每 5 分钟为当前文档自动存一个历史版本（内容没变时会跳过）
+  useEffect(() => {
+    const timer = window.setInterval(() => snapshotBeforeOverwrite(mode, "自动保存"), 5 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [mode]);
 
   // 监听子组件打开设置弹窗的请求（如 Mermaid 图床提醒弹窗的「配置图床」按钮）
   useEffect(() => {
@@ -158,6 +166,7 @@ export default function App() {
         onTriggerGuide={() => triggerGuide(mode)}
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         onWidthChange={handleWidthChange}
+        onToast={showToast}
       />
 
       {/* 主体：按模式渲染 */}

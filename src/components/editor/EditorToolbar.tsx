@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { uploadImageFile } from '@/lib/editor/imageStorage'
 import { formatMarkdown, describeFormatStats } from '@/lib/editor/formatMarkdown'
+import { snapshotBeforeOverwrite } from '@/lib/libraryStore'
 
 interface EditorToolbarProps {
   view: EditorView | null
@@ -50,6 +51,8 @@ export function EditorToolbar({ view, mode, onToast }: EditorToolbarProps) {
           return
         }
         const doc = view.state.doc.toString()
+        // 导入会覆盖全文，先为当前内容存档
+        if (mode) snapshotBeforeOverwrite(mode, '导入文件前')
         view.dispatch({ changes: { from: 0, to: doc.length, insert: content } })
         view.focus()
         onToast(`已导入: ${file.name}`)

@@ -156,3 +156,20 @@ export const useContentStore = create<ContentState>()(
     }
   )
 )
+
+export type ContentMode = 'article' | 'document' | 'card' | 'html'
+
+/** 读取某个模式当前的内容 */
+export function getModeContent(mode: ContentMode): string {
+  const s = useContentStore.getState()
+  return { article: s.articleMarkdown, document: s.documentMarkdown, card: s.cardMarkdown, html: s.html }[mode]
+}
+
+/** 写入某个模式当前的内容（编辑器会把它当作外部变更并同步显示） */
+export function setModeContent(mode: ContentMode, content: string): void {
+  const s = useContentStore.getState()
+  if (mode === 'article') s.setArticleMarkdown(content)
+  else if (mode === 'document') s.setDocumentMarkdown(content)
+  else if (mode === 'card') s.setCardMarkdown(content)
+  else s.setHtml(content)
+}

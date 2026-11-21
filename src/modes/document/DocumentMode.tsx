@@ -29,6 +29,7 @@ import { useStore } from '@/lib/store'
 import { ModeLayout } from '@/components/layout/ModeLayout'
 import { Download, Printer, FileText, Book, Package } from '@/components/ui/Icon'
 import { useMaterialSource } from '@/lib/useMaterialSource'
+import { snapshotBeforeOverwrite } from '@/lib/libraryStore'
 
 
 interface DocumentModeProps {
@@ -174,6 +175,7 @@ export function DocumentMode({
   }
 
   const handleApplyTemplate = (markdown: string) => {
+    snapshotBeforeOverwrite('document', '套用模板前')
     setMarkdown(markdown)
   }
 

@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import type { RenderMode } from '@/lib/store'
 import { ModeTabs } from '@/components/layout/ModeTabs'
 import { ThemePicker } from '@/components/layout/ThemePicker'
+import { DocLibraryMenu } from '@/components/layout/DocLibraryMenu'
 import { HeaderMoreMenu } from '@/components/layout/HeaderMoreMenu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Shield } from '@/components/ui/Icon'
@@ -17,6 +18,7 @@ interface AppHeaderProps {
   onTriggerGuide: () => void
   onOpenMobileMenu: () => void
   onWidthChange: (width: number) => void
+  onToast: (msg: string) => void
 }
 
 export function AppHeader({
@@ -30,6 +32,7 @@ export function AppHeader({
   onTriggerGuide,
   onOpenMobileMenu,
   onWidthChange,
+  onToast,
 }: AppHeaderProps) {
   const headerRef = useRef<HTMLDivElement>(null)
   const [headerWidth, setHeaderWidth] = useState(() =>
@@ -86,6 +89,7 @@ export function AppHeader({
         {headerWidth >= 960 && (
           <ModeTabs mode={mode} onChange={setMode} />
         )}
+        {headerWidth >= 960 && <DocLibraryMenu key={mode} mode={mode} onToast={onToast} />}
       </div>
 
       {headerWidth >= 960 ? (
