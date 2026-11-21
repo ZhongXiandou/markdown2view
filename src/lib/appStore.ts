@@ -150,6 +150,10 @@ export interface AppState {
   // 卡片模式：画布比例与作者名（刷新后保留）
   cardAspect: XhsAspect
   cardAuthorName: string
+  // 违禁词检测中用户选择忽略的词
+  bannedIgnoredWords: string[]
+  addBannedIgnoredWord: (word: string) => void
+  clearBannedIgnoredWords: () => void
   // 编辑区占整体宽度的比例（桌面端分栏，可拖拽调整）
   editorSplit: number
   setEditorSplit: (ratio: number) => void
@@ -196,6 +200,12 @@ export const useAppStore = create<AppState>()(
       cardFont: 'heiti',
       cardAspect: '3:4',
       cardAuthorName: 'Pintley Tasia',
+      bannedIgnoredWords: [],
+      addBannedIgnoredWord: (word) =>
+        set((state) =>
+          state.bannedIgnoredWords.includes(word) ? {} : { bannedIgnoredWords: [...state.bannedIgnoredWords, word] },
+        ),
+      clearBannedIgnoredWords: () => set({ bannedIgnoredWords: [] }),
       editorSplit: 0.5,
       setEditorSplit: (ratio) => set({ editorSplit: clampEditorSplit(ratio) }),
       accent: DEFAULT_ACCENT,
@@ -298,6 +308,7 @@ export const useAppStore = create<AppState>()(
         cardAspect: state.cardAspect,
         cardAuthorName: state.cardAuthorName,
         editorSplit: state.editorSplit,
+        bannedIgnoredWords: state.bannedIgnoredWords,
         accent: state.accent,
         accentDark: state.accentDark,
         imageHostConfig: stripImageHostSecrets(state.imageHostConfig),
